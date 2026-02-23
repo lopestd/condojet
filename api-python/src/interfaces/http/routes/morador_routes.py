@@ -1,0 +1,81 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from src.application.dtos.morador_dto import CreateMoradorDTO, UpdateMoradorDTO
+from src.application.services.exceptions import AppError
+from src.infrastructure.database.session import get_db
+from src.infrastructure.repositories.endereco_repository import EnderecoRepository
+from src.infrastructure.repositories.morador_repository import MoradorRepository
+from src.infrastructure.security.password import hash_password
+from src.interfaces.http.dependencies.auth import Principal, require_roles
+
+router = APIRouter(tags=["moradores"])
+
+
+@router.get("/moradores")
+def list_moradores(
+    principal: Principal = Depends(require_roles("ADMIN", "PORTEIRO")),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    repository = MoradorRepository(db)
+    condominio_id = principal.condominio_id
+    items = repository.list_all(condominio_id=condominio_id)
+    return [
+        {
+            "id": item.id,
+            "condominio_id": item.condominio_id,
+            "nome": item.nome,
+            "telefone": item.telefone,
+            "email": item.email,
+            "endereco_id": item.endereco_id,
+            "ativo": item.ativo,
+        }
+        for item in items
+    ]
+
+
+@router.post("/moradores", status_code=201)
+def create_morador(
+    payload: CreateMoradorDTO,
+    principal: Principal = Depends(require_roles("ADMIN", "PORTEIRO")),
+    db: Session = Depends(get_db),
+) -> dict:
+    condominio_id = principal.condominio_id
+
+    endereco_repository = EnderecoRepository(db)
+    if endereco_repository.find_by_id(payload.endereco_id, condominio_id=condominio_id) is None:
+        raise AppError("endereco_not_found", status_code=404, code="endereco_not_found")
+
+    repository = MoradorRepository(db)
+    model = repository.create(
+        {
+            "condominio_id": condominio_id,
+            "nome": payload.nome,
+            "telefone": payload.telefone,
+            "email": payload.email,
+            "endereco_id": payload.endereco_id,
+            "senha_hash": hash_password(payload.senha),
+            "ativo": True,
+        }
+    )
+    return {"id": model.id}
+
+
+@router.put("/moradores/{morador_id}")
+def update_morador(
+    morador_id: int,
+    payload: UpdateMoradorDTO,
+    principal: Principal = Depends(require_roles("ADMIN", "PORTEIRO")),
+    db: Session = Depends(get_db),
+) -> dict:
+    repository = MoradorRepository(db)
+    condominio_id = principal.condominio_id
+    update_data = payload.model_dump(exclude_none=True)
+    if "senha" in update_data:
+        update_data["senha_hash"] = hash_password(update_data.pop("senha"))
+
+    model = repository.update(morador_id, update_data, condominio_id=condominio_id)
+    if model is None:
+        raise AppError("morador_not_found", status_code=404, code="morador_not_found")
+
+    return {"id": model.id, "updated": True}

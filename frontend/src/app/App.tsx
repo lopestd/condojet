@@ -1,0 +1,12 @@
+import { RouterProvider } from 'react-router-dom';
+
+import { AuthProvider } from '../auth/AuthContext';
+import { appRouter } from './router';
+
+export function App(): JSX.Element {
+  return (
+    <AuthProvider>
+      <RouterProvider router={appRouter} />
+    </AuthProvider>
+  );
+}

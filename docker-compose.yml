@@ -1,0 +1,64 @@
+name: condojet
+
+services:
+  api-python:
+    image: condojet-api-python:local
+    build:
+      context: ./api-python
+    container_name: condojet-api-python
+    restart: unless-stopped
+    env_file:
+      - ./config/env/.env.dsv
+    environment:
+      DB_HOST: host.docker.internal
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      API_DATABASE_URL: ${API_DATABASE_URL_DOCKER}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${API_APP_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    image: condojet-backend:local
+    build:
+      context: ./backend
+    container_name: condojet-backend
+    restart: unless-stopped
+    env_file:
+      - ./config/env/.env.dsv
+    environment:
+      BFF_API_PYTHON_BASE_URL: http://api-python:8000/api/v1
+    ports:
+      - "${BFF_PORT:-3000}:3000"
+    depends_on:
+      api-python:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/v1/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  frontend:
+    image: condojet-frontend:local
+    build:
+      context: ./frontend
+    container_name: condojet-frontend
+    restart: unless-stopped
+    env_file:
+      - ./config/env/.env.dsv
+    environment:
+      VITE_BACKEND_URL: ${WEB_VITE_BACKEND_URL}
+    ports:
+      - "5173:5173"
+    depends_on:
+      backend:
+        condition: service_healthy

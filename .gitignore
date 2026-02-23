@@ -1,0 +1,37 @@
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.mypy_cache/
+
+# Node
+node_modules/
+dist/
+build/
+coverage/
+.npm/
+
+# Docker
+*.pid
+
+# Planning docs
+plans/
+
+# API test env at project root (DSV local)
+tests_env/
