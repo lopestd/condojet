@@ -55,6 +55,7 @@ describe('Task4 - usuario routes', () => {
       payload: {
         nome: 'Porteiro 1',
         email: 'porteiro1@condojet.com',
+        telefone: '(61) 99999-0001',
         senha: '123456',
         perfil: 'PORTEIRO'
       }
@@ -66,6 +67,7 @@ describe('Task4 - usuario routes', () => {
       '/usuarios',
       expect.any(Object),
       expect.objectContaining({
+        telefone: '(61) 99999-0001',
         perfil: 'PORTEIRO'
       })
     );

@@ -9,6 +9,7 @@ type Usuario = {
   email: string;
   telefone: string;
   perfil: 'ADMIN' | 'PORTEIRO';
+  responsavel_sistema?: boolean;
   ativo: boolean;
 };
 
@@ -59,6 +60,8 @@ export function AdminUsersPage(): JSX.Element {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ATIVO' | 'INATIVO'>('ALL');
 
   const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null);
   const [showStatusConfirmModal, setShowStatusConfirmModal] = useState(false);
@@ -99,7 +102,31 @@ export function AdminUsersPage(): JSX.Element {
     void loadUsuarios();
   }, []);
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(usuarios.length / pageSize)), [usuarios.length, pageSize]);
+  const filteredUsuarios = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return usuarios.filter((usuario) => {
+      const matchesStatus =
+        statusFilter === 'ALL' || (statusFilter === 'ATIVO' ? usuario.ativo : !usuario.ativo);
+      if (!matchesStatus) return false;
+      if (!term) return true;
+
+      const perfilLabel = usuario.perfil === 'PORTEIRO' ? 'atendente' : usuario.perfil.toLowerCase();
+      const searchable = [
+        String(usuario.id),
+        usuario.nome,
+        usuario.email,
+        usuario.telefone,
+        perfilLabel,
+        usuario.responsavel_sistema ? 'responsavel responsável' : '',
+        usuario.ativo ? 'ativo' : 'inativo'
+      ]
+        .join(' ')
+        .toLowerCase();
+      return searchable.includes(term);
+    });
+  }, [usuarios, searchTerm, statusFilter]);
+
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(filteredUsuarios.length / pageSize)), [filteredUsuarios.length, pageSize]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -107,10 +134,14 @@ export function AdminUsersPage(): JSX.Element {
     }
   }, [currentPage, totalPages]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
   const paginatedUsuarios = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
-    return usuarios.slice(start, start + pageSize);
-  }, [usuarios, currentPage, pageSize]);
+    return filteredUsuarios.slice(start, start + pageSize);
+  }, [filteredUsuarios, currentPage, pageSize]);
 
   function openCreateModal(): void {
     setFormMode('create');
@@ -140,6 +171,10 @@ export function AdminUsersPage(): JSX.Element {
   }
 
   function openStatusConfirmModal(usuario: Usuario): void {
+    if (usuario.perfil === 'ADMIN' && usuario.responsavel_sistema && usuario.ativo) {
+      setError('O usuário ADMIN responsável não pode ser inativado.');
+      return;
+    }
     setSelectedUsuario(usuario);
     setShowStatusConfirmModal(true);
   }
@@ -192,6 +227,10 @@ export function AdminUsersPage(): JSX.Element {
   }
 
   async function toggleUsuarioStatus(usuario: Usuario): Promise<void> {
+    if (usuario.perfil === 'ADMIN' && usuario.responsavel_sistema && usuario.ativo) {
+      setError('O usuário ADMIN responsável não pode ser inativado.');
+      return;
+    }
     setError(null);
     setFeedback(null);
     setUpdatingStatus(true);
@@ -207,8 +246,8 @@ export function AdminUsersPage(): JSX.Element {
     }
   }
 
-  const firstRecord = usuarios.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const lastRecord = Math.min(usuarios.length, currentPage * pageSize);
+  const firstRecord = filteredUsuarios.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const lastRecord = Math.min(filteredUsuarios.length, currentPage * pageSize);
 
   return (
     <section className="page-grid condo-admin-page">
@@ -232,8 +271,27 @@ export function AdminUsersPage(): JSX.Element {
       <article className="card section-card">
         <h2>Usuários cadastrados</h2>
 
+        <div className="list-filters">
+          <label>
+            Pesquisar usuário
+            <input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Nome, e-mail, telefone, perfil ou ID"
+            />
+          </label>
+          <label>
+            Situação
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as 'ALL' | 'ATIVO' | 'INATIVO')}>
+              <option value="ALL">Todos</option>
+              <option value="ATIVO">Ativo</option>
+              <option value="INATIVO">Inativo</option>
+            </select>
+          </label>
+        </div>
+
         <div className="list-toolbar">
-          <p className="table-meta">{`Exibindo ${firstRecord}-${lastRecord} de ${usuarios.length}`}</p>
+          <p className="table-meta">{`Exibindo ${firstRecord}-${lastRecord} de ${filteredUsuarios.length}`}</p>
           <label>
             Registros por página
             <select
@@ -282,7 +340,12 @@ export function AdminUsersPage(): JSX.Element {
                   <td>{usuario.nome}</td>
                   <td>{usuario.telefone}</td>
                   <td>{usuario.email}</td>
-                  <td>{usuario.perfil === 'PORTEIRO' ? 'ATENDENTE' : usuario.perfil}</td>
+                  <td>
+                    {usuario.perfil === 'PORTEIRO' ? 'ATENDENTE' : usuario.perfil}{' '}
+                    {usuario.perfil === 'ADMIN' && usuario.responsavel_sistema ? (
+                      <span className="status-badge active">Responsável</span>
+                    ) : null}
+                  </td>
                   <td>
                     <span className={usuario.ativo ? 'status-badge active' : 'status-badge inactive'}>
                       {usuario.ativo ? 'Ativo' : 'Inativo'}
@@ -294,8 +357,21 @@ export function AdminUsersPage(): JSX.Element {
                         type="button"
                         className="icon-action-button"
                         onClick={() => openStatusConfirmModal(usuario)}
-                        title={usuario.ativo ? 'Inativar usuário' : 'Ativar usuário'}
-                        aria-label={usuario.ativo ? 'Inativar usuário' : 'Ativar usuário'}
+                        title={
+                          usuario.perfil === 'ADMIN' && usuario.responsavel_sistema && usuario.ativo
+                            ? 'ADMIN responsável não pode ser inativado'
+                            : usuario.ativo
+                              ? 'Inativar usuário'
+                              : 'Ativar usuário'
+                        }
+                        aria-label={
+                          usuario.perfil === 'ADMIN' && usuario.responsavel_sistema && usuario.ativo
+                            ? 'ADMIN responsável não pode ser inativado'
+                            : usuario.ativo
+                              ? 'Inativar usuário'
+                              : 'Ativar usuário'
+                        }
+                        disabled={usuario.perfil === 'ADMIN' && usuario.responsavel_sistema && usuario.ativo}
                       >
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                           <path d="M12 3v8" />
@@ -320,7 +396,7 @@ export function AdminUsersPage(): JSX.Element {
               ))}
               {!loading && paginatedUsuarios.length === 0 ? (
                 <tr>
-                  <td colSpan={7}>Nenhum usuário cadastrado.</td>
+                  <td colSpan={7}>Nenhum usuário encontrado com os filtros aplicados.</td>
                 </tr>
               ) : null}
             </tbody>

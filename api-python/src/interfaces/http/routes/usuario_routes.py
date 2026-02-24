@@ -29,6 +29,7 @@ def list_usuarios(
             "email": item.email,
             "telefone": item.telefone,
             "perfil": item.perfil,
+            "responsavel_sistema": item.responsavel_sistema,
             "ativo": item.ativo,
         }
         for item in items
@@ -77,7 +78,17 @@ def update_usuario(
 ) -> dict:
     repository = UsuarioRepository(db)
     condominio_id = principal.condominio_id
+    model = repository.find_by_id(usuario_id, condominio_id=condominio_id)
+    if model is None:
+        raise AppError("usuario_not_found", status_code=404, code="usuario_not_found")
+
     update_data = payload.model_dump(exclude_none=True)
+    if update_data.get("ativo") is False and model.ativo and model.perfil == "ADMIN" and model.responsavel_sistema:
+        raise AppError(
+            "responsavel_admin_inactivation_blocked",
+            status_code=409,
+            code="responsavel_admin_inactivation_blocked",
+        )
     if "senha" in update_data:
         update_data["senha_hash"] = hash_password(update_data.pop("senha"))
 

@@ -99,6 +99,8 @@ export function AdminResidentsPage(): JSX.Element {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ATIVO' | 'INATIVO'>('ALL');
 
   const [selectedMorador, setSelectedMorador] = useState<Morador | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -152,7 +154,27 @@ export function AdminResidentsPage(): JSX.Element {
     void loadAll();
   }, []);
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(moradores.length / pageSize)), [moradores.length, pageSize]);
+  const filteredMoradores = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return moradores.filter((morador) => {
+      const matchesStatus =
+        statusFilter === 'ALL' || (statusFilter === 'ATIVO' ? morador.ativo : !morador.ativo);
+      if (!matchesStatus) return false;
+      if (!term) return true;
+      const searchable = [
+        String(morador.id),
+        morador.nome,
+        morador.email,
+        morador.telefone,
+        morador.ativo ? 'residente ativo' : 'ex-morador inativo'
+      ]
+        .join(' ')
+        .toLowerCase();
+      return searchable.includes(term);
+    });
+  }, [moradores, searchTerm, statusFilter]);
+
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(filteredMoradores.length / pageSize)), [filteredMoradores.length, pageSize]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -160,10 +182,14 @@ export function AdminResidentsPage(): JSX.Element {
     }
   }, [currentPage, totalPages]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
   const paginatedMoradores = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
-    return moradores.slice(start, start + pageSize);
-  }, [moradores, currentPage, pageSize]);
+    return filteredMoradores.slice(start, start + pageSize);
+  }, [filteredMoradores, currentPage, pageSize]);
 
   const selectedMoradorEndereco = useMemo(
     () => enderecos.find((item) => item.id === selectedMorador?.endereco_id) ?? null,
@@ -345,8 +371,8 @@ export function AdminResidentsPage(): JSX.Element {
     }
   }
 
-  const firstRecord = moradores.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const lastRecord = Math.min(moradores.length, currentPage * pageSize);
+  const firstRecord = filteredMoradores.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const lastRecord = Math.min(filteredMoradores.length, currentPage * pageSize);
 
   return (
     <section className="page-grid condo-admin-page">
@@ -370,8 +396,27 @@ export function AdminResidentsPage(): JSX.Element {
       <article className="card section-card">
         <h2>Moradores cadastrados</h2>
 
+        <div className="list-filters">
+          <label>
+            Pesquisar morador
+            <input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Nome, e-mail, telefone ou ID"
+            />
+          </label>
+          <label>
+            Situação
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as 'ALL' | 'ATIVO' | 'INATIVO')}>
+              <option value="ALL">Todos</option>
+              <option value="ATIVO">Ativo</option>
+              <option value="INATIVO">Inativo</option>
+            </select>
+          </label>
+        </div>
+
         <div className="list-toolbar">
-          <p className="table-meta">{`Exibindo ${firstRecord}-${lastRecord} de ${moradores.length}`}</p>
+          <p className="table-meta">{`Exibindo ${firstRecord}-${lastRecord} de ${filteredMoradores.length}`}</p>
           <label>
             Registros por página
             <select
@@ -469,7 +514,7 @@ export function AdminResidentsPage(): JSX.Element {
               })}
               {!loading && paginatedMoradores.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>Nenhum morador cadastrado.</td>
+                  <td colSpan={6}>Nenhum morador encontrado com os filtros aplicados.</td>
                 </tr>
               ) : null}
             </tbody>

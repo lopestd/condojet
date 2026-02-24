@@ -263,6 +263,12 @@ th {
   margin-bottom: 0.8rem;
 }
 
+.list-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 0.65rem;
+}
+
 .table-meta {
   margin-top: 0.45rem;
   color: var(--text-2);
@@ -374,6 +380,11 @@ th {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.icon-action-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .icon-action-button-primary {

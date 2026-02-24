@@ -5,7 +5,7 @@ import { ApiProxyError } from '../../src/infrastructure/clients/apiPythonProxyCl
 
 type ApiRecord = {
   condominios: Array<{ id: number; nome: string; api_key: string }>;
-  usuarios: Array<{ id: number; condominio_id: number; nome: string; email: string; perfil: string }>;
+  usuarios: Array<{ id: number; condominio_id: number; nome: string; email: string; telefone: string; perfil: string }>;
   enderecos: Array<{ id: number; condominio_id: number; tipo_endereco: string; quadra: string }>;
   moradores: Array<{ id: number; condominio_id: number; nome: string; endereco_id: number }>;
   encomendas: Array<{ id: number; condominio_id: number; morador_id: number; status: string; codigo_interno: string }>;
@@ -59,7 +59,14 @@ describe('Task8 - backend functional scenarios', () => {
 
       if (method === 'POST' && path === '/usuarios') {
         const id = record.usuarios.length + 1;
-        const model = { id, condominio_id: tenantId ?? payload.condominio_id ?? 1, nome: payload.nome, email: payload.email, perfil: payload.perfil };
+        const model = {
+          id,
+          condominio_id: tenantId ?? payload.condominio_id ?? 1,
+          nome: payload.nome,
+          email: payload.email,
+          telefone: payload.telefone,
+          perfil: payload.perfil
+        };
         record.usuarios.push(model);
         return { id: model.id };
       }
@@ -135,13 +142,13 @@ describe('Task8 - backend functional scenarios', () => {
       method: 'POST',
       url: '/api/v1/usuarios',
       headers: { authorization: 'Bearer token tenant=1' },
-      payload: { nome: 'Admin A', email: 'admin.a@condojet.com', senha: '123', perfil: 'ADMIN' }
+      payload: { nome: 'Admin A', email: 'admin.a@condojet.com', telefone: '61991111111', senha: '123', perfil: 'ADMIN' }
     });
     const porteiro = await app.inject({
       method: 'POST',
       url: '/api/v1/usuarios',
       headers: { authorization: 'Bearer token tenant=1' },
-      payload: { nome: 'Porteiro A', email: 'porteiro.a@condojet.com', senha: '123', perfil: 'PORTEIRO' }
+      payload: { nome: 'Porteiro A', email: 'porteiro.a@condojet.com', telefone: '61992222222', senha: '123', perfil: 'PORTEIRO' }
     });
     expect(admin.statusCode).toBe(201);
     expect(porteiro.statusCode).toBe(201);

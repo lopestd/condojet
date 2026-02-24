@@ -114,6 +114,7 @@
 }
 
 @media (max-width: 768px) {
+  .list-filters,
   .list-toolbar {
     grid-template-columns: 1fr;
   }
