@@ -27,6 +27,9 @@
   .app-sidebar {
     transform: translateX(-105%);
     transition: transform 180ms ease;
+    z-index: 120;
+    overflow-y: auto;
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
   }
 
   .app-sidebar.open {
@@ -37,7 +40,7 @@
     display: block;
     position: fixed;
     inset: 0;
-    z-index: 35;
+    z-index: 110;
     background: rgba(10, 24, 20, 0.45);
     border: 0;
     padding: 0;
@@ -66,12 +69,16 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 70;
+    z-index: 60;
     background: rgba(243, 250, 247, 0.96);
     backdrop-filter: blur(12px);
     border-top: 1px solid #cddfd6;
     padding: 0.35rem 0.5rem calc(0.45rem + env(safe-area-inset-bottom));
     height: 52px;
+  }
+
+  .layout-root.menu-open .bottom-nav {
+    display: none;
   }
 
   .bottom-link {

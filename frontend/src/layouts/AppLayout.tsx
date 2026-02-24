@@ -44,7 +44,7 @@ export function AppLayout(): JSX.Element {
   const pageTitle = TITLES[location.pathname] ?? 'CondoJET';
 
   return (
-    <main className="layout-root">
+    <main className={mobileMenuOpen ? 'layout-root menu-open' : 'layout-root'}>
       <button
         type="button"
         className="mobile-menu-toggle"

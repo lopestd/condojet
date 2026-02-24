@@ -5,6 +5,7 @@ import type { ApiErrorPayload } from '../types';
 
 const SESSION_STORAGE_KEY = 'condojet_session';
 let inMemoryToken: string | null = null;
+let redirectingToLogin = false;
 
 export const backendApi = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL,
@@ -36,6 +37,16 @@ function resolveAuthToken(): string | null {
   return inMemoryToken ?? readStoredToken();
 }
 
+function clearSessionAndRedirectToLogin(): void {
+  if (typeof window === 'undefined') return;
+  if (redirectingToLogin) return;
+  redirectingToLogin = true;
+  inMemoryToken = null;
+  delete backendApi.defaults.headers.common.Authorization;
+  window.localStorage.removeItem(SESSION_STORAGE_KEY);
+  window.location.replace('/login');
+}
+
 backendApi.interceptors.request.use((config) => {
   const token = resolveAuthToken();
   if (token) {
@@ -51,6 +62,8 @@ backendApi.interceptors.response.use(
     const status = error.response?.status;
     const message = error.response?.data?.message;
     const originalConfig = error.config as (typeof error.config & { _retriedMissingToken?: boolean }) | undefined;
+    const requestUrl = originalConfig?.url ?? '';
+    const isLoginRequest = requestUrl.includes('/auth/login');
 
     if (status === 401 && message === 'missing_token' && originalConfig && !originalConfig._retriedMissingToken) {
       const token = resolveAuthToken();
@@ -60,6 +73,10 @@ backendApi.interceptors.response.use(
         originalConfig.headers.Authorization = `Bearer ${token}`;
         return backendApi.request(originalConfig);
       }
+    }
+
+    if (status === 401 && !isLoginRequest) {
+      clearSessionAndRedirectToLogin();
     }
 
     return Promise.reject(error);
