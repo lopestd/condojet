@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from src.application.dtos.morador_dto import CreateMoradorDTO, UpdateMoradorDTO
 from src.application.services.exceptions import AppError
 from src.infrastructure.database.session import get_db
+from src.infrastructure.repositories.email_registry_repository import EmailRegistryRepository
 from src.infrastructure.repositories.endereco_repository import EnderecoRepository
 from src.infrastructure.repositories.morador_repository import MoradorRepository
 from src.infrastructure.security.password import hash_password
@@ -45,6 +46,10 @@ def create_morador(
     endereco_repository = EnderecoRepository(db)
     if endereco_repository.find_by_id(payload.endereco_id, condominio_id=condominio_id) is None:
         raise AppError("endereco_not_found", status_code=404, code="endereco_not_found")
+
+    email_registry_repository = EmailRegistryRepository(db)
+    if email_registry_repository.find_owner(payload.email) is not None:
+        raise AppError("email_already_exists", status_code=409, code="email_already_exists")
 
     repository = MoradorRepository(db)
     model = repository.create(

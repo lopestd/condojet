@@ -31,7 +31,7 @@ describe('Task2 - auth routes', () => {
       payload: {
         email: 'admin@condojet.com',
         senha: '123456',
-        condominio_id: 1
+        acesso_condominio: true
       }
     });
     expect(response.statusCode).toBe(200);
@@ -54,7 +54,7 @@ describe('Task2 - auth routes', () => {
       },
       payload: {
         email: 'invalid-email',
-        condominio_id: 1
+        acesso_condominio: true
       }
     });
     expect(response.statusCode).toBe(422);

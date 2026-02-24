@@ -1,0 +1,150 @@
+@media (max-width: 900px) {
+  .mobile-menu-toggle {
+    display: grid;
+    gap: 4px;
+    position: fixed;
+    left: 0.85rem;
+    top: 0.8rem;
+    z-index: 85;
+    width: 38px;
+    height: 34px;
+    border-radius: 9px;
+    border: 1px solid #c6dad0;
+    background: #f2f8f5;
+    align-items: center;
+    justify-items: center;
+    padding: 0.35rem 0.3rem;
+  }
+
+  .mobile-menu-toggle span {
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: #235542;
+    display: block;
+  }
+
+  .app-sidebar {
+    transform: translateX(-105%);
+    transition: transform 180ms ease;
+  }
+
+  .app-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    background: rgba(10, 24, 20, 0.45);
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  .app-main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .app-topbar {
+    background: linear-gradient(95deg, #f7fbf9, #e9f4ef);
+    padding-left: 3.4rem;
+  }
+
+  .topbar-logout {
+    display: none;
+  }
+
+  .bottom-nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.35rem;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 70;
+    background: rgba(243, 250, 247, 0.96);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid #cddfd6;
+    padding: 0.35rem 0.5rem calc(0.45rem + env(safe-area-inset-bottom));
+    height: 52px;
+  }
+
+  .bottom-link {
+    min-height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #31574a;
+    font-size: 0.79rem;
+    font-weight: 700;
+  }
+
+  .bottom-link.active {
+    background: #d8efe5;
+    color: #104935;
+  }
+
+  .page-content {
+    padding-bottom: 4.5rem;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .content-two {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .list-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .global-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .page-intro,
+  .global-saas-header {
+    display: grid;
+  }
+
+  .section-card {
+    padding: 0.8rem;
+  }
+
+  .inline-panel {
+    padding: 0.65rem;
+  }
+
+  .modal-card {
+    width: calc(100% - 24px);
+    border-radius: 13px;
+    padding: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-topbar h2 {
+    font-size: 0.92rem;
+  }
+
+  .app-topbar p {
+    font-size: 0.73rem;
+  }
+
+  .summary-grid,
+  .filter-row {
+    grid-template-columns: 1fr;
+  }
+}

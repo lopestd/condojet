@@ -5,6 +5,7 @@ from src.application.dtos.usuario_dto import CreateUsuarioDTO, UpdateUsuarioDTO
 from src.application.services.exceptions import AppError
 from src.infrastructure.database.session import get_db
 from src.infrastructure.repositories.condominio_repository import CondominioRepository
+from src.infrastructure.repositories.email_registry_repository import EmailRegistryRepository
 from src.infrastructure.repositories.usuario_repository import UsuarioRepository
 from src.infrastructure.security.password import hash_password
 from src.interfaces.http.dependencies.auth import Principal, require_roles
@@ -46,6 +47,10 @@ def create_usuario(
     condominio_repository = CondominioRepository(db)
     if condominio_repository.find_by_id(condominio_id) is None:
         raise AppError("condominio_not_found", status_code=404, code="condominio_not_found")
+
+    email_registry_repository = EmailRegistryRepository(db)
+    if email_registry_repository.find_owner(payload.email) is not None:
+        raise AppError("email_already_exists", status_code=409, code="email_already_exists")
 
     repository = UsuarioRepository(db)
     model = repository.create(

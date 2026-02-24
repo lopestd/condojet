@@ -6,7 +6,7 @@ import type { SessionUser, UserRole } from '../types';
 type LoginInput = {
   email: string;
   senha: string;
-  condominioId?: number;
+  accessMode: 'global' | 'condominio';
 };
 
 type LoginResponse = {
@@ -48,11 +48,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
   async function login(input: LoginInput): Promise<void> {
     const payload: Record<string, unknown> = {
       email: input.email,
-      senha: input.senha
+      senha: input.senha,
+      acesso_condominio: input.accessMode === 'condominio'
     };
-    if (typeof input.condominioId === 'number') {
-      payload.condominio_id = input.condominioId;
-    }
     const { data } = await backendApi.post<LoginResponse>('/auth/login', payload);
     const nextUser: SessionUser = {
       accessToken: data.access_token,

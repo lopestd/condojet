@@ -4,6 +4,7 @@ from pydantic import BaseModel, EmailStr
 class LoginRequestDTO(BaseModel):
     email: EmailStr
     senha: str
+    acesso_condominio: bool = False
     condominio_id: int | None = None
 
 

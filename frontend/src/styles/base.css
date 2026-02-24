@@ -1,0 +1,61 @@
+:root {
+  --ui-zoom: 1;
+  --sidebar-width: calc(280px * var(--ui-zoom));
+  --page-header-height: 48px;
+
+  --bg-page: #e7efec;
+  --bg-deep: #0f2621;
+  --bg-deep-2: #16342e;
+  --bg-surface: #f6faf8;
+  --bg-card: #ffffff;
+  --line: #c7d8d3;
+
+  --text-1: #10231f;
+  --text-2: #46605a;
+  --text-inverse: #e8f6f1;
+
+  --brand: #1f7a5b;
+  --brand-hover: #166246;
+  --brand-soft: #d8efe5;
+  --success: #0f8a55;
+  --warning: #b57911;
+  --danger: #b9382c;
+
+  --shadow-md: 0 12px 32px rgba(10, 28, 22, 0.1);
+  --shadow-soft: 0 8px 18px rgba(12, 30, 23, 0.08);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(900px 460px at -8% -15%, #c6ddd2 0%, transparent 70%),
+    radial-gradient(1100px 640px at 120% -10%, #d8e8e1 0%, transparent 72%),
+    linear-gradient(155deg, #dde9e4 0%, var(--bg-page) 45%, #ecf4f1 100%);
+  color: var(--text-1);
+  font-family: 'Manrope', 'Sora', 'Segoe UI', sans-serif;
+  line-height: 1.4;
+}
+
+a {
+  color: inherit;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+

@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import IntegrityError
 
 from src.application.services.exceptions import AppError
 
@@ -29,6 +30,24 @@ def configure_error_handler(app: FastAPI) -> None:
                 request,
                 {"message": "validation_error", "detail": jsonable_encoder(exc.errors())},
             ),
+        )
+
+    @app.exception_handler(IntegrityError)
+    async def handle_integrity_error(request: Request, exc: IntegrityError) -> JSONResponse:
+        detail = str(exc).lower()
+        if (
+            "email_already_exists" in detail
+            or "ux_usuarios_condominio_email_lower" in detail
+            or "ux_moradores_condominio_email_lower" in detail
+            or "ux_usuarios_globais_email_lower" in detail
+        ):
+            return JSONResponse(
+                status_code=409,
+                content=_with_request_id(request, {"message": "email_already_exists", "code": "email_already_exists"}),
+            )
+        return JSONResponse(
+            status_code=409,
+            content=_with_request_id(request, {"message": "integrity_error", "code": "integrity_error"}),
         )
 
     @app.exception_handler(Exception)

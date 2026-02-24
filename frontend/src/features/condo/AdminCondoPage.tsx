@@ -148,7 +148,7 @@ export function AdminCondoPage(): JSX.Element {
   }
 
   return (
-    <section className="page-grid">
+    <section className="page-grid condo-admin-page">
       <header className="page-header">
         <h1>Painel de Administração do Condomínio</h1>
         <p>Gerencie usuários, endereços e moradores do seu condomínio.</p>
@@ -160,7 +160,7 @@ export function AdminCondoPage(): JSX.Element {
       {error ? <p className="error-box">{error}</p> : null}
       {loading ? <p className="info-box">Carregando dados...</p> : null}
 
-      <article className="card">
+      <article id="usuarios" className="card section-card">
         <h2>Usuários</h2>
         <div className="table-wrap">
           <table>
@@ -186,7 +186,7 @@ export function AdminCondoPage(): JSX.Element {
             </tbody>
           </table>
         </div>
-        <form className="form-grid" onSubmit={(e) => void onCreateUser(e)}>
+        <form className="form-grid inline-panel" onSubmit={(e) => void onCreateUser(e)}>
           <h3>Criar usuário</h3>
           <label>
             Nome
@@ -211,7 +211,7 @@ export function AdminCondoPage(): JSX.Element {
             Criar usuário
           </button>
         </form>
-        <form className="form-grid" onSubmit={(e) => void onUpdateUser(e)}>
+        <form className="form-grid inline-panel" onSubmit={(e) => void onUpdateUser(e)}>
           <h3>Atualizar usuário (ativo/inativo)</h3>
           <label>
             ID usuário
@@ -227,7 +227,7 @@ export function AdminCondoPage(): JSX.Element {
         </form>
       </article>
 
-      <article className="card">
+      <article id="moradores" className="card section-card">
         <h2>Endereços</h2>
         <div className="table-wrap">
           <table>
@@ -251,7 +251,7 @@ export function AdminCondoPage(): JSX.Element {
             </tbody>
           </table>
         </div>
-        <form className="form-grid" onSubmit={(e) => void onCreateEndereco(e)}>
+        <form className="form-grid inline-panel" onSubmit={(e) => void onCreateEndereco(e)}>
           <h3>Criar endereço</h3>
           <label>
             Tipo
@@ -296,7 +296,7 @@ export function AdminCondoPage(): JSX.Element {
         </form>
       </article>
 
-      <article className="card">
+      <article className="card section-card">
         <h2>Moradores</h2>
         <div className="table-wrap">
           <table>
@@ -324,7 +324,7 @@ export function AdminCondoPage(): JSX.Element {
             </tbody>
           </table>
         </div>
-        <form className="form-grid" onSubmit={(e) => void onCreateMorador(e)}>
+        <form className="form-grid inline-panel" onSubmit={(e) => void onCreateMorador(e)}>
           <h3>Criar morador</h3>
           <label>
             Nome
@@ -356,7 +356,7 @@ export function AdminCondoPage(): JSX.Element {
             Criar morador
           </button>
         </form>
-        <form className="form-grid" onSubmit={(e) => void onUpdateMorador(e)}>
+        <form className="form-grid inline-panel" onSubmit={(e) => void onUpdateMorador(e)}>
           <h3>Atualizar morador (ativo/inativo)</h3>
           <label>
             ID morador

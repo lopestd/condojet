@@ -8,7 +8,8 @@ export function LoginPage(): JSX.Element {
   const [mode, setMode] = useState<'global' | 'condominio'>('global');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [condominioId, setCondominioId] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +21,7 @@ export function LoginPage(): JSX.Element {
       await login({
         email,
         senha,
-        condominioId: mode === 'condominio' ? Number(condominioId) : undefined
+        accessMode: mode
       });
     } catch (err) {
       setError(readApiError(err));
@@ -32,8 +33,9 @@ export function LoginPage(): JSX.Element {
   return (
     <main className="auth-shell">
       <section className="auth-card">
-        <h1>CondoJET</h1>
-        <p>Selecione o contexto de acesso e autentique no sistema.</p>
+        <p className="brand-eyebrow">CondoJET</p>
+        <h1>Controle operacional de condominios</h1>
+        <p>Autentique-se para acompanhar recebimentos, retiradas e administracao da plataforma.</p>
 
         <div className="segmented">
           <button
@@ -60,21 +62,23 @@ export function LoginPage(): JSX.Element {
 
           <label>
             Senha
-            <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
-          </label>
-
-          {mode === 'condominio' ? (
-            <label>
-              ID do condomínio
+            <div className="password-wrap">
               <input
-                type="number"
-                min={1}
-                value={condominioId}
-                onChange={(e) => setCondominioId(e.target.value)}
+                type={showPassword ? 'text' : 'password'}
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
                 required
               />
-            </label>
-          ) : null}
+              <button type="button" className="button-soft small" onClick={() => setShowPassword((value) => !value)}>
+                {showPassword ? 'Ocultar' : 'Mostrar'}
+              </button>
+            </div>
+          </label>
+
+          <label className="inline-option">
+            <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
+            Lembrar de mim
+          </label>
 
           {error ? <p className="error-box">{error}</p> : null}
 

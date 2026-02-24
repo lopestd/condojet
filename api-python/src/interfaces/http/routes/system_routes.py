@@ -5,6 +5,7 @@ from src.application.services.exceptions import AppError
 from src.infrastructure.config.settings import settings
 from src.infrastructure.database.session import get_db
 from src.infrastructure.repositories.chave_sistema_repository import ChaveSistemaRepository
+from src.infrastructure.repositories.email_registry_repository import EmailRegistryRepository
 from src.infrastructure.repositories.usuario_global_repository import UsuarioGlobalRepository
 from src.infrastructure.security.password import hash_password
 
@@ -37,6 +38,11 @@ def sync_global_admin(
         raise AppError("missing_global_api_key", status_code=401, code="missing_global_api_key")
     if x_global_api_key != settings.global_api_key:
         raise AppError("invalid_global_api_key", status_code=403, code="invalid_global_api_key")
+
+    email_registry_repository = EmailRegistryRepository(db)
+    owner = email_registry_repository.find_owner(settings.global_admin_email)
+    if owner is not None and owner[0] != "usuarios_globais":
+        raise AppError("email_already_exists", status_code=409, code="email_already_exists")
 
     repository = UsuarioGlobalRepository(db)
     model, created = repository.upsert_admin_global(

@@ -1,0 +1,151 @@
+.page-intro {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.page-intro p {
+  margin-top: 0.35rem;
+  color: var(--text-2);
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
+  gap: 0.6rem;
+}
+
+.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background:
+    radial-gradient(700px 280px at 18% 10%, rgba(105, 178, 144, 0.34) 0%, transparent 80%),
+    radial-gradient(620px 320px at 88% -4%, rgba(59, 133, 98, 0.34) 0%, transparent 78%);
+}
+
+.auth-card {
+  width: min(460px, 100%);
+  background: #ffffff;
+  border: 1px solid #caddd4;
+  border-radius: 18px;
+  box-shadow: var(--shadow-md);
+  padding: 1.2rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.auth-card h1 {
+  font-size: 1.5rem;
+}
+
+.auth-card p {
+  color: var(--text-2);
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.segmented button {
+  border-radius: 9px;
+  border: 1px solid #cddfd7;
+  min-height: 42px;
+  background: #f4faf7;
+}
+
+.segmented button.active {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(130deg, var(--brand), #2b8a64);
+}
+
+.global-saas-page,
+.global-list-panel {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.global-saas-page > .card,
+.condo-admin-page > .card,
+.operation-page > .card,
+.resident-page > .card {
+  border-left: 4px solid #6db899;
+}
+
+.condo-admin-page .page-header,
+.operation-page .page-header,
+.resident-page .page-header,
+.global-saas-page .global-saas-header {
+  background: linear-gradient(120deg, #f7fcfa, #edf6f2);
+  border: 1px solid #d1e2db;
+  border-radius: 14px;
+  padding: 0.8rem 0.9rem;
+}
+
+.condo-admin-page .page-header h1,
+.operation-page .page-header h1,
+.resident-page .page-header h1 {
+  font-size: 1.26rem;
+  color: #0f2d24;
+}
+
+.global-saas-page h1,
+.condo-admin-page h2,
+.operation-page h2,
+.resident-page h2 {
+  color: #14392d;
+}
+
+.global-condo-table {
+  min-width: 920px;
+}
+
+.global-condo-table th:nth-child(2),
+.global-condo-table td:nth-child(2) {
+  min-width: 220px;
+}
+
+.global-condo-table th:nth-child(5),
+.global-condo-table td:nth-child(5) {
+  min-width: 210px;
+}
+
+.global-list-panel-full {
+  width: 100%;
+}
+
+.global-saas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.global-saas-header p {
+  margin-top: 0.32rem;
+  color: var(--text-2);
+}
+
+.global-header-actions {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.detail-content-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.65rem;
+}
+
+.modal-data {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}

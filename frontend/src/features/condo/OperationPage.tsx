@@ -95,7 +95,7 @@ export function OperationPage(): JSX.Element {
   }
 
   return (
-    <section className="page-grid">
+    <section className="page-grid operation-page">
       <header className="page-header">
         <h1>Operação de Encomendas</h1>
         <p>Recebimento, entrega e reabertura (admin) das encomendas do condomínio.</p>
@@ -107,7 +107,7 @@ export function OperationPage(): JSX.Element {
       {error ? <p className="error-box">{error}</p> : null}
       {loading ? <p className="info-box">Carregando...</p> : null}
 
-      <article className="card">
+      <article className="card section-card">
         <h2>Encomendas</h2>
         <div className="table-wrap">
           <table>
@@ -137,9 +137,9 @@ export function OperationPage(): JSX.Element {
         </div>
       </article>
 
-      <article className="card">
+      <article className="card section-card">
         <h2>Receber encomenda</h2>
-        <form className="form-grid" onSubmit={(e) => void onCreate(e)}>
+        <form className="form-grid inline-panel" onSubmit={(e) => void onCreate(e)}>
           <label>
             Tipo
             <select value={tipo} onChange={(e) => setTipo(e.target.value as 'PACOTE' | 'ENVELOPE' | 'CAIXA')}>
@@ -170,9 +170,9 @@ export function OperationPage(): JSX.Element {
         </form>
       </article>
 
-      <article className="card">
+      <article className="card section-card">
         <h2>Entregar encomenda</h2>
-        <form className="form-grid" onSubmit={(e) => void onEntregar(e)}>
+        <form className="form-grid inline-panel" onSubmit={(e) => void onEntregar(e)}>
           <label>
             ID encomenda
             <input type="number" min={1} value={entregaId} onChange={(e) => setEntregaId(e.target.value)} required />
@@ -187,9 +187,9 @@ export function OperationPage(): JSX.Element {
         </form>
       </article>
 
-      <article className="card">
+      <article className="card section-card">
         <h2>Reabrir encomenda (somente Admin)</h2>
-        <form className="form-grid" onSubmit={(e) => void onReabrir(e)}>
+        <form className="form-grid inline-panel" onSubmit={(e) => void onReabrir(e)}>
           <label>
             ID encomenda
             <input type="number" min={1} value={reabrirId} onChange={(e) => setReabrirId(e.target.value)} required />

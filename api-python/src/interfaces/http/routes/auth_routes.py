@@ -23,7 +23,9 @@ def login(
     include_global = False
     if tenant_context.is_global:
         tenant_id = payload.condominio_id
-        include_global = payload.condominio_id is None
+        if payload.acesso_condominio and payload.condominio_id is None:
+            tenant_id = None
+        include_global = not payload.acesso_condominio and payload.condominio_id is None
 
     account = repository.find_account_by_email(payload.email, condominio_id=tenant_id, include_global=include_global)
     if account is None:

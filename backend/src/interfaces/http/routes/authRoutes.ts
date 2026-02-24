@@ -7,6 +7,7 @@ import { buildValidationError, extractProxyHeaders } from '../utils/proxyRequest
 const loginSchema = z.object({
   email: z.string().email(),
   senha: z.string().min(1),
+  acesso_condominio: z.boolean().optional(),
   condominio_id: z.coerce.number().int().positive().optional()
 });
 

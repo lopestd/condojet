@@ -6,7 +6,9 @@ import { LoginPage } from '../features/auth/LoginPage';
 import { AdminCondoPage } from '../features/condo/AdminCondoPage';
 import { OperationPage } from '../features/condo/OperationPage';
 import { ResidentPage } from '../features/condo/ResidentPage';
+import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { GlobalManagementPage } from '../features/global/GlobalManagementPage';
+import { SettingsPage } from '../features/settings/SettingsPage';
 import { AppLayout } from '../layouts/AppLayout';
 
 function HomeRedirect(): JSX.Element {
@@ -37,6 +39,10 @@ export const appRouter = createBrowserRouter([
     element: <AppLayout />,
     children: [
       {
+        element: <ProtectedRoute allowedRoles={['ADMIN_GLOBAL', 'ADMIN', 'PORTEIRO', 'MORADOR']} />,
+        children: [{ path: '/dashboard', element: <DashboardPage /> }]
+      },
+      {
         element: <ProtectedRoute allowedRoles={['ADMIN_GLOBAL']} />,
         children: [{ path: '/global', element: <GlobalManagementPage /> }]
       },
@@ -51,6 +57,10 @@ export const appRouter = createBrowserRouter([
       {
         element: <ProtectedRoute allowedRoles={['MORADOR']} />,
         children: [{ path: '/condo/minhas-encomendas', element: <ResidentPage /> }]
+      },
+      {
+        element: <ProtectedRoute allowedRoles={['ADMIN_GLOBAL', 'ADMIN']} />,
+        children: [{ path: '/condo/config', element: <SettingsPage /> }]
       }
     ]
   },

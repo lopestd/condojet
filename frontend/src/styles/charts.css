@@ -1,0 +1,16 @@
+.chart-placeholder {
+  margin-top: 0.7rem;
+  padding: 0.8rem;
+  border: 1px dashed #b9d2c7;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #f7fbf9, #eef5f1);
+  display: grid;
+  gap: 0.4rem;
+}
+
+.chart-placeholder .bar {
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(130deg, #65b38e, #1f7a5b);
+}
+

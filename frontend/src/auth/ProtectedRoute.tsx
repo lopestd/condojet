@@ -22,8 +22,8 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps): JSX.Eleme
 }
 
 export function defaultPathByRole(role: UserRole): string {
-  if (role === 'ADMIN_GLOBAL') return '/global';
   if (role === 'MORADOR') return '/condo/minhas-encomendas';
   if (role === 'PORTEIRO') return '/condo/operacao';
-  return '/condo/admin';
+  if (role === 'ADMIN') return '/condo/admin';
+  return '/dashboard';
 }

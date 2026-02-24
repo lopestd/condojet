@@ -32,7 +32,7 @@ export function ResidentPage(): JSX.Element {
   }, []);
 
   return (
-    <section className="page-grid">
+    <section className="page-grid resident-page">
       <header className="page-header">
         <h1>Minhas Encomendas</h1>
         <p>Acompanhe suas encomendas e status de retirada.</p>
@@ -44,7 +44,7 @@ export function ResidentPage(): JSX.Element {
       {error ? <p className="error-box">{error}</p> : null}
       {loading ? <p className="info-box">Carregando...</p> : null}
 
-      <article className="card">
+      <article className="card section-card">
         <div className="table-wrap">
           <table>
             <thead>
