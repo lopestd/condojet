@@ -7,6 +7,7 @@ import { buildValidationError, extractProxyHeaders } from '../utils/proxyRequest
 const createUsuarioSchema = z.object({
   nome: z.string().min(1),
   email: z.string().email(),
+  telefone: z.string().min(1),
   senha: z.string().min(1),
   perfil: z.enum(['ADMIN', 'PORTEIRO'])
 });
@@ -14,12 +15,16 @@ const createUsuarioSchema = z.object({
 const updateUsuarioSchema = z
   .object({
     nome: z.string().min(1).optional(),
+    telefone: z.string().min(1).optional(),
     senha: z.string().min(1).optional(),
     ativo: z.boolean().optional()
   })
-  .refine((value) => value.nome !== undefined || value.senha !== undefined || value.ativo !== undefined, {
-    message: 'at_least_one_field_required'
-  });
+  .refine(
+    (value) => value.nome !== undefined || value.telefone !== undefined || value.senha !== undefined || value.ativo !== undefined,
+    {
+      message: 'at_least_one_field_required'
+    }
+  );
 
 const usuarioPathParamsSchema = z.object({
   id: z.coerce.number().int().positive()

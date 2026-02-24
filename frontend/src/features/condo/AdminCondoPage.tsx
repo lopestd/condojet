@@ -150,7 +150,7 @@ export function AdminCondoPage(): JSX.Element {
   return (
     <section className="page-grid condo-admin-page">
       <header className="page-header">
-        <h1>Painel de Administração do Condomínio</h1>
+        <h1>Gestão interna</h1>
         <p>Gerencie usuários, endereços e moradores do seu condomínio.</p>
         <button type="button" className="button-soft" onClick={() => void loadAll()}>
           Atualizar
@@ -179,7 +179,7 @@ export function AdminCondoPage(): JSX.Element {
                   <td>{u.id}</td>
                   <td>{u.nome}</td>
                   <td>{u.email}</td>
-                  <td>{u.perfil}</td>
+                  <td>{renderPerfil(u.perfil)}</td>
                   <td>{u.ativo ? 'Sim' : 'Não'}</td>
                 </tr>
               ))}
@@ -203,7 +203,7 @@ export function AdminCondoPage(): JSX.Element {
           <label>
             Perfil
             <select value={novoUsuarioPerfil} onChange={(e) => setNovoUsuarioPerfil(e.target.value as 'ADMIN' | 'PORTEIRO')}>
-              <option value="PORTEIRO">PORTEIRO</option>
+              <option value="PORTEIRO">ATENDENTE</option>
               <option value="ADMIN">ADMIN</option>
             </select>
           </label>
@@ -374,3 +374,6 @@ export function AdminCondoPage(): JSX.Element {
     </section>
   );
 }
+  function renderPerfil(perfil: string): string {
+    return perfil === 'PORTEIRO' ? 'ATENDENTE' : perfil;
+  }

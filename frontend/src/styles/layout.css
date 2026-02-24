@@ -70,6 +70,40 @@
   box-shadow: inset 3px 0 0 #95e9c5;
 }
 
+.sidebar-group {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.sidebar-subnav {
+  margin: -0.15rem 0 0.2rem 0.6rem;
+  padding-left: 0.55rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  display: grid;
+  gap: 0.28rem;
+}
+
+.sidebar-sublink {
+  text-decoration: none;
+  border-radius: 9px;
+  padding: 0.5rem 0.55rem;
+  color: rgba(232, 246, 241, 0.74);
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+}
+
+.sidebar-sublink:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-sublink.active {
+  color: #fff;
+  border-color: rgba(106, 214, 169, 0.28);
+  background: rgba(45, 141, 103, 0.42);
+}
+
 .sidebar-footer {
   margin-top: auto;
   display: grid;

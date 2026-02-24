@@ -6,6 +6,8 @@ export type SessionUser = {
   accessToken: string;
   role: UserRole;
   condominioId: number | null;
+  nomeUsuario: string;
+  nomeCondominio: string;
 };
 
 export type ApiErrorPayload = {

@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from src.application.dtos.auth_dto import LoginRequestDTO, LoginResponseDTO
+from src.application.dtos.auth_dto import LoginRequestDTO, LoginResponseDTO, SessionProfileResponseDTO
 from src.application.services.exceptions import AppError
 from src.infrastructure.database.session import get_db
 from src.infrastructure.repositories.auth_repository import AuthRepository
 from src.infrastructure.security.jwt import create_access_token
 from src.infrastructure.security.password import verify_password
+from src.interfaces.http.dependencies.auth import Principal, get_current_principal
 from src.interfaces.http.dependencies.tenant import TenantContext, get_tenant_context
 
 router = APIRouter(tags=["auth"])
@@ -42,3 +43,22 @@ def login(
 @router.post("/auth/logout")
 def logout() -> dict[str, str]:
     return {"message": "ok"}
+
+
+@router.get("/auth/me", response_model=SessionProfileResponseDTO)
+def me(
+    principal: Principal = Depends(get_current_principal),
+    db: Session = Depends(get_db),
+) -> SessionProfileResponseDTO:
+    repository = AuthRepository(db)
+    nome_usuario, nome_condominio = repository.find_session_profile(
+        user_id=principal.user_id,
+        role=principal.role,
+        condominio_id=principal.condominio_id,
+    )
+    return SessionProfileResponseDTO(
+        role=principal.role,
+        condominio_id=principal.condominio_id,
+        nome_usuario=nome_usuario,
+        nome_condominio=nome_condominio,
+    )

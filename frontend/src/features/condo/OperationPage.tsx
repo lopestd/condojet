@@ -97,7 +97,7 @@ export function OperationPage(): JSX.Element {
   return (
     <section className="page-grid operation-page">
       <header className="page-header">
-        <h1>Operação de Encomendas</h1>
+        <h1>Fluxo operacional</h1>
         <p>Recebimento, entrega e reabertura (admin) das encomendas do condomínio.</p>
         <button type="button" className="button-soft" onClick={() => void loadEncomendas()}>
           Atualizar

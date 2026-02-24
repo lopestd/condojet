@@ -15,6 +15,13 @@ type LoginResponse = {
   condominio_id: number | null;
 };
 
+type SessionProfileResponse = {
+  role: UserRole;
+  condominio_id: number | null;
+  nome_usuario: string;
+  nome_condominio: string;
+};
+
 type AuthContextValue = {
   user: SessionUser | null;
   isAuthenticated: boolean;
@@ -32,7 +39,13 @@ function parseStoredSession(): SessionUser | null {
   try {
     const parsed = JSON.parse(raw) as SessionUser;
     if (!parsed.accessToken || !parsed.role) return null;
-    return parsed;
+    return {
+      accessToken: parsed.accessToken,
+      role: parsed.role,
+      condominioId: parsed.condominioId ?? null,
+      nomeUsuario: parsed.nomeUsuario ?? 'Usuario',
+      nomeCondominio: parsed.nomeCondominio ?? (parsed.condominioId ? `Condominio ${parsed.condominioId}` : 'CondoJET Global')
+    };
   } catch {
     return null;
   }
@@ -52,12 +65,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
       acesso_condominio: input.accessMode === 'condominio'
     };
     const { data } = await backendApi.post<LoginResponse>('/auth/login', payload);
+    setAuthToken(data.access_token);
+    const { data: profile } = await backendApi.get<SessionProfileResponse>('/auth/me');
     const nextUser: SessionUser = {
       accessToken: data.access_token,
-      role: data.role,
-      condominioId: data.condominio_id
+      role: profile.role,
+      condominioId: profile.condominio_id,
+      nomeUsuario: profile.nome_usuario,
+      nomeCondominio: profile.nome_condominio
     };
-    setAuthToken(nextUser.accessToken);
     setUser(nextUser);
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser));
   }

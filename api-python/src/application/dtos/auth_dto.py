@@ -13,3 +13,10 @@ class LoginResponseDTO(BaseModel):
     token_type: str = "bearer"
     role: str
     condominio_id: int | None = None
+
+
+class SessionProfileResponseDTO(BaseModel):
+    role: str
+    condominio_id: int | None = None
+    nome_usuario: str
+    nome_condominio: str

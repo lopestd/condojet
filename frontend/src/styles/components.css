@@ -263,6 +263,206 @@ th {
   margin-bottom: 0.8rem;
 }
 
+.table-meta {
+  margin-top: 0.45rem;
+  color: var(--text-2);
+}
+
+.list-pagination {
+  margin-top: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.phones-inline-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.72rem;
+}
+
+.address-action-button {
+  color: #ffffff;
+  background: linear-gradient(130deg, #1f7a5b, #16573f);
+  border-color: #0f4a34;
+  box-shadow: 0 6px 14px rgba(15, 74, 52, 0.24);
+}
+
+.address-action-button:hover {
+  background: linear-gradient(130deg, #196449, #104632);
+}
+
+.residents-table {
+  width: 100%;
+  min-width: 100%;
+  table-layout: fixed;
+}
+
+.residents-table .col-id {
+  width: 7%;
+}
+
+.residents-table .col-nome {
+  width: 23%;
+}
+
+.residents-table .col-telefone {
+  width: 16%;
+}
+
+.residents-table .col-email {
+  width: 22%;
+}
+
+.residents-table .col-perfil {
+  width: 12%;
+}
+
+.residents-table .col-situacao {
+  width: 10%;
+}
+
+.residents-table .col-acoes {
+  width: 10%;
+}
+
+.residents-table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.users-table {
+  table-layout: auto;
+}
+
+.users-table th,
+.users-table td {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.actions-col,
+.actions-cell {
+  text-align: center;
+}
+
+.action-group-icons {
+  justify-content: center;
+}
+
+.icon-action-button {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid #c5ddd1;
+  background: #eef7f3;
+  color: #184739;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.icon-action-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-action-button-primary {
+  background: linear-gradient(130deg, #1f7a5b, #16573f);
+  border-color: #0f4a34;
+  color: #fff;
+}
+
+.confirm-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.confirm-head h3 {
+  font-size: 1.62rem;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+}
+
+.confirm-icon {
+  width: 3.15em;
+  height: 3.15em;
+  border-radius: 0.82em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 0.82rem;
+}
+
+.confirm-icon svg {
+  width: 1.75em;
+  height: 1.75em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.confirm-icon.warn {
+  background: #fef3e4;
+  color: #8f5c0a;
+  border: 1px solid #f5d7a6;
+}
+
+.confirm-icon.success {
+  background: #dbf4e6;
+  color: #126c43;
+  border: 1px solid #bde4cf;
+}
+
+.status-text-warn {
+  color: #8f5c0a;
+}
+
+.status-text-success {
+  color: #126c43;
+}
+
+.status-title-warn {
+  color: #8f5c0a;
+  font-size: 1.62rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.status-title-success {
+  color: #126c43;
+  font-size: 1.62rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.confirm-description {
+  margin-top: 1.2rem !important;
+  padding-top: 0.65rem;
+  border-top: 1px solid #d6e5de;
+}
+
+.morador-modal {
+  width: min(760px, 100%);
+}
+
+.morador-modal .senha-field .input-action-wrap {
+  max-width: 360px;
+}
+
 .masked-key {
   display: inline-flex;
   gap: 0.4rem;
@@ -328,6 +528,18 @@ th {
   padding: 1rem;
   max-height: 92vh;
   overflow: auto;
+}
+
+.modal-card input,
+.modal-card select,
+.modal-card textarea {
+  padding-left: 0.46rem;
+  padding-right: 0.46rem;
+}
+
+.modal-card label {
+  font-size: 0.97rem;
+  font-weight: 700;
 }
 
 .modal-card-wide {
@@ -444,4 +656,10 @@ th {
   border: 1px solid #c8ddd2;
   background: #ebf4f0;
   min-width: 60px;
+}
+
+.address-inline-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.72rem;
 }

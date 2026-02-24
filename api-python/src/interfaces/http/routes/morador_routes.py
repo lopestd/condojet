@@ -75,7 +75,26 @@ def update_morador(
 ) -> dict:
     repository = MoradorRepository(db)
     condominio_id = principal.condominio_id
+    current = repository.find_by_id(morador_id, condominio_id=condominio_id)
+    if current is None:
+        raise AppError("morador_not_found", status_code=404, code="morador_not_found")
+
     update_data = payload.model_dump(exclude_none=True)
+
+    if "endereco_id" in update_data:
+        endereco_repository = EnderecoRepository(db)
+        if endereco_repository.find_by_id(int(update_data["endereco_id"]), condominio_id=condominio_id) is None:
+            raise AppError("endereco_not_found", status_code=404, code="endereco_not_found")
+
+    if "email" in update_data:
+        next_email = str(update_data["email"]).strip().lower()
+        current_email = str(current.email).strip().lower()
+        if next_email != current_email:
+            email_registry_repository = EmailRegistryRepository(db)
+            owner = email_registry_repository.find_owner(str(update_data["email"]))
+            if owner is not None:
+                raise AppError("email_already_exists", status_code=409, code="email_already_exists")
+
     if "senha" in update_data:
         update_data["senha_hash"] = hash_password(update_data.pop("senha"))
 

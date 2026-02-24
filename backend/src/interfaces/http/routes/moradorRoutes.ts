@@ -16,11 +16,19 @@ const updateMoradorSchema = z
   .object({
     nome: z.string().min(1).optional(),
     telefone: z.string().min(1).optional(),
+    email: z.string().email().optional(),
+    endereco_id: z.number().int().positive().optional(),
     ativo: z.boolean().optional(),
     senha: z.string().min(1).optional()
   })
   .refine(
-    (value) => value.nome !== undefined || value.telefone !== undefined || value.ativo !== undefined || value.senha !== undefined,
+    (value) =>
+      value.nome !== undefined ||
+      value.telefone !== undefined ||
+      value.email !== undefined ||
+      value.endereco_id !== undefined ||
+      value.ativo !== undefined ||
+      value.senha !== undefined,
     {
       message: 'at_least_one_field_required'
     }

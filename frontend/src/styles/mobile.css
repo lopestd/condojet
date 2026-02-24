@@ -29,11 +29,18 @@
     transition: transform 180ms ease;
     z-index: 120;
     overflow-y: auto;
-    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
   }
 
   .app-sidebar.open {
     transform: translateX(0);
+  }
+
+  .sidebar-footer {
+    position: sticky;
+    bottom: calc(0.5rem + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(23, 68, 54, 0), rgba(23, 68, 54, 0.92) 28%);
+    padding-top: 0.7rem;
   }
 
   .sidebar-backdrop {
@@ -55,10 +62,6 @@
   .app-topbar {
     background: linear-gradient(95deg, #f7fbf9, #e9f4ef);
     padding-left: 3.4rem;
-  }
-
-  .topbar-logout {
-    display: none;
   }
 
   .bottom-nav {
@@ -152,6 +155,22 @@
 
   .summary-grid,
   .filter-row {
+    grid-template-columns: 1fr;
+  }
+
+  .phones-inline-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .residents-table {
+    min-width: 740px;
+    table-layout: auto;
+  }
+
+}
+
+@media (max-width: 480px) {
+  .address-inline-3 {
     grid-template-columns: 1fr;
   }
 }

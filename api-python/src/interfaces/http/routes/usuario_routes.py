@@ -27,6 +27,7 @@ def list_usuarios(
             "condominio_id": item.condominio_id,
             "nome": item.nome,
             "email": item.email,
+            "telefone": item.telefone,
             "perfil": item.perfil,
             "ativo": item.ativo,
         }
@@ -58,6 +59,7 @@ def create_usuario(
             "condominio_id": condominio_id,
             "nome": payload.nome,
             "email": payload.email,
+            "telefone": payload.telefone,
             "senha_hash": hash_password(payload.senha),
             "perfil": payload.perfil,
             "ativo": True,

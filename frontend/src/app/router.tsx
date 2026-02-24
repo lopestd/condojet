@@ -3,7 +3,8 @@ import { Navigate, createBrowserRouter } from 'react-router-dom';
 import { ProtectedRoute, defaultPathByRole } from '../auth/ProtectedRoute';
 import { useAuth } from '../auth/AuthContext';
 import { LoginPage } from '../features/auth/LoginPage';
-import { AdminCondoPage } from '../features/condo/AdminCondoPage';
+import { AdminResidentsPage } from '../features/condo/AdminResidentsPage';
+import { AdminUsersPage } from '../features/condo/AdminUsersPage';
 import { OperationPage } from '../features/condo/OperationPage';
 import { ResidentPage } from '../features/condo/ResidentPage';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
@@ -48,7 +49,11 @@ export const appRouter = createBrowserRouter([
       },
       {
         element: <ProtectedRoute allowedRoles={['ADMIN']} />,
-        children: [{ path: '/condo/admin', element: <AdminCondoPage /> }]
+        children: [
+          { path: '/condo/admin', element: <Navigate to="/condo/admin/usuarios" replace /> },
+          { path: '/condo/admin/usuarios', element: <AdminUsersPage /> },
+          { path: '/condo/admin/moradores', element: <AdminResidentsPage /> }
+        ]
       },
       {
         element: <ProtectedRoute allowedRoles={['ADMIN', 'PORTEIRO']} />,

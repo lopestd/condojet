@@ -12,7 +12,7 @@ export function SettingsPage(): JSX.Element {
   return (
     <section className="page-grid">
       <header className="page-header">
-        <h1>Configuracoes CondoJET</h1>
+        <h1>Preferências da operação</h1>
         <p>Parametros operacionais, alertas e preferencias de visualizacao.</p>
       </header>
 
@@ -49,4 +49,3 @@ export function SettingsPage(): JSX.Element {
     </section>
   );
 }
-

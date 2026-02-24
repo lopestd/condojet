@@ -362,7 +362,7 @@ export function GlobalManagementPage(): JSX.Element {
     <section className="global-saas-page">
       <header className="global-saas-header">
         <div>
-          <h1>Painel Global SaaS</h1>
+          <h1>Visão central</h1>
           <p>Operação central de condomínios e gestão de Admins por condomínio.</p>
         </div>
         <div className="global-header-actions">

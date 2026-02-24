@@ -1,7 +1,7 @@
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from src.infrastructure.database.models import MoradorModel, UsuarioGlobalModel, UsuarioModel
+from src.infrastructure.database.models import CondominioModel, MoradorModel, UsuarioGlobalModel, UsuarioModel
 
 
 class AuthRepository:
@@ -44,3 +44,24 @@ class AuthRepository:
             return morador.id, morador.senha_hash, "MORADOR", morador.condominio_id
 
         return None
+
+    def find_session_profile(self, user_id: int, role: str, condominio_id: int | None) -> tuple[str, str]:
+        if role == "ADMIN_GLOBAL":
+            global_user = self.db.get(UsuarioGlobalModel, user_id)
+            if global_user is None:
+                return "Usuario", "CondoJET Global"
+            return global_user.nome, "CondoJET Global"
+
+        if role == "MORADOR":
+            morador = self.db.get(MoradorModel, user_id)
+            nome_usuario = morador.nome if morador is not None else "Morador"
+        else:
+            usuario = self.db.get(UsuarioModel, user_id)
+            nome_usuario = usuario.nome if usuario is not None else "Usuario"
+
+        if condominio_id is None:
+            return nome_usuario, "CondoJET Global"
+
+        condominio = self.db.get(CondominioModel, condominio_id)
+        nome_condominio = condominio.nome if condominio is not None else f"Condominio {condominio_id}"
+        return nome_usuario, nome_condominio

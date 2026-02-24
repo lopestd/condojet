@@ -24,7 +24,7 @@ export function DashboardPage(): JSX.Element {
     <section className="page-grid">
       <div className="panel page-intro">
         <div>
-          <h1>Painel CondoJET</h1>
+          <h1>Visao geral</h1>
           <p>Visao consolidada da operacao com foco em encomendas, moradores e produtividade.</p>
         </div>
         <div className="filter-row">
@@ -88,4 +88,3 @@ export function DashboardPage(): JSX.Element {
     </section>
   );
 }
-

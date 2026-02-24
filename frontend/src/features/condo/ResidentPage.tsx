@@ -34,7 +34,7 @@ export function ResidentPage(): JSX.Element {
   return (
     <section className="page-grid resident-page">
       <header className="page-header">
-        <h1>Minhas Encomendas</h1>
+        <h1>Acompanhamento</h1>
         <p>Acompanhe suas encomendas e status de retirada.</p>
         <button type="button" className="button-soft" onClick={() => void load()}>
           Atualizar

@@ -25,4 +25,9 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     const data = await proxyToApiPython('POST', '/auth/logout', extractProxyHeaders(request.headers));
     return reply.status(200).send(data);
   });
+
+  app.get('/auth/me', async (request, reply) => {
+    const data = await proxyToApiPython('GET', '/auth/me', extractProxyHeaders(request.headers));
+    return reply.status(200).send(data);
+  });
 }
