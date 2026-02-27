@@ -60,6 +60,7 @@ def list_encomendas(
             "tipo": item.tipo,
             "data_recebimento": item.data_recebimento,
             "hora_recebimento": item.hora_recebimento,
+            "data_entrega": item.data_entrega,
             "morador_id": item.morador_id,
             "morador_nome": morador_nome,
             "endereco_id": item.endereco_id,

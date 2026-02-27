@@ -16,7 +16,13 @@ export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
 
   await app.register(cors, {
-    origin: env.corsOrigin,
+    origin: (origin, callback) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      callback(null, env.corsOrigins.includes(origin));
+    },
     credentials: true
   });
 

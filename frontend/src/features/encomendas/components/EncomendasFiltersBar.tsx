@@ -7,6 +7,7 @@ type Props = {
   onStatusFilterChange: (value: EncomendaFilter) => void
   sortBy: EncomendaSort
   onSortByChange: (value: EncomendaSort) => void
+  onCreate: () => void
 }
 
 const FILTERS: Array<{ value: EncomendaFilter; label: string }> = [
@@ -23,10 +24,17 @@ export function EncomendasFiltersBar({
   statusFilter,
   onStatusFilterChange,
   sortBy,
-  onSortByChange
+  onSortByChange,
+  onCreate
 }: Props): JSX.Element {
   return (
     <section className="encomendas-controls card" aria-label="Filtros de encomendas">
+      <div className="encomendas-controls-head">
+        <button type="button" className="cta" onClick={onCreate}>
+          Nova encomenda
+        </button>
+      </div>
+
       <div className="encomendas-search-wrap">
         <label>
           Buscar encomenda
@@ -53,15 +61,16 @@ export function EncomendasFiltersBar({
         </div>
 
         <div className="encomendas-sort-wrap">
-          <label>
-            Ordenar por
-            <select value={sortBy} onChange={(event) => onSortByChange(event.target.value as EncomendaSort)}>
-              <option value="RECENTES">Mais recentes</option>
-              <option value="ANTIGAS">Mais antigas</option>
-              <option value="MORADOR_AZ">Morador A-Z</option>
-              <option value="MORADOR_ZA">Morador Z-A</option>
-            </select>
-          </label>
+          <select
+            aria-label="Ordenação"
+            value={sortBy}
+            onChange={(event) => onSortByChange(event.target.value as EncomendaSort)}
+          >
+            <option value="RECENTES">Mais recentes</option>
+            <option value="ANTIGAS">Mais antigas</option>
+            <option value="MORADOR_AZ">Morador A-Z</option>
+            <option value="MORADOR_ZA">Morador Z-A</option>
+          </select>
         </div>
       </div>
     </section>

@@ -494,8 +494,11 @@ th {
 }
 
 .icon-action-button:disabled {
-  opacity: 0.45;
+  opacity: 1;
   cursor: not-allowed;
+  background: #f1f4f7;
+  border-color: #d3dde6;
+  color: #8d9cad;
 }
 
 .icon-action-button-primary {
@@ -666,6 +669,14 @@ th {
 .modal-card label {
   font-size: 0.97rem;
   font-weight: 700;
+}
+
+.modal-card h3 {
+  margin: 0;
+  color: #12372c;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
 }
 
 .modal-card-wide {

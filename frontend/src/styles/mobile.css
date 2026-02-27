@@ -242,6 +242,15 @@
 }
 
 @media (max-width: 540px) {
+  .encomendas-controls-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .encomendas-controls-head .cta {
+    width: 100%;
+  }
+
   .encomendas-chip-filters {
     justify-content: flex-start;
   }

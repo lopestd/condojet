@@ -7,8 +7,22 @@ const SESSION_STORAGE_KEY = 'condojet_session';
 let inMemoryToken: string | null = null;
 let redirectingToLogin = false;
 
+function resolveBackendBaseUrl(): string {
+  const envUrl = String(import.meta.env.VITE_BACKEND_URL ?? '').trim();
+  if (typeof window === 'undefined') return envUrl || 'http://localhost:3000/api/v1';
+  if (envUrl) {
+    const isLocalAlias = envUrl.includes('://localhost:');
+    const browserHostIsLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!isLocalAlias || browserHostIsLocal) return envUrl;
+    return envUrl.replace('://localhost:', `://${window.location.hostname}:`);
+  }
+  const protocol = window.location.protocol;
+  const hostname = window.location.hostname;
+  return `${protocol}//${hostname}:3000/api/v1`;
+}
+
 export const backendApi = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL,
+  baseURL: resolveBackendBaseUrl(),
   timeout: 10000
 });
 

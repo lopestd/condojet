@@ -6,7 +6,6 @@ import { EncomendaCard } from './components/EncomendaCard'
 import { EncomendaDetailsTimeline } from './components/EncomendaDetailsTimeline'
 import { EncomendasEmptyState } from './components/EncomendasEmptyState'
 import { EncomendasFiltersBar } from './components/EncomendasFiltersBar'
-import { EncomendasStatsStrip } from './components/EncomendasStatsStrip'
 import { NewEncomendaWizardModal } from './components/NewEncomendaWizardModal'
 import type {
   EncomendaDetail,
@@ -19,7 +18,7 @@ import type {
   Morador
 } from './types'
 import { filterEncomendas, paginateEncomendas, sortEncomendas } from './utils/encomendasSelectors'
-import { isOverdue, statusClass, statusLabel } from './utils/statusMapping'
+import { statusClass, statusLabel } from './utils/statusMapping'
 
 const DEFAULT_PAGE_SIZE = 10
 const MOBILE_BREAKPOINT = 900
@@ -201,19 +200,6 @@ export function EncomendasPage(): JSX.Element {
     () => paginateEncomendas(filteredAndSortedItems, currentPage, pageSize),
     [filteredAndSortedItems, currentPage, pageSize]
   )
-
-  const firstRecord = filteredAndSortedItems.length === 0 ? 0 : (currentPage - 1) * pageSize + 1
-  const lastRecord = Math.min(filteredAndSortedItems.length, currentPage * pageSize)
-
-  const stats = useMemo(() => {
-    const total = items.length
-    const aguardando = items.filter((item) => item.status === 'RECEBIDA').length
-    const notificadas = items.filter((item) => item.status === 'DISPONIVEL_RETIRADA').length
-    const entregues = items.filter((item) => item.status === 'ENTREGUE').length
-    const atrasadas = items.filter((item) => isOverdue(item)).length
-
-    return { total, aguardando, notificadas, entregues, atrasadas }
-  }, [items])
 
   const canReabrir = (item: EncomendaListItem): boolean => user?.role === 'ADMIN' && item.status === 'ENTREGUE'
   const canEntregar = (item: EncomendaListItem): boolean =>
@@ -402,21 +388,6 @@ export function EncomendasPage(): JSX.Element {
 
   return (
     <section className="page-grid operation-page encomendas-page">
-      <header className="page-header">
-        <div>
-          <h1>Encomendas</h1>
-          <p>Controle completo de recebimento, notificacao e entrega por unidade.</p>
-        </div>
-        <div className="action-group">
-          <button type="button" className="button-soft" onClick={() => void loadAll()}>
-            Atualizar
-          </button>
-          <button type="button" className="cta" onClick={openCreateModal}>
-            Nova encomenda
-          </button>
-        </div>
-      </header>
-
       {error ? <p className="error-box">{error}</p> : null}
       {feedback ? <p className="info-box">{feedback}</p> : null}
 
@@ -427,22 +398,10 @@ export function EncomendasPage(): JSX.Element {
         onStatusFilterChange={setStatusFilter}
         sortBy={sortBy}
         onSortByChange={setSortBy}
-      />
-
-      <EncomendasStatsStrip
-        total={stats.total}
-        aguardando={stats.aguardando}
-        notificadas={stats.notificadas}
-        entregues={stats.entregues}
-        atrasadas={stats.atrasadas}
+        onCreate={openCreateModal}
       />
 
       <article className="card section-card">
-        <div className="list-toolbar">
-          <h2>Fila de encomendas</h2>
-          <p className="table-meta">{`Exibindo ${firstRecord}-${lastRecord} de ${filteredAndSortedItems.length}`}</p>
-        </div>
-
         {loading ? (
           <div className="encomendas-skeleton-grid" aria-hidden="true">
             <div className="encomendas-skeleton-card" />
@@ -484,14 +443,20 @@ export function EncomendasPage(): JSX.Element {
                   <th>Morador</th>
                   <th>Endereco</th>
                   <th>Tipo</th>
-                  <th>Recebimento</th>
+                  <th>Data Entrega</th>
                   <th>Status</th>
                   <th className="actions-col">Acoes</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedItems.map((item) => (
-                  <tr key={item.id}>
+                  <tr
+                    key={item.id}
+                    className={canVisualizar(item) ? 'row-openable' : undefined}
+                    onClick={() => {
+                      if (canVisualizar(item)) void openViewModal(item)
+                    }}
+                  >
                     <td>{formatDateBR(item.data_recebimento)}</td>
                     <td>{item.morador_nome ?? `Morador #${item.morador_id}`}</td>
                     <td>
@@ -513,84 +478,78 @@ export function EncomendasPage(): JSX.Element {
                         <span className="rastreio-pill">{item.codigo_externo || '-'}</span>
                       </div>
                     </td>
-                    <td>{formatDateBR(item.data_recebimento)}</td>
+                    <td>{item.data_entrega ? formatDateBR(item.data_entrega) : '-'}</td>
                     <td>
                       <span className={`status-badge ${statusClass(item.status)}`}>{statusLabel(item.status)}</span>
                     </td>
                     <td className="actions-cell">
                       <div className="action-group action-group-icons operation-actions">
-                        {canVisualizar(item) ? (
-                          <button
-                            type="button"
-                            className="icon-action-button"
-                            onClick={() => void openViewModal(item)}
-                            title="Visualizar encomenda"
-                            aria-label="Visualizar encomenda"
-                          >
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                              <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" />
-                              <circle cx="12" cy="12" r="3" />
-                            </svg>
-                          </button>
-                        ) : null}
-                        {canEditar(item) ? (
-                          <button
-                            type="button"
-                            className="icon-action-button icon-action-button-primary"
-                            onClick={() => void openEditModal(item)}
-                            title="Editar encomenda"
-                            aria-label="Editar encomenda"
-                          >
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                              <path d="M3 21h6l11-11a2.2 2.2 0 0 0-3.1-3.1L5.9 17.8 3 21Z" />
-                              <path d="m14 6 4 4" />
-                            </svg>
-                          </button>
-                        ) : null}
-                        {canEntregar(item) ? (
-                          <button
-                            type="button"
-                            className="icon-action-button icon-action-button-primary"
-                            onClick={() => openEntregarModal(item)}
-                            title="Confirmar entrega"
-                            aria-label="Confirmar entrega"
-                          >
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                              <path d="M20 7 9 18l-5-5" />
-                            </svg>
-                          </button>
-                        ) : null}
-                        {canReabrir(item) ? (
-                          <button
-                            type="button"
-                            className="icon-action-button"
-                            onClick={() => openReabrirModal(item)}
-                            title="Reabrir encomenda"
-                            aria-label="Reabrir encomenda"
-                          >
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                              <path d="M3 12a9 9 0 1 0 3-6.7" />
-                              <path d="M3 3v5h5" />
-                            </svg>
-                          </button>
-                        ) : null}
-                        {canExcluir(item) ? (
-                          <button
-                            type="button"
-                            className="icon-action-button"
-                            onClick={() => openExcluirModal(item)}
-                            title="Excluir encomenda"
-                            aria-label="Excluir encomenda"
-                          >
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                              <path d="M3 6h18" />
-                              <path d="M8 6V4h8v2" />
-                              <path d="M7 6l1 14h8l1-14" />
-                              <path d="M10 10v7" />
-                              <path d="M14 10v7" />
-                            </svg>
-                          </button>
-                        ) : null}
+                        <button
+                          type="button"
+                          className="icon-action-button icon-action-button-primary"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            void openEditModal(item)
+                          }}
+                          title={canEditar(item) ? 'Editar encomenda' : 'Edição indisponível'}
+                          aria-label={canEditar(item) ? 'Editar encomenda' : 'Edição indisponível'}
+                          disabled={!canEditar(item)}
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M3 21h6l11-11a2.2 2.2 0 0 0-3.1-3.1L5.9 17.8 3 21Z" />
+                            <path d="m14 6 4 4" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          className="icon-action-button icon-action-button-primary"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            openEntregarModal(item)
+                          }}
+                          title={canEntregar(item) ? 'Confirmar entrega' : 'Entrega indisponível'}
+                          aria-label={canEntregar(item) ? 'Confirmar entrega' : 'Entrega indisponível'}
+                          disabled={!canEntregar(item)}
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M20 7 9 18l-5-5" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          className="icon-action-button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            openReabrirModal(item)
+                          }}
+                          title={canReabrir(item) ? 'Reabrir encomenda' : 'Reabertura indisponível'}
+                          aria-label={canReabrir(item) ? 'Reabrir encomenda' : 'Reabertura indisponível'}
+                          disabled={!canReabrir(item)}
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M3 12a9 9 0 1 0 3-6.7" />
+                            <path d="M3 3v5h5" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          className="icon-action-button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            openExcluirModal(item)
+                          }}
+                          title={canExcluir(item) ? 'Excluir encomenda' : 'Exclusão indisponível'}
+                          aria-label={canExcluir(item) ? 'Excluir encomenda' : 'Exclusão indisponível'}
+                          disabled={!canExcluir(item)}
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4h8v2" />
+                            <path d="M7 6l1 14h8l1-14" />
+                            <path d="M10 10v7" />
+                            <path d="M14 10v7" />
+                          </svg>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -665,8 +624,8 @@ export function EncomendasPage(): JSX.Element {
               <div className="detail-content">
                 <div className="summary-grid">
                   <div className="summary-card">
-                    <span>Codigo interno</span>
-                    <strong>{detail.codigo_interno}</strong>
+                    <span>Código de Rastreio</span>
+                    <strong>{detail.codigo_externo || '-'}</strong>
                   </div>
                   <div className="summary-card">
                     <span>Status</span>
@@ -684,7 +643,6 @@ export function EncomendasPage(): JSX.Element {
 
                 <div className="encomenda-detalhe-grid">
                   <div className="modal-data operation-modal-data">
-                    <p><strong>Código de Rastreio:</strong> {detail.codigo_externo || '-'}</p>
                     <p><strong>Empresa responsável:</strong> {detail.empresa_entregadora || '-'}</p>
                     <p><strong>Descrição:</strong> {detail.descricao || '-'}</p>
                     <p><strong>Recebimento:</strong> {detail.data_recebimento || '-'} {detail.hora_recebimento || ''}</p>
