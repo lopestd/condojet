@@ -21,9 +21,15 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Minhas Encomendas',
     shortLabel: 'Minhas',
     roles: ['MORADOR']
-  },
-  { path: '/condo/config', label: 'Configuracoes', shortLabel: 'Config', roles: ['ADMIN_GLOBAL', 'ADMIN'] }
+  }
 ];
+
+const CONFIG_NAV_ITEM: NavItem = {
+  path: '/condo/config',
+  label: 'Configuracoes',
+  shortLabel: 'Config',
+  roles: ['ADMIN_GLOBAL', 'ADMIN']
+};
 
 const TITLES: Record<string, string> = {
   '/dashboard': 'Painel CondoJET',
@@ -41,6 +47,51 @@ function getRoleLabel(role?: UserRole): string {
   return role === 'PORTEIRO' ? 'ATENDENTE' : role;
 }
 
+function findNavItem(path: string): NavItem | undefined {
+  if (path === CONFIG_NAV_ITEM.path) return CONFIG_NAV_ITEM;
+  return NAV_ITEMS.find((item) => item.path === path);
+}
+
+function getBottomNavItems(role: UserRole | undefined, visible: NavItem[]): NavItem[] {
+  if (!role) return [];
+
+  const addItem = (items: NavItem[], path: string): void => {
+    const item = findNavItem(path);
+    if (!item) return;
+    if (items.some((existing) => existing.path === item.path)) return;
+    items.push(item);
+  };
+
+  const items: NavItem[] = [];
+
+  if (role === 'ADMIN_GLOBAL') {
+    addItem(items, '/dashboard');
+    addItem(items, '/global');
+    addItem(items, '/condo/config');
+    const extraShortcut = visible.find((item) => item.path !== '/dashboard' && item.path !== '/global');
+    if (extraShortcut) addItem(items, extraShortcut.path);
+    return items;
+  }
+
+  if (role === 'ADMIN') {
+    addItem(items, '/dashboard');
+    addItem(items, '/condo/admin/usuarios');
+    addItem(items, '/condo/operacao');
+    addItem(items, '/condo/config');
+    return items;
+  }
+
+  if (role === 'PORTEIRO') {
+    addItem(items, '/dashboard');
+    addItem(items, '/condo/operacao');
+    return items;
+  }
+
+  addItem(items, '/dashboard');
+  addItem(items, '/condo/minhas-encomendas');
+  return items;
+}
+
 export function AppLayout(): JSX.Element {
   const { user, logout } = useAuth();
   const location = useLocation();
@@ -48,8 +99,9 @@ export function AppLayout(): JSX.Element {
 
   const visible = useMemo(() => NAV_ITEMS.filter((item) => (user ? item.roles.includes(user.role) : false)), [user]);
   const showAdminMenu = user?.role === 'ADMIN';
+  const showConfigItem = user ? CONFIG_NAV_ITEM.roles.includes(user.role) : false;
   const isAdminSection = location.pathname.startsWith('/condo/admin');
-  const bottomNavItems = visible.slice(0, 4);
+  const bottomNavItems = useMemo(() => getBottomNavItems(user?.role, visible), [user?.role, visible]);
   const pageTitle = TITLES[location.pathname] ?? 'CondoJET';
   const profileLabel = getRoleLabel(user?.role);
   const usuarioLabel = user ? `${user.nomeUsuario} (${profileLabel})` : 'Usuario';
@@ -118,6 +170,16 @@ export function AppLayout(): JSX.Element {
                 </NavLink>
               </div>
             </div>
+          ) : null}
+
+          {showConfigItem ? (
+            <NavLink
+              to={CONFIG_NAV_ITEM.path}
+              className={({ isActive }) => (isActive ? 'sidebar-link active' : 'sidebar-link')}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {CONFIG_NAV_ITEM.label}
+            </NavLink>
           ) : null}
         </nav>
 

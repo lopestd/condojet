@@ -149,3 +149,9 @@
   gap: 0.3rem;
   margin-top: 0.4rem;
 }
+
+.operation-modal-data {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #d6e5de;
+}

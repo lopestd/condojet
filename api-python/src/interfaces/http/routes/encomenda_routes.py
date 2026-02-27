@@ -1,13 +1,21 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from src.application.dtos.encomenda_dto import CreateEncomendaDTO, EntregarEncomendaDTO, ReabrirEncomendaDTO
+from src.application.dtos.encomenda_dto import (
+    CreateEncomendaDTO,
+    EntregarEncomendaDTO,
+    ReabrirEncomendaDTO,
+    UpdateEncomendaDTO,
+)
 from src.application.services.encomenda_service import (
     build_encomenda_payload,
     ensure_entrega_allowed,
     ensure_morador_endereco_consistency,
     ensure_reabertura_allowed,
+    ensure_update_allowed,
+    format_endereco_label,
 )
+from src.application.services.exceptions import AppError
 from src.infrastructure.database.session import get_db
 from src.infrastructure.repositories.encomenda_repository import EncomendaRepository
 from src.infrastructure.repositories.morador_repository import MoradorRepository
@@ -40,7 +48,7 @@ def list_encomendas(
 ) -> list[dict]:
     repository = EncomendaRepository(db)
     condominio_id = principal.condominio_id
-    items = repository.list_all(condominio_id=condominio_id)
+    items = repository.list_all_with_details(condominio_id=condominio_id)
     return [
         {
             "id": item.id,
@@ -49,9 +57,22 @@ def list_encomendas(
             "status": item.status,
             "tipo": item.tipo,
             "morador_id": item.morador_id,
+            "morador_nome": morador_nome,
             "endereco_id": item.endereco_id,
+            "endereco_label": format_endereco_label(
+                {
+                    "tipo_endereco": endereco.tipo_endereco if endereco else None,
+                    "quadra": endereco.quadra if endereco else None,
+                    "conjunto": endereco.conjunto if endereco else None,
+                    "lote": endereco.lote if endereco else None,
+                    "setor_chacara": endereco.setor_chacara if endereco else None,
+                    "numero_chacara": endereco.numero_chacara if endereco else None,
+                }
+                if endereco is not None
+                else None
+            ),
         }
-        for item in items
+        for item, morador_nome, endereco in items
     ]
 
 
@@ -63,11 +84,11 @@ def get_encomenda(
 ) -> dict:
     repository = EncomendaRepository(db)
     condominio_id = principal.condominio_id
-    item = repository.find_by_id(encomenda_id, condominio_id=condominio_id)
-    if item is None:
-        from src.application.services.exceptions import AppError
-
+    details = repository.find_by_id_with_details(encomenda_id, condominio_id=condominio_id)
+    if details is None:
         raise AppError("encomenda_not_found", status_code=404, code="encomenda_not_found")
+
+    item, morador_nome, endereco = details
 
     return {
         "id": item.id,
@@ -76,8 +97,58 @@ def get_encomenda(
         "status": item.status,
         "tipo": item.tipo,
         "morador_id": item.morador_id,
+        "morador_nome": morador_nome,
         "endereco_id": item.endereco_id,
+        "endereco_label": format_endereco_label(
+            {
+                "tipo_endereco": endereco.tipo_endereco if endereco else None,
+                "quadra": endereco.quadra if endereco else None,
+                "conjunto": endereco.conjunto if endereco else None,
+                "lote": endereco.lote if endereco else None,
+                "setor_chacara": endereco.setor_chacara if endereco else None,
+                "numero_chacara": endereco.numero_chacara if endereco else None,
+            }
+            if endereco is not None
+            else None
+        ),
+        "codigo_externo": item.codigo_externo,
+        "descricao": item.descricao,
+        "empresa_entregadora": item.empresa_entregadora,
+        "data_recebimento": item.data_recebimento,
+        "hora_recebimento": item.hora_recebimento,
+        "data_entrega": item.data_entrega,
+        "entregue_por_usuario_id": item.entregue_por_usuario_id,
+        "retirado_por_nome": item.retirado_por_nome,
+        "motivo_reabertura": item.motivo_reabertura,
+        "reaberto_por_usuario_id": item.reaberto_por_usuario_id,
+        "reaberto_em": item.reaberto_em,
     }
+
+
+@router.put("/encomendas/{encomenda_id}")
+def update_encomenda(
+    encomenda_id: int,
+    payload: UpdateEncomendaDTO,
+    principal: Principal = Depends(require_roles("ADMIN", "PORTEIRO")),
+    db: Session = Depends(get_db),
+) -> dict:
+    repository = EncomendaRepository(db)
+    condominio_id = principal.condominio_id
+    current = ensure_update_allowed(repository.find_by_id(encomenda_id, condominio_id=condominio_id))
+
+    update_data = payload.model_dump(exclude_none=True)
+    if not update_data:
+        raise AppError("at_least_one_field_required", status_code=422, code="at_least_one_field_required")
+
+    effective_morador_id = int(update_data.get("morador_id", current.morador_id))
+    effective_endereco_id = int(update_data.get("endereco_id", current.endereco_id))
+
+    morador_repository = MoradorRepository(db)
+    morador = morador_repository.find_by_id(effective_morador_id, condominio_id=condominio_id)
+    ensure_morador_endereco_consistency(morador, effective_endereco_id)
+
+    updated = repository.update(current, update_data)
+    return {"id": updated.id, "status": updated.status}
 
 
 @router.put("/encomendas/{encomenda_id}/entregar")

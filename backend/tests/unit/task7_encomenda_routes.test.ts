@@ -77,6 +77,33 @@ describe('Task7 - encomenda routes', () => {
     await app.close();
   });
 
+  it('updates encomenda', async () => {
+    proxyMock.mockResolvedValueOnce({ id: 1, status: 'RECEBIDA' });
+    const app = await buildApp();
+
+    const response = await app.inject({
+      method: 'PUT',
+      url: '/api/v1/encomendas/1',
+      headers: {
+        authorization: 'Bearer token',
+        'x-api-key': 'tenant-a'
+      },
+      payload: {
+        tipo: 'CAIXA',
+        codigo_externo: 'BR999'
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(proxyMock).toHaveBeenCalledWith(
+      'PUT',
+      '/encomendas/1',
+      expect.any(Object),
+      expect.objectContaining({ tipo: 'CAIXA', codigo_externo: 'BR999' })
+    );
+    await app.close();
+  });
+
   it('delivers and reopens encomenda', async () => {
     proxyMock.mockResolvedValueOnce({ id: 1, status: 'ENTREGUE' }).mockResolvedValueOnce({
       id: 1,
@@ -148,6 +175,23 @@ describe('Task7 - encomenda routes', () => {
     const response = await app.inject({
       method: 'PUT',
       url: '/api/v1/encomendas/1/entregar',
+      headers: {
+        authorization: 'Bearer token',
+        'x-api-key': 'tenant-a'
+      },
+      payload: {}
+    });
+
+    expect(response.statusCode).toBe(422);
+    expect(proxyMock).not.toHaveBeenCalled();
+    await app.close();
+  });
+
+  it('returns 422 for invalid update payload', async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: 'PUT',
+      url: '/api/v1/encomendas/1',
       headers: {
         authorization: 'Bearer token',
         'x-api-key': 'tenant-a'

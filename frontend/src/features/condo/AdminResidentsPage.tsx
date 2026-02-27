@@ -417,23 +417,6 @@ export function AdminResidentsPage(): JSX.Element {
 
         <div className="list-toolbar">
           <p className="table-meta">{`Exibindo ${firstRecord}-${lastRecord} de ${filteredMoradores.length}`}</p>
-          <label>
-            Registros por página
-            <select
-              value={pageSize}
-              onChange={(event) => {
-                const nextSize = Number(event.target.value);
-                setPageSize(nextSize);
-                setCurrentPage(1);
-                window.localStorage.setItem(pageSizeStorageKey, String(nextSize));
-              }}
-            >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-          </label>
         </div>
 
         <div className="table-wrap">
@@ -522,18 +505,42 @@ export function AdminResidentsPage(): JSX.Element {
         </div>
 
         <div className="list-pagination">
-          <button type="button" className="button-soft" disabled={currentPage <= 1} onClick={() => setCurrentPage((v) => Math.max(1, v - 1))}>
-            Anterior
-          </button>
-          <span>{`Página ${currentPage} de ${totalPages}`}</span>
-          <button
-            type="button"
-            className="button-soft"
-            disabled={currentPage >= totalPages}
-            onClick={() => setCurrentPage((v) => Math.min(totalPages, v + 1))}
-          >
-            Próxima
-          </button>
+          <label className="pagination-page-size">
+            Registros por página
+            <select
+              value={pageSize}
+              onChange={(event) => {
+                const nextSize = Number(event.target.value);
+                setPageSize(nextSize);
+                setCurrentPage(1);
+                window.localStorage.setItem(pageSizeStorageKey, String(nextSize));
+              }}
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </label>
+          <div className="pagination-nav">
+            <button
+              type="button"
+              className="button-soft"
+              disabled={currentPage <= 1}
+              onClick={() => setCurrentPage((v) => Math.max(1, v - 1))}
+            >
+              Anterior
+            </button>
+            <span>{`Página ${currentPage} de ${totalPages}`}</span>
+            <button
+              type="button"
+              className="button-soft"
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage((v) => Math.min(totalPages, v + 1))}
+            >
+              Próxima
+            </button>
+          </div>
         </div>
       </article>
 

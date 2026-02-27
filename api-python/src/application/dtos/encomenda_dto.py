@@ -16,3 +16,12 @@ class EntregarEncomendaDTO(BaseModel):
 
 class ReabrirEncomendaDTO(BaseModel):
     motivo_reabertura: str
+
+
+class UpdateEncomendaDTO(BaseModel):
+    tipo: str | None = None
+    morador_id: int | None = None
+    endereco_id: int | None = None
+    codigo_externo: str | None = None
+    descricao: str | None = None
+    empresa_entregadora: str | None = None

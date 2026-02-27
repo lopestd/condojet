@@ -119,6 +119,16 @@
     grid-template-columns: 1fr;
   }
 
+  .list-pagination {
+    justify-content: flex-start;
+  }
+
+  .pagination-nav {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
   .global-kpis {
     grid-template-columns: 1fr;
   }

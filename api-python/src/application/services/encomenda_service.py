@@ -42,6 +42,14 @@ def ensure_entrega_allowed(encomenda: EncomendaModel | None) -> EncomendaModel:
     return encomenda
 
 
+def ensure_update_allowed(encomenda: EncomendaModel | None) -> EncomendaModel:
+    if encomenda is None:
+        raise AppError("encomenda_not_found", status_code=404, code="encomenda_not_found")
+    if encomenda.status == "ENTREGUE":
+        raise AppError("encomenda_update_not_allowed", status_code=409, code="encomenda_update_not_allowed")
+    return encomenda
+
+
 def ensure_reabertura_allowed(encomenda: EncomendaModel | None, motivo_reabertura: str) -> EncomendaModel:
     if encomenda is None:
         raise AppError("encomenda_not_found", status_code=404, code="encomenda_not_found")
@@ -50,3 +58,22 @@ def ensure_reabertura_allowed(encomenda: EncomendaModel | None, motivo_reabertur
     if not motivo_reabertura.strip():
         raise AppError("motivo_reabertura_required", status_code=422, code="motivo_reabertura_required")
     return encomenda
+
+
+def format_endereco_label(endereco: dict | None) -> str:
+    if endereco is None:
+        return "-"
+
+    quadra = str(endereco.get("quadra") or "-")
+    tipo_endereco = str(endereco.get("tipo_endereco") or "")
+
+    if tipo_endereco == "QUADRA_SETOR_CHACARA":
+        setor_chacara = str(endereco.get("setor_chacara") or "-")
+        numero_chacara = endereco.get("numero_chacara")
+        complemento = f"{setor_chacara}/{numero_chacara}" if numero_chacara else setor_chacara
+        return f"{quadra} - {complemento}"
+
+    conjunto = str(endereco.get("conjunto") or "-")
+    lote = endereco.get("lote")
+    complemento = f"{conjunto}/{lote}" if lote else conjunto
+    return f"{quadra} - {complemento}"

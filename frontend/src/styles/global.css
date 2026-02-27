@@ -8,3 +8,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Overrides finais para neutralizar reset de padding do Tailwind preflight */
+input,
+select,
+textarea {
+  padding: 0.56rem 0.72rem;
+  text-align: left;
+}
+
+select {
+  padding-right: 1.75rem;
+}
+
+.modal-card input,
+.modal-card select,
+.modal-card textarea {
+  padding-left: 0.72rem;
+  padding-right: 0.72rem;
+}
+
+.modal-card select {
+  padding-right: 1.75rem;
+}
