@@ -15,7 +15,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/dashboard', label: 'Painel CondoJET', shortLabel: 'Painel', roles: ['ADMIN_GLOBAL', 'ADMIN', 'PORTEIRO', 'MORADOR'] },
   { path: '/global', label: 'Gestao Global', shortLabel: 'Global', roles: ['ADMIN_GLOBAL'] },
   { path: '/condo/admin/usuarios', label: 'Admin Condomínio', shortLabel: 'Admin', roles: ['ADMIN'] },
-  { path: '/condo/operacao', label: 'Operacao', shortLabel: 'Operacao', roles: ['ADMIN', 'PORTEIRO'] },
+  { path: '/condo/encomendas', label: 'Encomendas', shortLabel: 'Encomendas', roles: ['ADMIN', 'PORTEIRO'] },
   {
     path: '/condo/minhas-encomendas',
     label: 'Minhas Encomendas',
@@ -37,6 +37,7 @@ const TITLES: Record<string, string> = {
   '/condo/admin': 'Administracao do Condominio',
   '/condo/admin/usuarios': 'Administracao do Condominio',
   '/condo/admin/moradores': 'Administracao do Condominio',
+  '/condo/encomendas': 'Encomendas',
   '/condo/operacao': 'Operacao de Encomendas',
   '/condo/minhas-encomendas': 'Minhas Encomendas',
   '/condo/config': 'Configuracoes'
@@ -76,14 +77,14 @@ function getBottomNavItems(role: UserRole | undefined, visible: NavItem[]): NavI
   if (role === 'ADMIN') {
     addItem(items, '/dashboard');
     addItem(items, '/condo/admin/usuarios');
-    addItem(items, '/condo/operacao');
+    addItem(items, '/condo/encomendas');
     addItem(items, '/condo/config');
     return items;
   }
 
   if (role === 'PORTEIRO') {
     addItem(items, '/dashboard');
-    addItem(items, '/condo/operacao');
+    addItem(items, '/condo/encomendas');
     return items;
   }
 

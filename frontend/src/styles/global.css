@@ -13,21 +13,21 @@
 input,
 select,
 textarea {
-  padding: 0.56rem 0.72rem;
+  padding: 0.56rem 0.68rem;
   text-align: left;
 }
 
 select {
-  padding-right: 1.75rem;
+  padding-right: 2.05rem;
 }
 
 .modal-card input,
 .modal-card select,
 .modal-card textarea {
-  padding-left: 0.72rem;
-  padding-right: 0.72rem;
+  padding-left: 0.68rem;
+  padding-right: 0.68rem;
 }
 
 .modal-card select {
-  padding-right: 1.75rem;
+  padding-right: 2.05rem;
 }

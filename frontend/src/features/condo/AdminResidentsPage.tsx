@@ -422,7 +422,6 @@ export function AdminResidentsPage(): JSX.Element {
         <div className="table-wrap">
           <table className="residents-table">
             <colgroup>
-              <col className="col-id" />
               <col className="col-nome" />
               <col className="col-telefone" />
               <col className="col-email" />
@@ -431,7 +430,6 @@ export function AdminResidentsPage(): JSX.Element {
             </colgroup>
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Nome</th>
                 <th>Telefone</th>
                 <th>E-Mail</th>
@@ -447,7 +445,6 @@ export function AdminResidentsPage(): JSX.Element {
 
                 return (
                   <tr key={morador.id}>
-                    <td>{morador.id}</td>
                     <td>{morador.nome}</td>
                     <td>{extraCount > 0 ? `${mainPhone} +${extraCount}` : mainPhone}</td>
                     <td>{morador.email}</td>
@@ -497,7 +494,7 @@ export function AdminResidentsPage(): JSX.Element {
               })}
               {!loading && paginatedMoradores.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>Nenhum morador encontrado com os filtros aplicados.</td>
+                  <td colSpan={5}>Nenhum morador encontrado com os filtros aplicados.</td>
                 </tr>
               ) : null}
             </tbody>
@@ -549,10 +546,6 @@ export function AdminResidentsPage(): JSX.Element {
           <div className="modal-card">
             <h3>Detalhes do morador</h3>
             <div className="summary-grid">
-              <div className="summary-card">
-                <span>ID</span>
-                <strong>{selectedMorador.id}</strong>
-              </div>
               <div className="summary-card">
                 <span>Situação</span>
                 <strong>{selectedMorador.ativo ? 'Residente' : 'Ex-Morador'}</strong>

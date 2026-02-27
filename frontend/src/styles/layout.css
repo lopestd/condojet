@@ -7,7 +7,7 @@
   width: var(--sidebar-width);
   background: linear-gradient(180deg, var(--bg-deep), var(--bg-deep-2));
   color: var(--text-inverse);
-  padding: 1.4rem 1rem 1rem;
+  padding: 1.05rem 0.9rem 0.9rem;
   display: flex;
   flex-direction: column;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
@@ -19,7 +19,7 @@
 }
 
 .brand-block {
-  padding: 0.6rem 0.55rem 1rem;
+  padding: 0.48rem 0.5rem 0.82rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
@@ -43,15 +43,15 @@
 }
 
 .sidebar-nav {
-  margin-top: 1rem;
+  margin-top: 0.82rem;
   display: grid;
-  gap: 0.38rem;
+  gap: 0.3rem;
 }
 
 .sidebar-link {
   text-decoration: none;
   border-radius: 12px;
-  padding: 0.72rem 0.68rem;
+  padding: 0.64rem 0.66rem;
   color: rgba(232, 246, 241, 0.72);
   border: 1px solid transparent;
   transition: all 140ms ease;
@@ -72,12 +72,12 @@
 
 .sidebar-group {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.3rem;
 }
 
 .sidebar-subnav {
-  margin: -0.15rem 0 0.2rem 0.6rem;
-  padding-left: 0.55rem;
+  margin: -0.1rem 0 0.15rem 0.55rem;
+  padding-left: 0.5rem;
   border-left: 1px solid rgba(255, 255, 255, 0.2);
   display: grid;
   gap: 0.28rem;
@@ -86,7 +86,7 @@
 .sidebar-sublink {
   text-decoration: none;
   border-radius: 9px;
-  padding: 0.5rem 0.55rem;
+  padding: 0.44rem 0.5rem;
   color: rgba(232, 246, 241, 0.74);
   border: 1px solid transparent;
   font-size: 0.9rem;
@@ -107,11 +107,11 @@
 .sidebar-footer {
   margin-top: auto;
   display: grid;
-  gap: 0.75rem;
+  gap: 0.62rem;
 }
 
 .user-card {
-  padding: 0.78rem;
+  padding: 0.68rem;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -142,8 +142,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.8rem;
-  padding: 0.25rem 1.4rem;
+  gap: 0.7rem;
+  padding: 0.25rem 1.2rem;
   background: rgba(248, 252, 250, 0.92);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(16, 35, 31, 0.08);
@@ -160,7 +160,7 @@
 }
 
 .page-content {
-  padding: 1.25rem 1.3rem 1.2rem;
+  padding: 1rem 1.15rem 1rem;
 }
 
 .mobile-menu-toggle,

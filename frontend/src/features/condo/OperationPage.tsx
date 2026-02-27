@@ -207,6 +207,12 @@ export function OperationPage(): JSX.Element {
 
   const firstRecord = filteredItems.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const lastRecord = Math.min(filteredItems.length, currentPage * pageSize);
+  const totalRecebidas = useMemo(() => items.filter((item) => item.status === 'RECEBIDA').length, [items]);
+  const totalDisponiveis = useMemo(
+    () => items.filter((item) => item.status === 'DISPONIVEL_RETIRADA').length,
+    [items]
+  );
+  const totalEntregues = useMemo(() => items.filter((item) => item.status === 'ENTREGUE').length, [items]);
 
   const canReabrir = (item: EncomendaListItem): boolean => user?.role === 'ADMIN' && item.status === 'ENTREGUE';
   const canEntregar = (item: EncomendaListItem): boolean =>
@@ -371,11 +377,11 @@ export function OperationPage(): JSX.Element {
   }
 
   return (
-    <section className="page-grid operation-page">
+    <section className="page-grid operation-page encomendas-page">
       <header className="page-header">
         <div>
-          <h1>Operação de encomendas</h1>
-          <p>Controle o fluxo de recebimento, atualização, entrega (RECEBIDA e DISPONÍVEL) e reabertura com filtros e histórico completo.</p>
+          <h1>Encomendas</h1>
+          <p>Central operacional para recebimento, acompanhamento, entrega e reabertura de encomendas.</p>
         </div>
         <div className="action-group">
           <button type="button" className="button-soft" onClick={() => void loadAll()}>
@@ -391,8 +397,23 @@ export function OperationPage(): JSX.Element {
       {feedback ? <p className="info-box">{feedback}</p> : null}
       {loading ? <p className="info-box">Carregando dados...</p> : null}
 
+      <section className="global-kpis">
+        <article className="kpi-card">
+          <span>Recebidas</span>
+          <strong>{totalRecebidas}</strong>
+        </article>
+        <article className="kpi-card">
+          <span>Disponiveis para retirada</span>
+          <strong>{totalDisponiveis}</strong>
+        </article>
+        <article className="kpi-card">
+          <span>Entregues</span>
+          <strong>{totalEntregues}</strong>
+        </article>
+      </section>
+
       <article className="card section-card">
-        <h2>Lista operacional</h2>
+        <h2>Fila de encomendas</h2>
 
         <div className="list-filters">
           <label>
@@ -400,7 +421,7 @@ export function OperationPage(): JSX.Element {
             <input
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Código, status, tipo, morador, endereço ou ID"
+              placeholder="Codigo, status, tipo, morador, endereco ou ID"
             />
           </label>
           <label>

@@ -277,7 +277,7 @@ export function AdminUsersPage(): JSX.Element {
             <input
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Nome, e-mail, telefone, perfil ou ID"
+              placeholder="Nome, e-mail, telefone ou perfil"
             />
           </label>
           <label>
@@ -297,7 +297,6 @@ export function AdminUsersPage(): JSX.Element {
         <div className="table-wrap">
           <table className="residents-table users-table">
             <colgroup>
-              <col className="col-id" />
               <col className="col-nome" />
               <col className="col-telefone" />
               <col className="col-email" />
@@ -307,7 +306,6 @@ export function AdminUsersPage(): JSX.Element {
             </colgroup>
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Nome</th>
                 <th>Telefone</th>
                 <th>E-Mail</th>
@@ -319,7 +317,6 @@ export function AdminUsersPage(): JSX.Element {
             <tbody>
               {paginatedUsuarios.map((usuario) => (
                 <tr key={usuario.id}>
-                  <td>{usuario.id}</td>
                   <td>{usuario.nome}</td>
                   <td>{usuario.telefone}</td>
                   <td>{usuario.email}</td>
@@ -379,7 +376,7 @@ export function AdminUsersPage(): JSX.Element {
               ))}
               {!loading && paginatedUsuarios.length === 0 ? (
                 <tr>
-                  <td colSpan={7}>Nenhum usuário encontrado com os filtros aplicados.</td>
+                  <td colSpan={6}>Nenhum usuário encontrado com os filtros aplicados.</td>
                 </tr>
               ) : null}
             </tbody>

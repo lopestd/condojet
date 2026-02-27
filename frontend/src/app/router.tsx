@@ -57,7 +57,10 @@ export const appRouter = createBrowserRouter([
       },
       {
         element: <ProtectedRoute allowedRoles={['ADMIN', 'PORTEIRO']} />,
-        children: [{ path: '/condo/operacao', element: <OperationPage /> }]
+        children: [
+          { path: '/condo/operacao', element: <Navigate to="/condo/encomendas" replace /> },
+          { path: '/condo/encomendas', element: <OperationPage /> }
+        ]
       },
       {
         element: <ProtectedRoute allowedRoles={['MORADOR']} />,
