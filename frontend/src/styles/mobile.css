@@ -205,3 +205,57 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 1024px) {
+  .encomendas-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .encomendas-search-wrap {
+    min-width: 0;
+  }
+
+  .encomendas-filter-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .encomendas-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .encomendas-cards-grid,
+  .encomendas-skeleton-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .encomendas-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .encomenda-detalhe-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 540px) {
+  .encomendas-chip-filters {
+    justify-content: flex-start;
+  }
+
+  .chip-filter {
+    min-height: 34px;
+    padding: 0.28rem 0.62rem;
+    font-size: 0.8rem;
+  }
+
+  .encomendas-cards-grid,
+  .encomendas-skeleton-grid,
+  .encomendas-stats,
+  .wizard-steps {
+    grid-template-columns: 1fr;
+  }
+}

@@ -60,6 +60,14 @@ def ensure_reabertura_allowed(encomenda: EncomendaModel | None, motivo_reabertur
     return encomenda
 
 
+def ensure_delete_allowed(encomenda: EncomendaModel | None) -> EncomendaModel:
+    if encomenda is None:
+        raise AppError("encomenda_not_found", status_code=404, code="encomenda_not_found")
+    if encomenda.status == "ENTREGUE":
+        raise AppError("encomenda_delete_not_allowed", status_code=409, code="encomenda_delete_not_allowed")
+    return encomenda
+
+
 def format_endereco_label(endereco: dict | None) -> str:
     if endereco is None:
         return "-"

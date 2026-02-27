@@ -12,9 +12,9 @@ const createEncomendaSchema = z.object({
   tipo: z.string().min(1),
   morador_id: z.number().int().positive(),
   endereco_id: z.number().int().positive(),
-  codigo_externo: z.string().min(1).optional(),
+  codigo_externo: z.string().trim().min(1),
   descricao: z.string().min(1).optional(),
-  empresa_entregadora: z.string().min(1).optional()
+  empresa_entregadora: z.string().trim().min(1)
 });
 
 const entregarEncomendaSchema = z.object({
@@ -131,6 +131,16 @@ export async function encomendaRoutes(app: FastifyInstance): Promise<void> {
       body.data
     );
     return reply.status(200).send(data);
+  });
+
+  app.delete('/encomendas/:id', async (request, reply) => {
+    const params = encomendaPathParamsSchema.safeParse(request.params);
+    if (!params.success) {
+      return reply.status(422).send(buildValidationError(params.error));
+    }
+
+    await proxyToApiPython('DELETE', `/encomendas/${params.data.id}`, extractProxyHeaders(request.headers));
+    return reply.status(204).send();
   });
 
   app.get('/minhas-encomendas', async (request, reply) => {

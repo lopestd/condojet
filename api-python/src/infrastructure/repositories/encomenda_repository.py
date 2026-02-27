@@ -107,3 +107,7 @@ class EncomendaRepository:
         self.db.commit()
         self.db.refresh(model)
         return model
+
+    def delete(self, model: EncomendaModel) -> None:
+        self.db.delete(model)
+        self.db.commit()

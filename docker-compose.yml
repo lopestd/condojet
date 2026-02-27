@@ -11,11 +11,11 @@ services:
       - ./config/env/.env.dsv
     environment:
       DB_HOST: host.docker.internal
-      DB_PORT: ${DB_PORT}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
-      API_DATABASE_URL: ${API_DATABASE_URL_DOCKER}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-condojethmg}
+      DB_PASSWORD: ${DB_PASSWORD:-condoJetNovo2026}
+      DB_NAME: ${DB_NAME:-condojethmg}
+      API_DATABASE_URL: ${API_DATABASE_URL_DOCKER:-postgresql+psycopg://condojethmg:condoJetNovo2026@host.docker.internal:5432/condojethmg}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -56,7 +56,7 @@ services:
     env_file:
       - ./config/env/.env.dsv
     environment:
-      VITE_BACKEND_URL: ${WEB_VITE_BACKEND_URL}
+      VITE_BACKEND_URL: ${WEB_VITE_BACKEND_URL:-http://localhost:3000/api/v1}
     ports:
       - "5173:5173"
     depends_on:

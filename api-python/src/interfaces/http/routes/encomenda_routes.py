@@ -9,6 +9,7 @@ from src.application.dtos.encomenda_dto import (
 )
 from src.application.services.encomenda_service import (
     build_encomenda_payload,
+    ensure_delete_allowed,
     ensure_entrega_allowed,
     ensure_morador_endereco_consistency,
     ensure_reabertura_allowed,
@@ -54,8 +55,11 @@ def list_encomendas(
             "id": item.id,
             "condominio_id": item.condominio_id,
             "codigo_interno": item.codigo_interno,
+            "codigo_externo": item.codigo_externo,
             "status": item.status,
             "tipo": item.tipo,
+            "data_recebimento": item.data_recebimento,
+            "hora_recebimento": item.hora_recebimento,
             "morador_id": item.morador_id,
             "morador_nome": morador_nome,
             "endereco_id": item.endereco_id,
@@ -179,6 +183,19 @@ def reabrir_encomenda(
     )
     updated = repository.reabrir(item, principal.user_id, payload.motivo_reabertura)
     return {"id": updated.id, "status": updated.status}
+
+
+@router.delete("/encomendas/{encomenda_id}", status_code=204)
+def delete_encomenda(
+    encomenda_id: int,
+    principal: Principal = Depends(require_roles("ADMIN")),
+    db: Session = Depends(get_db),
+) -> None:
+    repository = EncomendaRepository(db)
+    condominio_id = principal.condominio_id
+    item = ensure_delete_allowed(repository.find_by_id(encomenda_id, condominio_id=condominio_id))
+    repository.delete(item)
+    return None
 
 
 @router.get("/minhas-encomendas")
