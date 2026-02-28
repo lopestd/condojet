@@ -33,7 +33,7 @@ function buildTimeline(detail: EncomendaDetail): TimelineEvent[] {
 
   if (detail.reaberto_em) {
     events.push({
-      label: 'Encomenda reaberta',
+      label: 'Entrega reaberta',
       date: detail.reaberto_em,
       caption: detail.motivo_reabertura ?? undefined
     })
