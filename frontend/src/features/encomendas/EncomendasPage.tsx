@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { useAuth } from '../../auth/AuthContext'
 import { backendApi, readApiError } from '../../services/httpClient'
@@ -83,6 +84,8 @@ function formatDateBR(value?: string | null): string {
 
 export function EncomendasPage(): JSX.Element {
   const { user } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
 
   const [items, setItems] = useState<EncomendaListItem[]>([])
   const [moradores, setMoradores] = useState<Morador[]>([])
@@ -172,6 +175,21 @@ export function EncomendasPage(): JSX.Element {
   useEffect(() => {
     void loadAll()
   }, [])
+
+  useEffect(() => {
+    const search = new URLSearchParams(location.search)
+    if (search.get('new') !== '1') return
+    openCreateModal()
+    search.delete('new')
+    const nextSearch = search.toString()
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextSearch ? `?${nextSearch}` : ''
+      },
+      { replace: true }
+    )
+  }, [location.pathname, location.search, navigate])
 
   const enderecosById = useMemo(() => {
     const map = new Map<number, Endereco>()

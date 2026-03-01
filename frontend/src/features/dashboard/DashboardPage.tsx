@@ -151,6 +151,7 @@ export function DashboardPage(): JSX.Element {
     dashboardData.alertPackages.length > 0
       ? `${dashboardData.alertPackages.length} encomendas requerem atencao`
       : 'Nenhuma encomenda atrasada';
+  const hasOverdueAlerts = dashboardData.alertPackages.length > 0;
   const contexto = user?.nomeCondominio ?? (user?.condominioId ? `Condominio ${user.condominioId}` : 'CondoJET Global');
   const canCreateEncomenda = user?.role === 'ADMIN' || user?.role === 'PORTEIRO';
 
@@ -165,7 +166,7 @@ export function DashboardPage(): JSX.Element {
         </div>
         <div className="dashboard-hero-side">
           {canCreateEncomenda ? (
-            <button type="button" className="cta dashboard-hero-cta" onClick={() => navigate('/encomendas')}>
+            <button type="button" className="cta dashboard-hero-cta" onClick={() => navigate('/condo/encomendas?new=1')}>
               + Nova encomenda
             </button>
           ) : null}
@@ -209,7 +210,7 @@ export function DashboardPage(): JSX.Element {
         </article>
       </section>
 
-      <article className="panel dashboard-alerts-panel">
+      <article className={`panel dashboard-alerts-panel ${hasOverdueAlerts ? 'dashboard-alerts-panel-danger' : 'dashboard-alerts-panel-ok'}`}>
         <div className="dashboard-alerts-head">
           <h2>{alertTitle}</h2>
           <small>{`Total monitorado: ${dashboardData.total} encomendas`}</small>

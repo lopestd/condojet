@@ -946,8 +946,17 @@ th {
 }
 
 .dashboard-alerts-panel {
+  border-left: 4px solid transparent;
+}
+
+.dashboard-alerts-panel-danger {
   background: #feeff0;
-  border-left: 4px solid var(--danger);
+  border-left-color: var(--danger);
+}
+
+.dashboard-alerts-panel-ok {
+  background: #edf8f2;
+  border-left-color: #5eb98e;
 }
 
 .dashboard-alerts-head {
@@ -957,18 +966,34 @@ th {
   gap: 0.6rem;
 }
 
-.dashboard-alerts-head h2 {
+.dashboard-alerts-panel-danger .dashboard-alerts-head h2 {
   font-family: 'Sora', 'DM Sans', sans-serif;
   color: #a12828;
 }
 
-.dashboard-alerts-head small {
+.dashboard-alerts-panel-danger .dashboard-alerts-head small {
   color: #8c4b4b;
+}
+
+.dashboard-alerts-panel-ok .dashboard-alerts-head h2 {
+  font-family: 'Sora', 'DM Sans', sans-serif;
+  color: #1d6647;
+}
+
+.dashboard-alerts-panel-ok .dashboard-alerts-head small {
+  color: #3f7e62;
 }
 
 .dashboard-empty-alerts {
   margin-top: 0.62rem;
+}
+
+.dashboard-alerts-panel-danger .dashboard-empty-alerts {
   color: #914646;
+}
+
+.dashboard-alerts-panel-ok .dashboard-empty-alerts {
+  color: #2c6f4f;
 }
 
 .dashboard-alerts-list {
