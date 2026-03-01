@@ -4,8 +4,6 @@ import { backendApi, readApiError } from '../../services/httpClient';
 import { parseApiDate } from '../../utils/dateTime';
 import type { Endereco, EncomendaListItem } from '../encomendas/types';
 
-type ViewPeriod = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';
-
 type DateRange = {
   start: Date;
   end: Date;
@@ -19,13 +17,6 @@ type RiskBuckets = {
   acima72h: number;
 };
 
-const PERIOD_OPTIONS: Array<{ value: ViewPeriod; label: string }> = [
-  { value: 'DAY', label: 'Hoje' },
-  { value: 'WEEK', label: 'Ultimos 7 dias' },
-  { value: 'MONTH', label: 'Mensal' },
-  { value: 'YEAR', label: 'Anual' }
-];
-
 const WEEK_DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
 
 function capitalizeFirst(value: string): string {
@@ -33,29 +24,13 @@ function capitalizeFirst(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-function resolveDateRange(now: Date, period: ViewPeriod, dataAnchor: Date, selectedYear: number): DateRange {
-  const end = new Date(now);
-  if (period === 'DAY') {
-    const start = new Date(now);
-    start.setHours(0, 0, 0, 0);
-    return { start, end, label: 'hoje' };
-  }
-  if (period === 'WEEK') {
-    const start = new Date(now);
-    start.setDate(start.getDate() - 6);
-    start.setHours(0, 0, 0, 0);
-    return { start, end, label: 'nos ultimos 7 dias' };
-  }
-  if (period === 'MONTH') {
-    const start = new Date(dataAnchor.getFullYear(), dataAnchor.getMonth(), 1, 0, 0, 0, 0);
-    const endOfMonth = new Date(dataAnchor.getFullYear(), dataAnchor.getMonth() + 1, 0, 23, 59, 59, 999);
-    const monthLabel = capitalizeFirst(start.toLocaleDateString('pt-BR', { month: 'long' }));
-    return { start, end: endOfMonth, label: `no mes de ${monthLabel}` };
-  }
-  const start = new Date(selectedYear, 0, 1, 0, 0, 0, 0);
-  const endOfYear = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
-  return { start, end: endOfYear, label: `no ano de ${selectedYear}` };
-}
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) => {
+  const base = new Date(2026, index, 1);
+  return {
+    value: index,
+    label: capitalizeFirst(base.toLocaleDateString('pt-BR', { month: 'long' }))
+  };
+});
 
 function parseDateTime(data?: string | null, hora?: string | null): Date | null {
   const date = parseApiDate(data);
@@ -74,15 +49,27 @@ function inRange(date: Date | null, range: DateRange): boolean {
   return date >= range.start && date <= range.end;
 }
 
+function resolveDateRange(selectedYear: number, monthStart: number, monthEnd: number): DateRange {
+  const start = new Date(selectedYear, monthStart, 1, 0, 0, 0, 0);
+  const end = new Date(selectedYear, monthEnd + 1, 0, 23, 59, 59, 999);
+  const startLabel = capitalizeFirst(start.toLocaleDateString('pt-BR', { month: 'long' }));
+  const endLabel = capitalizeFirst(end.toLocaleDateString('pt-BR', { month: 'long' }));
+  const label = monthStart === monthEnd
+    ? `no mes de ${startLabel}/${selectedYear}`
+    : `de ${startLabel} a ${endLabel}/${selectedYear}`;
+  return { start, end, label };
+}
+
 function formatHours(value: number): string {
   if (!Number.isFinite(value)) return '-';
   return `${value.toFixed(1)}h`;
 }
 
 export function ReportsPage(): JSX.Element {
-  const [viewPeriod, setViewPeriod] = useState<ViewPeriod>('MONTH');
   const [now, setNow] = useState(() => new Date());
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
+  const [monthStart, setMonthStart] = useState(() => new Date().getMonth());
+  const [monthEnd, setMonthEnd] = useState(() => new Date().getMonth());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<EncomendaListItem[]>([]);
@@ -128,7 +115,7 @@ export function ReportsPage(): JSX.Element {
   const availableYears = useMemo(() => {
     const years = new Set<number>();
     allRecordDates.forEach((date) => years.add(date.getFullYear()));
-    if (years.size === 0) years.add(now.getFullYear());
+    years.add(now.getFullYear());
     return Array.from(years).sort((a, b) => b - a);
   }, [allRecordDates, now]);
 
@@ -138,31 +125,9 @@ export function ReportsPage(): JSX.Element {
     }
   }, [availableYears, selectedYear]);
 
-  const dataAnchor = useMemo(() => {
-    const datesForSelectedYear = allRecordDates.filter((date) => date.getFullYear() === selectedYear);
-    const source = datesForSelectedYear.length > 0 ? datesForSelectedYear : allRecordDates;
-    if (source.length === 0) return now;
-    return source.reduce((latest, current) => (current > latest ? current : latest));
-  }, [allRecordDates, selectedYear, now]);
-
-  const range = useMemo(
-    () => resolveDateRange(now, viewPeriod, dataAnchor, selectedYear),
-    [now, viewPeriod, dataAnchor, selectedYear]
-  );
-
-  const periodOptions = useMemo(() => {
-    const monthLabel = capitalizeFirst(dataAnchor.toLocaleDateString('pt-BR', { month: 'long' }));
-    return PERIOD_OPTIONS.map((option) => {
-      if (option.value === 'MONTH') return { ...option, label: `Mensal (${monthLabel})` };
-      if (option.value === 'YEAR') return { ...option, label: `Anual (${selectedYear})` };
-      return option;
-    });
-  }, [dataAnchor, selectedYear]);
+  const range = useMemo(() => resolveDateRange(selectedYear, monthStart, monthEnd), [selectedYear, monthStart, monthEnd]);
 
   const report = useMemo(() => {
-    const enderecosById = new Map<number, Endereco>();
-    enderecos.forEach((endereco) => enderecosById.set(endereco.id, endereco));
-
     const recebidasNoPeriodo = items.filter((item) => inRange(parseDateTime(item.data_recebimento, item.hora_recebimento), range));
     const entreguesNoPeriodo = items.filter((item) => item.status === 'ENTREGUE' && inRange(parseApiDate(item.data_entrega), range));
 
@@ -205,17 +170,6 @@ export function ReportsPage(): JSX.Element {
     const sla24 = slaCount > 0 ? (slaDurationsHours.filter((value) => value <= 24).length / slaCount) * 100 : 0;
     const sla48 = slaCount > 0 ? (slaDurationsHours.filter((value) => value <= 48).length / slaCount) * 100 : 0;
 
-    const volumeByEnderecoMap = new Map<string, number>();
-    recebidasNoPeriodo.forEach((item) => {
-      const endereco = enderecosById.get(item.endereco_id);
-      const label = item.endereco_label || (endereco ? endereco.quadra : `Endereco #${item.endereco_id}`);
-      volumeByEnderecoMap.set(label, (volumeByEnderecoMap.get(label) ?? 0) + 1);
-    });
-    const volumeByEndereco = Array.from(volumeByEnderecoMap.entries())
-      .map(([label, count]) => ({ label, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 8);
-
     const receivedByWeekday = new Array<number>(7).fill(0);
     const deliveredByWeekday = new Array<number>(7).fill(0);
 
@@ -247,12 +201,13 @@ export function ReportsPage(): JSX.Element {
       slaAverage,
       sla24,
       sla48,
-      volumeByEndereco,
       receivedByWeekday,
       deliveredByWeekday,
       consistency
     };
   }, [items, enderecos, range, now]);
+
+  const monthEndOptions = MONTH_OPTIONS.filter((option) => option.value >= monthStart);
 
   return (
     <section className="page-grid reports-page">
@@ -261,24 +216,13 @@ export function ReportsPage(): JSX.Element {
           <h1>Relatorios de Encomendas</h1>
           <p>{`Indicadores operacionais ${range.label}, com base nos dados reais registrados no sistema.`}</p>
         </div>
-        <div className="reports-period" role="tablist" aria-label="Selecionar periodo dos relatorios">
-          {periodOptions.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              className={`reports-period-button ${viewPeriod === option.value ? 'active' : ''}`}
-              onClick={() => setViewPeriod(option.value)}
-              role="tab"
-              aria-selected={viewPeriod === option.value}
+        <div className="reports-period" aria-label="Selecionar periodo dos relatorios">
+          <label className="reports-period-card active">
+            <span className="reports-period-card-head">Escolha o Ano</span>
+            <select
+              value={String(selectedYear)}
+              onChange={(event) => setSelectedYear(Number(event.target.value))}
             >
-              {option.label}
-            </button>
-          ))}
-        </div>
-        {viewPeriod === 'YEAR' ? (
-          <label className="reports-year-select">
-            Ano
-            <select value={String(selectedYear)} onChange={(event) => setSelectedYear(Number(event.target.value))}>
               {availableYears.map((year) => (
                 <option key={year} value={year}>
                   {year}
@@ -286,7 +230,46 @@ export function ReportsPage(): JSX.Element {
               ))}
             </select>
           </label>
-        ) : null}
+
+          <label className="reports-period-card active">
+            <span className="reports-period-card-head">Mes inicio</span>
+            <select
+              value={String(monthStart)}
+              onChange={(event) => {
+                const nextStart = Number(event.target.value);
+                setMonthStart(nextStart);
+                setMonthEnd(nextStart);
+              }}
+            >
+              {MONTH_OPTIONS.map((month) => (
+                <option key={month.value} value={String(month.value)}>
+                  {month.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="reports-period-card active">
+            <span className="reports-period-card-head">Mes fim</span>
+            <select
+              value={String(monthEnd)}
+              onChange={(event) => {
+                const nextEnd = Number(event.target.value);
+                if (nextEnd < monthStart) {
+                  setMonthEnd(monthStart);
+                  return;
+                }
+                setMonthEnd(nextEnd);
+              }}
+            >
+              {monthEndOptions.map((month) => (
+                <option key={month.value} value={String(month.value)}>
+                  {month.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </header>
 
       {loading ? <p className="info-box">Carregando relatorios...</p> : null}
@@ -350,23 +333,6 @@ export function ReportsPage(): JSX.Element {
                 <li><b>48h a 72h:</b> {report.riskBuckets.de48a72h}</li>
                 <li><b>Acima de 72h:</b> {report.riskBuckets.acima72h}</li>
               </ul>
-            </article>
-
-            <article className="panel report-card report-card-wide">
-              <h2>Volume por Localizacao</h2>
-              <p>Top localizacoes com maior volume de recebimento no periodo.</p>
-              {report.volumeByEndereco.length === 0 ? (
-                <p className="report-empty">Sem registros no periodo selecionado.</p>
-              ) : (
-                <ul className="report-volume-list">
-                  {report.volumeByEndereco.map((row) => (
-                    <li key={row.label}>
-                      <span>{row.label}</span>
-                      <b>{row.count}</b>
-                    </li>
-                  ))}
-                </ul>
-              )}
             </article>
 
             <article className="panel report-card">

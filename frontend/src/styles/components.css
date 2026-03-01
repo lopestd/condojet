@@ -1150,7 +1150,7 @@ th {
 
 .reports-period {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.4rem;
 }
 
@@ -1174,21 +1174,48 @@ th {
   color: #fff;
 }
 
-.reports-year-select {
-  display: inline-grid;
-  gap: 0.26rem;
-  width: min(220px, 100%);
-  font-size: 0.82rem;
-  color: #244061;
-}
-
-.reports-year-select select {
-  min-height: 38px;
+.reports-period-card {
+  min-height: 40px;
   border-radius: 10px;
   border: 1px solid #d6e1ee;
   background: #f5f8fd;
   color: #244061;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.2rem;
+  padding: 0.28rem 0.34rem;
+}
+
+.reports-period-card.active {
+  border-color: #17365a;
+  background: linear-gradient(130deg, #0f2540, #17365a);
+  color: #fff;
+}
+
+.reports-period-card-head {
+  border: 0;
+  background: transparent;
+  color: inherit;
   font-weight: 700;
+  text-align: left;
+  padding: 0;
+  min-height: auto;
+  cursor: pointer;
+}
+
+.reports-period-card select {
+  min-height: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(151, 172, 195, 0.7);
+  background: #ffffff;
+  color: #244061;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+}
+
+.reports-period-card.active select {
+  border-color: rgba(196, 216, 239, 0.8);
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .reports-kpi-grid .kpi-highlight {
