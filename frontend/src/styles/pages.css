@@ -17,7 +17,11 @@
 }
 
 .dashboard-filters {
-  min-width: min(460px, 100%);
+  min-width: min(480px, 100%);
+}
+
+.dashboard-page {
+  gap: 0.9rem;
 }
 
 .dashboard-dual-grid {
