@@ -1143,6 +1143,59 @@ th {
   color: #40556b;
 }
 
+.reports-header {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.reports-period {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.reports-period-button {
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid #d6e1ee;
+  background: #f5f8fd;
+  color: #244061;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reports-period-button:hover {
+  background: #ecf2fb;
+}
+
+.reports-period-button.active {
+  border-color: #17365a;
+  background: linear-gradient(130deg, #0f2540, #17365a);
+  color: #fff;
+}
+
+.reports-year-select {
+  display: inline-grid;
+  gap: 0.26rem;
+  width: min(220px, 100%);
+  font-size: 0.82rem;
+  color: #244061;
+}
+
+.reports-year-select select {
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid #d6e1ee;
+  background: #f5f8fd;
+  color: #244061;
+  font-weight: 700;
+}
+
+.reports-kpi-grid .kpi-highlight {
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  border-left: 4px solid #17365a;
+}
+
 .reports-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1185,4 +1238,172 @@ th {
 .report-card dd {
   margin: 0.14rem 0 0;
   color: #17365a;
+}
+
+.report-card-wide {
+  grid-column: 1 / -1;
+}
+
+.report-list {
+  margin: 0;
+  padding-left: 1.05rem;
+  display: grid;
+  gap: 0.34rem;
+  color: #17365a;
+}
+
+.report-week-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.38rem;
+}
+
+.report-week-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  border-bottom: 1px dashed #d5e0ec;
+  padding-bottom: 0.24rem;
+}
+
+.report-week-list small {
+  color: #345573;
+}
+
+.report-volume-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.report-volume-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  border-radius: 8px;
+  background: #f1f6fd;
+  border: 1px solid #dae6f4;
+  padding: 0.34rem 0.48rem;
+  color: #17365a;
+}
+
+.report-empty {
+  color: #60758c;
+}
+
+.settings-page {
+  gap: 0.82rem;
+}
+
+.settings-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.72rem;
+}
+
+.settings-card {
+  display: grid;
+  gap: 0.6rem;
+  border: 1px solid #d5e0ec;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+}
+
+.settings-card-interactive {
+  padding: 0;
+  overflow: hidden;
+}
+
+.settings-card-trigger {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0.86rem;
+  text-align: left;
+  display: grid;
+  gap: 0.56rem;
+  cursor: pointer;
+}
+
+.settings-card-trigger:hover {
+  background: #f3f8ff;
+}
+
+.settings-card-trigger:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.35);
+  outline-offset: -2px;
+}
+
+.settings-card-header h2 {
+  margin: 0;
+  font-family: 'Sora', 'DM Sans', sans-serif;
+  font-size: 1.05rem;
+  color: #143a62;
+}
+
+.settings-card-header p {
+  margin-top: 0.34rem;
+  color: #4d6278;
+}
+
+.settings-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.settings-card-edit-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0.05rem 0.52rem;
+  border-radius: 999px;
+  border: 1px solid #c8d8eb;
+  background: #f2f7ff;
+  color: #355a82;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.settings-card-divider {
+  border-top: 1px solid #d8e4f0;
+}
+
+.settings-readonly-list {
+  margin: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.settings-readonly-list > div {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.9fr) minmax(0, 1.6fr);
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.settings-readonly-list dt {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #5b6f84;
+  font-weight: 700;
+}
+
+.settings-readonly-list dd {
+  margin: 0;
+  color: #17365a;
+  font-weight: 600;
+}
+
+.settings-card-hint {
+  border-radius: 10px;
+  border: 1px dashed #c8d8ea;
+  background: #f3f8ff;
+  color: #365c83;
+  padding: 0.56rem 0.62rem;
+  font-size: 0.84rem;
 }

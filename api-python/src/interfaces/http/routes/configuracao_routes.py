@@ -13,7 +13,7 @@ router = APIRouter(tags=["configuracoes"])
 
 @router.get("/configuracoes")
 def get_configuracoes(
-    principal: Principal = Depends(require_roles("ADMIN", "ADMIN_GLOBAL")),
+    principal: Principal = Depends(require_roles("ADMIN")),
     db: Session = Depends(get_db),
 ) -> dict:
     if principal.condominio_id is None:
@@ -27,7 +27,7 @@ def get_configuracoes(
 @router.put("/configuracoes")
 def update_configuracoes(
     payload: UpdateConfiguracaoDTO,
-    principal: Principal = Depends(require_roles("ADMIN", "ADMIN_GLOBAL")),
+    principal: Principal = Depends(require_roles("ADMIN")),
     db: Session = Depends(get_db),
 ) -> dict:
     if principal.condominio_id is None:
@@ -36,4 +36,3 @@ def update_configuracoes(
     model = repository.upsert_timezone(principal.condominio_id, payload.timezone)
     set_request_timezone(model.timezone or DEFAULT_TIMEZONE)
     return {"timezone": model.timezone or DEFAULT_TIMEZONE}
-

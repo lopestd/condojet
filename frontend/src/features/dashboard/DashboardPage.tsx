@@ -42,7 +42,12 @@ const PERIOD_OPTIONS: Array<{ value: ViewPeriod; label: string }> = [
   { value: 'YEAR', label: 'Anual' }
 ];
 
-function resolveDateRange(now: Date, period: ViewPeriod): DateRange {
+function capitalizeFirst(value: string): string {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function resolveDateRange(now: Date, period: ViewPeriod, dataAnchor: Date): DateRange {
   const end = new Date(now);
   if (period === 'DAY') {
     const start = new Date(now);
@@ -56,11 +61,14 @@ function resolveDateRange(now: Date, period: ViewPeriod): DateRange {
     return { start, end, label: 'nos ultimos 7 dias' };
   }
   if (period === 'MONTH') {
-    const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-    return { start, end, label: 'no mes atual' };
+    const start = new Date(dataAnchor.getFullYear(), dataAnchor.getMonth(), 1, 0, 0, 0, 0);
+    const endOfMonth = new Date(dataAnchor.getFullYear(), dataAnchor.getMonth() + 1, 0, 23, 59, 59, 999);
+    const monthLabel = capitalizeFirst(start.toLocaleDateString('pt-BR', { month: 'long' }));
+    return { start, end: endOfMonth, label: `no mes de ${monthLabel}` };
   }
-  const start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
-  return { start, end, label: 'no ano atual' };
+  const start = new Date(dataAnchor.getFullYear(), 0, 1, 0, 0, 0, 0);
+  const endOfYear = new Date(dataAnchor.getFullYear(), 11, 31, 23, 59, 59, 999);
+  return { start, end: endOfYear, label: `no ano de ${dataAnchor.getFullYear()}` };
 }
 
 function initials(nome: string): string {
@@ -111,8 +119,19 @@ export function DashboardPage(): JSX.Element {
     void loadDashboardData();
   }, []);
 
+  const dataAnchor = useMemo(() => {
+    let latest: Date | null = null;
+    items.forEach((item) => {
+      const received = parseApiDate(item.data_recebimento);
+      const delivered = parseApiDate(item.data_entrega);
+      if (received && (!latest || received > latest)) latest = received;
+      if (delivered && (!latest || delivered > latest)) latest = delivered;
+    });
+    return latest ?? now;
+  }, [items, now]);
+
   const dashboardData = useMemo<DashboardData>(() => {
-    const range = resolveDateRange(now, viewPeriod);
+    const range = resolveDateRange(now, viewPeriod, dataAnchor);
 
     let aguardando = 0;
     let notificado = 0;
@@ -130,7 +149,7 @@ export function DashboardPage(): JSX.Element {
 
       if (isReceivedInPeriod) {
         todayReceived += 1;
-        if (item.status === 'RECEBIDA') aguardando += 1;
+        if (item.status === 'RECEBIDA' || item.status === 'DISPONIVEL_RETIRADA') aguardando += 1;
         if (item.status === 'DISPONIVEL_RETIRADA') notificado += 1;
       }
       if (isDeliveredInPeriod) {
@@ -170,7 +189,7 @@ export function DashboardPage(): JSX.Element {
       todayDelivered,
       alertPackages
     };
-  }, [items, now, enderecosById, viewPeriod]);
+  }, [items, now, enderecosById, viewPeriod, dataAnchor]);
 
   const appTimezone = getAppTimezone();
   const dataLabel = now.toLocaleDateString('pt-BR', {
@@ -181,7 +200,14 @@ export function DashboardPage(): JSX.Element {
     year: 'numeric'
   });
   const horaLabel = now.toLocaleTimeString('pt-BR', { timeZone: appTimezone, hour: '2-digit', minute: '2-digit' });
-  const periodLabel = resolveDateRange(now, viewPeriod).label;
+  const periodLabel = resolveDateRange(now, viewPeriod, dataAnchor).label;
+  const monthPeriodText = capitalizeFirst(dataAnchor.toLocaleDateString('pt-BR', { month: 'long' }));
+  const yearPeriodText = String(dataAnchor.getFullYear());
+  const periodOptions = PERIOD_OPTIONS.map((option) => {
+    if (option.value === 'MONTH') return { ...option, label: `Mensal (${monthPeriodText})` };
+    if (option.value === 'YEAR') return { ...option, label: `Anual (${yearPeriodText})` };
+    return option;
+  });
   const alertTitle =
     dashboardData.alertPackages.length > 0
       ? `${dashboardData.alertPackages.length} encomendas requerem atencao ${periodLabel}`
@@ -213,7 +239,7 @@ export function DashboardPage(): JSX.Element {
       <section className="panel dashboard-period-panel" aria-label="Periodo de visualizacao">
         <p>Periodo de visualizacao</p>
         <div className="dashboard-period-options" role="tablist" aria-label="Selecionar periodo do painel">
-          {PERIOD_OPTIONS.map((option) => (
+          {periodOptions.map((option) => (
             <button
               key={option.value}
               type="button"

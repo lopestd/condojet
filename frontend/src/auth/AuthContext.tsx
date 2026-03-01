@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 import { backendApi, setAuthToken } from '../services/httpClient';
 import { DEFAULT_TIMEZONE, setAppTimezone } from '../utils/dateTime';
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
     return stored;
   });
 
-  async function login(input: LoginInput): Promise<void> {
+  const login = useCallback(async (input: LoginInput): Promise<void> => {
     const payload: Record<string, unknown> = {
       email: input.email,
       senha: input.senha,
@@ -83,24 +83,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
     setUser(nextUser);
     setAppTimezone(nextUser.timezone);
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser));
-  }
+  }, []);
 
-  function logout(): void {
+  const logout = useCallback((): void => {
     setAuthToken(null);
     setUser(null);
     setAppTimezone(DEFAULT_TIMEZONE);
     window.localStorage.removeItem(STORAGE_KEY);
-  }
+  }, []);
 
-  function updateTimezone(timezone: string): void {
+  const updateTimezone = useCallback((timezone: string): void => {
+    const normalizedTimezone = String(timezone ?? '').trim() || DEFAULT_TIMEZONE;
     setUser((current) => {
       if (!current) return current;
-      const next = { ...current, timezone };
+      if (current.timezone === normalizedTimezone) return current;
+      const next = { ...current, timezone: normalizedTimezone };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       return next;
     });
-    setAppTimezone(timezone);
-  }
+    setAppTimezone(normalizedTimezone);
+  }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -110,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
       logout,
       updateTimezone
     }),
-    [user]
+    [user, login, logout, updateTimezone]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -160,6 +160,23 @@
     grid-template-columns: 1fr;
   }
 
+  .settings-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-readonly-list > div {
+    grid-template-columns: 1fr;
+    gap: 0.16rem;
+  }
+
+  .reports-period {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reports-year-select {
+    width: 100%;
+  }
+
   .dashboard-period-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -190,6 +207,10 @@
   }
 
   .dashboard-period-options {
+    grid-template-columns: 1fr;
+  }
+
+  .reports-period {
     grid-template-columns: 1fr;
   }
 
