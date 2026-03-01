@@ -156,6 +156,10 @@
     grid-template-columns: 1fr;
   }
 
+  .reports-grid {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-period-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

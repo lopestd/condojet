@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../../auth/AuthContext';
 import { backendApi, readApiError } from '../../services/httpClient';
+import { getAppTimezone, parseApiDate } from '../../utils/dateTime';
 import type { Endereco } from '../encomendas/types';
 import type { EncomendaListItem } from '../encomendas/types';
 import { isOverdue } from '../encomendas/utils/statusMapping';
@@ -60,13 +61,6 @@ function resolveDateRange(now: Date, period: ViewPeriod): DateRange {
   }
   const start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
   return { start, end, label: 'no ano atual' };
-}
-
-function parseDate(value?: string | null): Date | null {
-  if (!value) return null;
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return parsed;
 }
 
 function initials(nome: string): string {
@@ -129,8 +123,8 @@ export function DashboardPage(): JSX.Element {
     const overdueItems: Array<{ item: EncomendaListItem; horas: number }> = [];
 
     items.forEach((item) => {
-      const received = parseDate(item.data_recebimento);
-      const delivered = parseDate(item.data_entrega);
+      const received = parseApiDate(item.data_recebimento);
+      const delivered = parseApiDate(item.data_entrega);
       const isReceivedInPeriod = Boolean(received && received >= range.start && received <= range.end);
       const isDeliveredInPeriod = Boolean(delivered && delivered >= range.start && delivered <= range.end);
 
@@ -178,30 +172,34 @@ export function DashboardPage(): JSX.Element {
     };
   }, [items, now, enderecosById, viewPeriod]);
 
+  const appTimezone = getAppTimezone();
   const dataLabel = now.toLocaleDateString('pt-BR', {
+    timeZone: appTimezone,
     weekday: 'long',
     day: '2-digit',
     month: 'long',
     year: 'numeric'
   });
-  const horaLabel = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const horaLabel = now.toLocaleTimeString('pt-BR', { timeZone: appTimezone, hour: '2-digit', minute: '2-digit' });
   const periodLabel = resolveDateRange(now, viewPeriod).label;
   const alertTitle =
     dashboardData.alertPackages.length > 0
       ? `${dashboardData.alertPackages.length} encomendas requerem atencao ${periodLabel}`
       : `Nenhuma encomenda atrasada ${periodLabel}`;
   const hasOverdueAlerts = dashboardData.alertPackages.length > 0;
-  const contexto = user?.nomeCondominio ?? (user?.condominioId ? `Condominio ${user.condominioId}` : 'CondoJET Global');
+  const condominio = user?.nomeCondominio ?? (user?.condominioId ? `Condominio ${user.condominioId}` : 'CondoJET Global');
   const canCreateEncomenda = user?.role === 'ADMIN' || user?.role === 'PORTEIRO';
 
   return (
     <section className="page-grid dashboard-page">
       <header className="panel dashboard-hero">
         <div className="dashboard-hero-main">
-          <p className="dashboard-hero-kicker">{`${dataLabel} • ${horaLabel}`}</p>
+          <p className="dashboard-hero-kicker">
+            <span className="dashboard-condo-badge">{condominio}</span>
+            <span>{`(${dataLabel} • ${horaLabel})`}</span>
+          </p>
           <h1>CondoJET - Dashboard Encomendas</h1>
           <p>Acompanhamento das situações das encomendas recebidas na portaria do Condomínio.</p>
-          <small>{`Contexto: ${contexto}`}</small>
         </div>
         <div className="dashboard-hero-side">
           {canCreateEncomenda ? (

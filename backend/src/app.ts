@@ -4,6 +4,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { env } from './infrastructure/config/env.js';
 import { authRoutes } from './interfaces/http/routes/authRoutes.js';
 import { condominioRoutes } from './interfaces/http/routes/condominioRoutes.js';
+import { configuracaoRoutes } from './interfaces/http/routes/configuracaoRoutes.js';
 import { errorHandler } from './interfaces/http/middlewares/errorHandler.js';
 import { registerRequestContext } from './interfaces/http/middlewares/requestContext.js';
 import { encomendaRoutes } from './interfaces/http/routes/encomendaRoutes.js';
@@ -32,6 +33,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(healthRoutes, { prefix: '/api/v1' });
   await app.register(authRoutes, { prefix: '/api/v1' });
   await app.register(condominioRoutes, { prefix: '/api/v1' });
+  await app.register(configuracaoRoutes, { prefix: '/api/v1' });
   await app.register(usuarioRoutes, { prefix: '/api/v1' });
   await app.register(enderecoRoutes, { prefix: '/api/v1' });
   await app.register(moradorRoutes, { prefix: '/api/v1' });

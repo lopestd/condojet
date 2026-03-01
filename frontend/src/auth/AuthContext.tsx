@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 
 import { backendApi, setAuthToken } from '../services/httpClient';
+import { DEFAULT_TIMEZONE, setAppTimezone } from '../utils/dateTime';
 import type { SessionUser, UserRole } from '../types';
 
 type LoginInput = {
@@ -20,6 +21,7 @@ type SessionProfileResponse = {
   condominio_id: number | null;
   nome_usuario: string;
   nome_condominio: string;
+  timezone: string;
 };
 
 type AuthContextValue = {
@@ -27,6 +29,7 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   login: (input: LoginInput) => Promise<void>;
   logout: () => void;
+  updateTimezone: (timezone: string) => void;
 };
 
 const STORAGE_KEY = 'condojet_session';
@@ -44,7 +47,8 @@ function parseStoredSession(): SessionUser | null {
       role: parsed.role,
       condominioId: parsed.condominioId ?? null,
       nomeUsuario: parsed.nomeUsuario ?? 'Usuario',
-      nomeCondominio: parsed.nomeCondominio ?? (parsed.condominioId ? `Condominio ${parsed.condominioId}` : 'CondoJET Global')
+      nomeCondominio: parsed.nomeCondominio ?? (parsed.condominioId ? `Condominio ${parsed.condominioId}` : 'CondoJET Global'),
+      timezone: parsed.timezone ?? DEFAULT_TIMEZONE
     };
   } catch {
     return null;
@@ -55,6 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
   const [user, setUser] = useState<SessionUser | null>(() => {
     const stored = parseStoredSession();
     setAuthToken(stored?.accessToken ?? null);
+    setAppTimezone(stored?.timezone ?? DEFAULT_TIMEZONE);
     return stored;
   });
 
@@ -72,16 +77,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
       role: profile.role,
       condominioId: profile.condominio_id,
       nomeUsuario: profile.nome_usuario,
-      nomeCondominio: profile.nome_condominio
+      nomeCondominio: profile.nome_condominio,
+      timezone: profile.timezone ?? DEFAULT_TIMEZONE
     };
     setUser(nextUser);
+    setAppTimezone(nextUser.timezone);
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser));
   }
 
   function logout(): void {
     setAuthToken(null);
     setUser(null);
+    setAppTimezone(DEFAULT_TIMEZONE);
     window.localStorage.removeItem(STORAGE_KEY);
+  }
+
+  function updateTimezone(timezone: string): void {
+    setUser((current) => {
+      if (!current) return current;
+      const next = { ...current, timezone };
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+    setAppTimezone(timezone);
   }
 
   const value = useMemo<AuthContextValue>(
@@ -89,7 +107,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
       user,
       isAuthenticated: !!user?.accessToken,
       login,
-      logout
+      logout,
+      updateTimezone
     }),
     [user]
   );

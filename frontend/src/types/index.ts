@@ -8,6 +8,7 @@ export type SessionUser = {
   condominioId: number | null;
   nomeUsuario: string;
   nomeCondominio: string;
+  timezone: string;
 };
 
 export type ApiErrorPayload = {

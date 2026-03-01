@@ -1,13 +1,16 @@
 from dataclasses import dataclass
 
 from fastapi import Depends, Header
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from src.application.services.exceptions import AppError
 from src.infrastructure.config.settings import settings
 from src.infrastructure.database.session import get_db
 from src.infrastructure.repositories.chave_sistema_repository import ChaveSistemaRepository
+from src.infrastructure.repositories.configuracao_repository import ConfiguracaoRepository
 from src.infrastructure.repositories.condominio_repository import CondominioRepository
+from src.infrastructure.timezone import DEFAULT_TIMEZONE, set_request_timezone
 
 
 @dataclass
@@ -29,11 +32,19 @@ def get_tenant_context(
     chave_global = chave_global_model.valor if chave_global_model is not None else settings.global_api_key
 
     if x_api_key == chave_global:
+        set_request_timezone(DEFAULT_TIMEZONE)
+        db.execute(text("SELECT set_config('TIMEZONE', :tz, false)"), {"tz": DEFAULT_TIMEZONE})
         return TenantContext(is_global=True, condominio_id=None, api_key=x_api_key)
 
     repository = CondominioRepository(db)
     condominio = repository.find_by_api_key(x_api_key)
     if condominio is None:
         raise AppError("invalid_api_key", status_code=401, code="invalid_api_key")
+
+    configuracao_repository = ConfiguracaoRepository(db)
+    configuracao = configuracao_repository.find_by_condominio_id(condominio.id)
+    timezone = configuracao.timezone if configuracao and configuracao.timezone else DEFAULT_TIMEZONE
+    set_request_timezone(timezone)
+    db.execute(text("SELECT set_config('TIMEZONE', :tz, false)"), {"tz": timezone})
 
     return TenantContext(is_global=False, condominio_id=condominio.id, api_key=x_api_key)

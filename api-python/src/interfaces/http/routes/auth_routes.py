@@ -5,8 +5,10 @@ from src.application.dtos.auth_dto import LoginRequestDTO, LoginResponseDTO, Ses
 from src.application.services.exceptions import AppError
 from src.infrastructure.database.session import get_db
 from src.infrastructure.repositories.auth_repository import AuthRepository
+from src.infrastructure.repositories.configuracao_repository import ConfiguracaoRepository
 from src.infrastructure.security.jwt import create_access_token
 from src.infrastructure.security.password import verify_password
+from src.infrastructure.timezone import DEFAULT_TIMEZONE, get_request_timezone
 from src.interfaces.http.dependencies.auth import Principal, get_current_principal
 from src.interfaces.http.dependencies.tenant import TenantContext, get_tenant_context
 
@@ -56,9 +58,19 @@ def me(
         role=principal.role,
         condominio_id=principal.condominio_id,
     )
+    timezone = get_request_timezone()
+    if principal.condominio_id is not None:
+        configuracao_repository = ConfiguracaoRepository(db)
+        configuracao = configuracao_repository.find_by_condominio_id(principal.condominio_id)
+        if configuracao is not None and configuracao.timezone:
+            timezone = configuracao.timezone
+        else:
+            timezone = DEFAULT_TIMEZONE
+
     return SessionProfileResponseDTO(
         role=principal.role,
         condominio_id=principal.condominio_id,
         nome_usuario=nome_usuario,
         nome_condominio=nome_condominio,
+        timezone=timezone,
     )

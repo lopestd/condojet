@@ -165,6 +165,7 @@ CREATE TABLE configuracoes (
   condominio_id BIGINT NOT NULL REFERENCES condominios(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
   whatsapp_token TEXT,
   numero_condominio VARCHAR(30),
+  timezone VARCHAR(64) NOT NULL DEFAULT 'America/Sao_Paulo',
   status_conexao status_conexao_whatsapp NOT NULL DEFAULT 'DESCONECTADO',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

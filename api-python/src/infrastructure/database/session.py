@@ -14,8 +14,6 @@ def get_db() -> Generator[Session, None, None]:
     try:
         # Ensure schema resolution is stable in every session.
         db.execute(text(f"SET search_path TO {settings.db_schema}, public"))
-        # Force DB session timezone for all TIMESTAMPTZ reads/writes and NOW() usage in triggers.
-        db.execute(text("SELECT set_config('TIMEZONE', :tz, false)"), {"tz": settings.app_timezone})
         yield db
     finally:
         db.close()

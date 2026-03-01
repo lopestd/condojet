@@ -9,6 +9,7 @@ import { OperationPage } from '../features/condo/OperationPage';
 import { ResidentPage } from '../features/condo/ResidentPage';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { GlobalManagementPage } from '../features/global/GlobalManagementPage';
+import { ReportsPage } from '../features/reports/ReportsPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { AppLayout } from '../layouts/AppLayout';
 
@@ -65,6 +66,10 @@ export const appRouter = createBrowserRouter([
       {
         element: <ProtectedRoute allowedRoles={['MORADOR']} />,
         children: [{ path: '/condo/minhas-encomendas', element: <ResidentPage /> }]
+      },
+      {
+        element: <ProtectedRoute allowedRoles={['ADMIN_GLOBAL', 'ADMIN']} />,
+        children: [{ path: '/condo/relatorios', element: <ReportsPage /> }]
       },
       {
         element: <ProtectedRoute allowedRoles={['ADMIN_GLOBAL', 'ADMIN']} />,

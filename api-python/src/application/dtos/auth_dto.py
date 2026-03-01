@@ -20,3 +20,4 @@ class SessionProfileResponseDTO(BaseModel):
     condominio_id: int | None = None
     nome_usuario: str
     nome_condominio: str
+    timezone: str

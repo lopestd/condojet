@@ -1,6 +1,16 @@
 const DATE_ONLY_REGEX = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-export const APP_TIMEZONE = String(import.meta.env.VITE_APP_TIMEZONE ?? 'America/Sao_Paulo').trim() || 'America/Sao_Paulo';
+export const DEFAULT_TIMEZONE = 'America/Sao_Paulo';
+let currentTimezone = DEFAULT_TIMEZONE;
+
+export function setAppTimezone(timezone: string | null | undefined): void {
+  const normalized = String(timezone ?? '').trim();
+  currentTimezone = normalized || DEFAULT_TIMEZONE;
+}
+
+export function getAppTimezone(): string {
+  return currentTimezone;
+}
 
 export function parseApiDate(value?: string | null): Date | null {
   if (!value) return null;
@@ -28,6 +38,5 @@ export function formatDateBR(value?: string | null): string {
   }
   const parsed = parseApiDate(raw);
   if (!parsed) return value;
-  return parsed.toLocaleDateString('pt-BR', { timeZone: APP_TIMEZONE });
+  return parsed.toLocaleDateString('pt-BR', { timeZone: currentTimezone });
 }
-
