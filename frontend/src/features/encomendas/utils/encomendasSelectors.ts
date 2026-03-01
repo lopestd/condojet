@@ -1,5 +1,6 @@
 import type { EncomendaFilter, EncomendaListItem, EncomendaSort, Endereco } from '../types'
 import { isOverdue } from './statusMapping'
+import { parseApiDate } from '../../../utils/dateTime'
 
 export function formatEnderecoLabel(endereco: Endereco): string {
   if (endereco.tipo_endereco === 'QUADRA_SETOR_CHACARA') {
@@ -47,8 +48,8 @@ export function sortEncomendas(items: EncomendaListItem[], sort: EncomendaSort):
   }
 
   sorted.sort((a, b) => {
-    const da = a.data_recebimento ? new Date(a.data_recebimento).getTime() : 0
-    const db = b.data_recebimento ? new Date(b.data_recebimento).getTime() : 0
+    const da = parseApiDate(a.data_recebimento)?.getTime() ?? 0
+    const db = parseApiDate(b.data_recebimento)?.getTime() ?? 0
     if (sort === 'ANTIGAS') return da - db
     return db - da
   })

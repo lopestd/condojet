@@ -1,8 +1,7 @@
-from datetime import datetime
-
 from src.application.dtos.encomenda_dto import CreateEncomendaDTO
 from src.domain.entities.encomenda import Encomenda
 from src.domain.repositories.encomenda_repository import EncomendaRepository
+from src.infrastructure.timezone import app_now
 
 
 class CreateEncomendaUseCase:
@@ -10,7 +9,7 @@ class CreateEncomendaUseCase:
         self.repository = repository
 
     def execute(self, dto: CreateEncomendaDTO) -> Encomenda:
-        now = datetime.now()
+        now = app_now()
         encomenda = Encomenda(
             id=None,
             codigo_interno=f"ENC-{int(now.timestamp())}",

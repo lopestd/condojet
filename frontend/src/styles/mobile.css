@@ -155,6 +155,10 @@
   .dashboard-activity-grid {
     grid-template-columns: 1fr;
   }
+
+  .dashboard-period-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 600px) {
@@ -179,6 +183,10 @@
   .dashboard-alert-item {
     grid-template-columns: auto 1fr;
     align-items: start;
+  }
+
+  .dashboard-period-options {
+    grid-template-columns: 1fr;
   }
 
   .dashboard-alert-meta {

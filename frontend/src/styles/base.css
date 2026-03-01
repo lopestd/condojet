@@ -1,6 +1,6 @@
 :root {
   --ui-zoom: 1;
-  --sidebar-width: calc(260px * var(--ui-zoom));
+  --sidebar-width: calc(300px * var(--ui-zoom));
   --page-header-height: 56px;
 
   --bg-page: #f0f2f5;

@@ -20,6 +20,7 @@ import type {
 } from './types'
 import { filterEncomendas, paginateEncomendas, sortEncomendas } from './utils/encomendasSelectors'
 import { statusClass, statusLabel } from './utils/statusMapping'
+import { formatDateBR } from '../../utils/dateTime'
 
 const DEFAULT_PAGE_SIZE = 10
 const MOBILE_BREAKPOINT = 900
@@ -67,19 +68,6 @@ function getEnderecoParts(endereco: Endereco | undefined): {
     thirdLabel: 'Lote',
     thirdValue: endereco.lote || '-'
   }
-}
-
-function formatDateBR(value?: string | null): string {
-  if (!value) return '-'
-  const raw = value.trim()
-  if (!raw) return '-'
-  const simpleDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw)
-  if (simpleDate) {
-    return `${simpleDate[3]}/${simpleDate[2]}/${simpleDate[1]}`
-  }
-  const parsed = new Date(raw)
-  if (Number.isNaN(parsed.getTime())) return value
-  return parsed.toLocaleDateString('pt-BR')
 }
 
 export function EncomendasPage(): JSX.Element {

@@ -2,6 +2,7 @@ from datetime import datetime
 
 from src.application.services.exceptions import AppError
 from src.infrastructure.database.models import EncomendaModel, MoradorModel
+from src.infrastructure.timezone import app_now
 
 
 def _build_codigo_interno(now: datetime) -> str:
@@ -10,7 +11,7 @@ def _build_codigo_interno(now: datetime) -> str:
 
 
 def build_encomenda_payload(payload: dict, principal_id: int, condominio_id: int) -> dict:
-    now = datetime.now()
+    now = app_now()
     return {
         "condominio_id": condominio_id,
         "codigo_interno": _build_codigo_interno(now),

@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     app_name: str = Field(default="CondoJET API", alias="API_APP_NAME")
     app_env: str = Field(default="development", alias="API_APP_ENV")
     app_port: int = Field(default=8000, alias="API_APP_PORT")
+    app_timezone: str = Field(default="America/Sao_Paulo", alias="APP_TIMEZONE")
 
     db_host: str = Field(default="127.0.0.1", alias="DB_HOST")
     db_port: int = Field(default=5432, alias="DB_PORT")

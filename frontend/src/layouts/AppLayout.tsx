@@ -125,7 +125,7 @@ export function AppLayout(): JSX.Element {
         <div className="brand-block">
           <p className="brand-eyebrow">Plataforma</p>
           <h1>CondoJET</h1>
-          <small>Gestao operacional de condominios</small>
+          <small>Gestao de encomendas em condominios</small>
         </div>
 
         <nav className="sidebar-nav" aria-label="Menu principal">

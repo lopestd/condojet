@@ -1,9 +1,8 @@
-from datetime import datetime
-
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from src.infrastructure.database.models import EncomendaModel, EnderecoModel, MoradorModel
+from src.infrastructure.timezone import app_now
 
 
 class EncomendaRepository:
@@ -91,7 +90,7 @@ class EncomendaRepository:
 
     def entregar(self, model: EncomendaModel, entregue_por_usuario_id: int, retirado_por_nome: str) -> EncomendaModel:
         model.status = "ENTREGUE"
-        model.data_entrega = datetime.utcnow()
+        model.data_entrega = app_now()
         model.entregue_por_usuario_id = entregue_por_usuario_id
         model.retirado_por_nome = retirado_por_nome
         self.db.add(model)

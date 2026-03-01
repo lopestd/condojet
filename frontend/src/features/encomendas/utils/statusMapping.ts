@@ -1,4 +1,5 @@
 import type { EncomendaDetail, EncomendaListItem, EncomendaStatus } from '../types'
+import { parseApiDate } from '../../../utils/dateTime'
 
 const OVERDUE_DAYS = 3
 const OVERDUE_MS = OVERDUE_DAYS * 24 * 60 * 60 * 1000
@@ -15,15 +16,8 @@ export function statusClass(status: EncomendaStatus): string {
   return 'entregue'
 }
 
-function parseDate(value?: string | null): Date | null {
-  if (!value) return null
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  return date
-}
-
 export function getRecebimentoDate(item: EncomendaListItem | EncomendaDetail): Date | null {
-  const iso = parseDate(item.data_recebimento)
+  const iso = parseApiDate(item.data_recebimento)
   if (iso) return iso
   return null
 }

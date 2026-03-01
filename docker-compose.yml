@@ -10,6 +10,7 @@ services:
     env_file:
       - ./config/env/.env.dsv
     environment:
+      TZ: ${APP_TIMEZONE:-America/Sao_Paulo}
       DB_HOST: host.docker.internal
       DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-condojethmg}
@@ -35,6 +36,7 @@ services:
     env_file:
       - ./config/env/.env.dsv
     environment:
+      TZ: ${APP_TIMEZONE:-America/Sao_Paulo}
       BFF_API_PYTHON_BASE_URL: http://api-python:8000/api/v1
     ports:
       - "${BFF_PORT:-3000}:3000"
@@ -56,7 +58,9 @@ services:
     env_file:
       - ./config/env/.env.dsv
     environment:
+      TZ: ${APP_TIMEZONE:-America/Sao_Paulo}
       VITE_BACKEND_URL: ${WEB_VITE_BACKEND_URL:-http://localhost:3000/api/v1}
+      VITE_APP_TIMEZONE: ${WEB_VITE_APP_TIMEZONE:-America/Sao_Paulo}
     ports:
       - "5173:5173"
     depends_on:

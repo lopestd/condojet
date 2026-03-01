@@ -1,4 +1,6 @@
 FROM node:20-alpine
+RUN apk add --no-cache tzdata
+ENV TZ=America/Sao_Paulo
 WORKDIR /app
 COPY package.json tsconfig.json vite.config.ts postcss.config.cjs tailwind.config.ts ./
 RUN npm install

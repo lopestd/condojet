@@ -1,10 +1,10 @@
 import json
 import logging
-from datetime import UTC, datetime
 from time import perf_counter
 from uuid import uuid4
 
 from fastapi import FastAPI, Request, Response
+from src.infrastructure.timezone import app_now
 
 REQUEST_ID_HEADER = "X-Request-Id"
 LOGGER_NAME = "condojet.api.http"
@@ -43,7 +43,7 @@ def configure_request_observability(app: FastAPI) -> None:
             _emit_http_log(
                 logger,
                 {
-                    "timestamp": datetime.now(UTC).isoformat(),
+                    "timestamp": app_now().isoformat(),
                     "event": "http_request",
                     "request_id": request_id,
                     "method": request.method,
@@ -59,7 +59,7 @@ def configure_request_observability(app: FastAPI) -> None:
         _emit_http_log(
             logger,
             {
-                "timestamp": datetime.now(UTC).isoformat(),
+                "timestamp": app_now().isoformat(),
                 "event": "http_request",
                 "request_id": request_id,
                 "method": request.method,

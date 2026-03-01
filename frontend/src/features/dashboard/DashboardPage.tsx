@@ -26,6 +26,49 @@ type AlertItem = {
   risco: 'Atrasado critico' | 'Atrasado'
 };
 
+type ViewPeriod = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';
+
+type DateRange = {
+  start: Date
+  end: Date
+  label: string
+};
+
+const PERIOD_OPTIONS: Array<{ value: ViewPeriod; label: string }> = [
+  { value: 'DAY', label: 'Hoje' },
+  { value: 'WEEK', label: 'Ultimos 7 dias' },
+  { value: 'MONTH', label: 'Mensal' },
+  { value: 'YEAR', label: 'Anual' }
+];
+
+function resolveDateRange(now: Date, period: ViewPeriod): DateRange {
+  const end = new Date(now);
+  if (period === 'DAY') {
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    return { start, end, label: 'hoje' };
+  }
+  if (period === 'WEEK') {
+    const start = new Date(now);
+    start.setDate(start.getDate() - 6);
+    start.setHours(0, 0, 0, 0);
+    return { start, end, label: 'nos ultimos 7 dias' };
+  }
+  if (period === 'MONTH') {
+    const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    return { start, end, label: 'no mes atual' };
+  }
+  const start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+  return { start, end, label: 'no ano atual' };
+}
+
+function parseDate(value?: string | null): Date | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed;
+}
+
 function initials(nome: string): string {
   return nome
     .split(' ')
@@ -43,6 +86,7 @@ export function DashboardPage(): JSX.Element {
   const [enderecosById, setEnderecosById] = useState<Map<number, Endereco>>(new Map());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewPeriod, setViewPeriod] = useState<ViewPeriod>('DAY');
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60000);
@@ -74,10 +118,7 @@ export function DashboardPage(): JSX.Element {
   }, []);
 
   const dashboardData = useMemo<DashboardData>(() => {
-    const startOfToday = new Date(now);
-    startOfToday.setHours(0, 0, 0, 0);
-    const endOfToday = new Date(now);
-    endOfToday.setHours(23, 59, 59, 999);
+    const range = resolveDateRange(now, viewPeriod);
 
     let aguardando = 0;
     let notificado = 0;
@@ -88,27 +129,24 @@ export function DashboardPage(): JSX.Element {
     const overdueItems: Array<{ item: EncomendaListItem; horas: number }> = [];
 
     items.forEach((item) => {
-      if (item.status === 'RECEBIDA') aguardando += 1;
-      if (item.status === 'DISPONIVEL_RETIRADA') notificado += 1;
-      if (item.status === 'ENTREGUE') entregue += 1;
+      const received = parseDate(item.data_recebimento);
+      const delivered = parseDate(item.data_entrega);
+      const isReceivedInPeriod = Boolean(received && received >= range.start && received <= range.end);
+      const isDeliveredInPeriod = Boolean(delivered && delivered >= range.start && delivered <= range.end);
 
-      const received = item.data_recebimento ? new Date(item.data_recebimento) : null;
-      if (received && !Number.isNaN(received.getTime())) {
-        if (received >= startOfToday && received <= endOfToday) {
-          todayReceived += 1;
-        }
+      if (isReceivedInPeriod) {
+        todayReceived += 1;
+        if (item.status === 'RECEBIDA') aguardando += 1;
+        if (item.status === 'DISPONIVEL_RETIRADA') notificado += 1;
+      }
+      if (isDeliveredInPeriod) {
+        todayDelivered += 1;
+        entregue += 1;
       }
 
-      const delivered = item.data_entrega ? new Date(item.data_entrega) : null;
-      if (delivered && !Number.isNaN(delivered.getTime())) {
-        if (delivered >= startOfToday && delivered <= endOfToday) {
-          todayDelivered += 1;
-        }
-      }
-
-      if (isOverdue(item, now.getTime())) {
+      if (isReceivedInPeriod && isOverdue(item, now.getTime())) {
         atrasado += 1;
-        if (received && !Number.isNaN(received.getTime())) {
+        if (received) {
           const horas = Math.max(1, Math.floor((now.getTime() - received.getTime()) / (1000 * 60 * 60)));
           overdueItems.push({ item, horas });
         }
@@ -129,7 +167,7 @@ export function DashboardPage(): JSX.Element {
     });
 
     return {
-      total: items.length,
+      total: todayReceived + todayDelivered,
       aguardando,
       notificado,
       entregue,
@@ -138,7 +176,7 @@ export function DashboardPage(): JSX.Element {
       todayDelivered,
       alertPackages
     };
-  }, [items, now, enderecosById]);
+  }, [items, now, enderecosById, viewPeriod]);
 
   const dataLabel = now.toLocaleDateString('pt-BR', {
     weekday: 'long',
@@ -147,10 +185,11 @@ export function DashboardPage(): JSX.Element {
     year: 'numeric'
   });
   const horaLabel = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const periodLabel = resolveDateRange(now, viewPeriod).label;
   const alertTitle =
     dashboardData.alertPackages.length > 0
-      ? `${dashboardData.alertPackages.length} encomendas requerem atencao`
-      : 'Nenhuma encomenda atrasada';
+      ? `${dashboardData.alertPackages.length} encomendas requerem atencao ${periodLabel}`
+      : `Nenhuma encomenda atrasada ${periodLabel}`;
   const hasOverdueAlerts = dashboardData.alertPackages.length > 0;
   const contexto = user?.nomeCondominio ?? (user?.condominioId ? `Condominio ${user.condominioId}` : 'CondoJET Global');
   const canCreateEncomenda = user?.role === 'ADMIN' || user?.role === 'PORTEIRO';
@@ -160,8 +199,8 @@ export function DashboardPage(): JSX.Element {
       <header className="panel dashboard-hero">
         <div className="dashboard-hero-main">
           <p className="dashboard-hero-kicker">{`${dataLabel} • ${horaLabel}`}</p>
-          <h1>CondoJET - Encomendas</h1>
-          <p>Visao executiva da operacao com foco em desempenho diario e tratativa de pendencias.</p>
+          <h1>CondoJET - Dashboard Encomendas</h1>
+          <p>Acompanhamento das situações das encomendas recebidas na portaria do Condomínio.</p>
           <small>{`Contexto: ${contexto}`}</small>
         </div>
         <div className="dashboard-hero-side">
@@ -173,40 +212,58 @@ export function DashboardPage(): JSX.Element {
         </div>
       </header>
 
+      <section className="panel dashboard-period-panel" aria-label="Periodo de visualizacao">
+        <p>Periodo de visualizacao</p>
+        <div className="dashboard-period-options" role="tablist" aria-label="Selecionar periodo do painel">
+          {PERIOD_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              className={`dashboard-period-button ${viewPeriod === option.value ? 'active' : ''}`}
+              onClick={() => setViewPeriod(option.value)}
+              role="tab"
+              aria-selected={viewPeriod === option.value}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
       <section className="kpi-grid dashboard-kpi-grid">
         <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-aguardando">
           <span>Aguardando</span>
           <strong>{dashboardData.aguardando}</strong>
-          <small>Prontas para retirada</small>
+          <small>{`Prontas para retirada ${periodLabel}`}</small>
         </article>
         <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-notificado">
           <span>Notificados</span>
           <strong>{dashboardData.notificado}</strong>
-          <small>Moradores avisados hoje</small>
+          <small>{`Moradores avisados ${periodLabel}`}</small>
         </article>
         <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-entregue">
           <span>Entregues</span>
           <strong>{dashboardData.entregue}</strong>
-          <small>Volume no periodo</small>
+          <small>{`Concluidas ${periodLabel}`}</small>
         </article>
         <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-atrasado">
           <span>Atrasados</span>
           <strong>{dashboardData.atrasado}</strong>
-          <small>Requerem atencao imediata</small>
+          <small>{`Pendencias ${periodLabel}`}</small>
         </article>
       </section>
 
       <section className="dashboard-activity-grid">
         <article className="panel dashboard-activity-card dashboard-activity-inbound">
-          <h2>Recebidas hoje</h2>
+          <h2>Recebidas</h2>
           <strong>{dashboardData.todayReceived}</strong>
-          <p>Entradas registradas nas ultimas 24 horas.</p>
+          <p>{`Entradas registradas ${periodLabel}.`}</p>
         </article>
 
         <article className="panel dashboard-activity-card dashboard-activity-delivered">
-          <h2>Entregues hoje</h2>
+          <h2>Entregues</h2>
           <strong>{dashboardData.todayDelivered}</strong>
-          <p>Retiradas concluidas no turno.</p>
+          <p>{`Retiradas concluidas ${periodLabel}.`}</p>
         </article>
       </section>
 

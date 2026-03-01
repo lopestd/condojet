@@ -863,6 +863,45 @@ th {
   background: linear-gradient(180deg, #ffffff, #f9fbff);
 }
 
+.dashboard-period-panel {
+  border: 1px solid #d7e2ef;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  display: grid;
+  gap: 0.58rem;
+}
+
+.dashboard-period-panel p {
+  font-weight: 700;
+  color: #17365a;
+}
+
+.dashboard-period-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.42rem;
+}
+
+.dashboard-period-button {
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid #d6e1ee;
+  background: #f5f8fd;
+  color: #244061;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dashboard-period-button:hover {
+  background: #ecf2fb;
+}
+
+.dashboard-period-button.active {
+  border-color: #17365a;
+  background: linear-gradient(130deg, #0f2540, #17365a);
+  color: #ffffff;
+  box-shadow: 0 8px 16px rgba(15, 37, 64, 0.16);
+}
+
 .dashboard-kpi small {
   display: block;
   margin-top: 0.22rem;
