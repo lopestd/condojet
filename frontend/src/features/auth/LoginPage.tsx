@@ -34,8 +34,8 @@ export function LoginPage(): JSX.Element {
     <main className="auth-shell">
       <section className="auth-card">
         <p className="brand-eyebrow">CondoJET</p>
-        <h1>Controle operacional de condominios</h1>
-        <p>Autentique-se para acompanhar recebimentos, retiradas e administracao da plataforma.</p>
+        <h1>Controle operacional de condomínios</h1>
+        <p>Autentique-se para acompanhar recebimentos, retiradas e administração da plataforma.</p>
 
         <div className="segmented">
           <button

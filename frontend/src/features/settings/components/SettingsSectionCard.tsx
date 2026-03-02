@@ -45,7 +45,7 @@ export function SettingsSectionCard({
             </div>
           ))}
         </dl>
-        {loading ? <p className="info-box">Carregando configuracoes...</p> : null}
+        {loading ? <p className="info-box">Carregando configurações...</p> : null}
         {infoMessage ? <p className="info-box">{infoMessage}</p> : null}
         {error ? <p className="error-box">{error}</p> : null}
         {feedback ? <p className="info-box">{feedback}</p> : null}

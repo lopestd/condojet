@@ -1924,6 +1924,16 @@ th {
   background: linear-gradient(180deg, #fff8f8, #fff1f1);
 }
 
+.reports-mgr-kpi-delivered {
+  border-left-color: #10b981;
+  background: linear-gradient(180deg, #f0fdf7, #e8f9f1);
+}
+
+.reports-mgr-kpi-waiting {
+  border-left-color: #f59e0b;
+  background: linear-gradient(180deg, #fffbef, #fff4d8);
+}
+
 .reports-mgr-charts-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

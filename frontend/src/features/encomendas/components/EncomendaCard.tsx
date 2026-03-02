@@ -31,7 +31,7 @@ export function EncomendaCard({
   onReabrir,
   onDelete
 }: Props): JSX.Element {
-  const endereco = item.endereco_label ?? (enderecosById.get(item.endereco_id) ? formatEnderecoLabel(enderecosById.get(item.endereco_id) as Endereco) : `Endereco #${item.endereco_id}`)
+  const endereco = item.endereco_label ?? (enderecosById.get(item.endereco_id) ? formatEnderecoLabel(enderecosById.get(item.endereco_id) as Endereco) : `Endereço #${item.endereco_id}`)
 
   return (
     <article
@@ -55,7 +55,7 @@ export function EncomendaCard({
           <dd>{item.morador_nome ?? `Morador #${item.morador_id}`}</dd>
         </div>
         <div>
-          <dt>Endereco</dt>
+          <dt>Endereço</dt>
           <dd>{endereco}</dd>
         </div>
         <div>

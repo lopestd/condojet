@@ -19,7 +19,7 @@ function buildTimeline(detail: EncomendaDetail): TimelineEvent[] {
     events.push({
       label: 'Morador notificado',
       date: detail.notificado_em ?? detail.data_recebimento ?? '-',
-      caption: detail.notificado_por || 'Notificacao operacional'
+      caption: detail.notificado_por || 'Notificação operacional'
     })
   }
 

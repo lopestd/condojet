@@ -80,7 +80,7 @@ export function NewEncomendaWizardModal({
 
         <div className="wizard-steps" role="list" aria-label="Etapas do cadastro">
           <span className={step >= 1 ? 'active' : ''}>Dados da encomenda</span>
-          <span className={step >= 2 ? 'active' : ''}>Morador e endereco</span>
+          <span className={step >= 2 ? 'active' : ''}>Morador e endereço</span>
         </div>
 
         <form className="form-grid" onSubmit={(event) => void onWizardSubmit(event)}>
@@ -176,7 +176,7 @@ export function NewEncomendaWizardModal({
                 className="cta"
                 disabled={loading || !canNextStep1}
               >
-                Proxima etapa
+                Próxima etapa
               </button>
             ) : (
               <button type="submit" className="cta" disabled={loading || !canNextStep2}>

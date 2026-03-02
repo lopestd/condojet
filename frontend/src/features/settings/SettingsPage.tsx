@@ -63,14 +63,14 @@ export function SettingsPage(): JSX.Element {
     setFeedback(null);
     try {
       if (!canEditTimezone) {
-        setErro('Configuracao de timezone disponivel apenas para administradores de condominio.');
+        setErro('Configuração de timezone disponível apenas para administradores de condomínio.');
         return;
       }
       const { data } = await backendApi.put<{ timezone: string }>('/configuracoes', { timezone: modalTimezone });
       setTimezone(data.timezone);
       setModalTimezone(data.timezone);
       updateTimezone(data.timezone);
-      setFeedback('Configuracoes salvas com sucesso.');
+      setFeedback('Configurações salvas com sucesso.');
       setActiveModal(null);
     } catch (err) {
       setErro(readApiError(err));
@@ -83,46 +83,46 @@ export function SettingsPage(): JSX.Element {
     <section className="page-grid settings-page">
       <header className="page-header">
         <h1>Preferências da operação</h1>
-        <p>Parametros operacionais organizados por modulos de configuracao.</p>
+        <p>Parâmetros operacionais organizados por módulos de configuração.</p>
       </header>
 
-      <section className="settings-cards-grid" aria-label="Modulos de configuracao">
+      <section className="settings-cards-grid" aria-label="Módulos de configuração">
         <SettingsSectionCard
-          title="Configuracao de Timezone"
-          description="Define o fuso horario oficial utilizado pelos registros de data e hora do condominio."
+          title="Configuração de Timezone"
+          description="Define o fuso horário oficial utilizado pelos registros de data e hora do condomínio."
           items={[
             { label: 'Timezone atual', value: timezone },
-            { label: 'Status', value: 'Configuracao ativa' },
-            { label: 'Aplicacao', value: 'Registros e consultas de data/hora' }
+            { label: 'Status', value: 'Configuração ativa' },
+            { label: 'Aplicação', value: 'Registros e consultas de data/hora' }
           ]}
           loading={carregando}
           error={erro}
           feedback={feedback}
-          infoMessage={canEditTimezone ? null : 'Timezone configurado por condominio. Somente administrador do condominio pode alterar.'}
+          infoMessage={canEditTimezone ? null : 'Timezone configurado por condomínio. Somente administrador do condomínio pode alterar.'}
           onOpen={openTimezoneModal}
         />
 
         <SettingsSectionCard
-          title="Notificacoes e Alertas"
-          description="Modulo reservado para parametros de canais, janelas de envio e regras de notificacao."
+          title="Notificações e Alertas"
+          description="Módulo reservado para parâmetros de canais, janelas de envio e regras de notificação."
           items={[
-            { label: 'Status', value: 'Estrutura pronta para parametrizacao' },
-            { label: 'Visualizacao', value: 'Somente leitura no card' },
-            { label: 'Edicao', value: 'Via modal' }
+            { label: 'Status', value: 'Estrutura pronta para parametrização' },
+            { label: 'Visualização', value: 'Somente leitura no card' },
+            { label: 'Edição', value: 'Via modal' }
           ]}
-          infoMessage="Template: seguir o padrao do modulo de Timezone para novos itens."
+          infoMessage="Template: seguir o padrão do módulo de Timezone para novos itens."
           onOpen={() => setActiveModal('notificacoes')}
         />
 
         <SettingsSectionCard
-          title="Integracoes Operacionais"
-          description="Modulo reservado para tokens, credenciais e politicas de integracao com servicos externos."
+          title="Integrações Operacionais"
+          description="Módulo reservado para tokens, credenciais e políticas de integração com serviços externos."
           items={[
-            { label: 'Status', value: 'Estrutura pronta para parametrizacao' },
-            { label: 'Visualizacao', value: 'Somente leitura no card' },
-            { label: 'Edicao', value: 'Via modal' }
+            { label: 'Status', value: 'Estrutura pronta para parametrização' },
+            { label: 'Visualização', value: 'Somente leitura no card' },
+            { label: 'Edição', value: 'Via modal' }
           ]}
-          infoMessage="Template: campos, validacao e acao de salvar por modulo independente."
+          infoMessage="Template: campos, validação e ação de salvar por módulo independente."
           onOpen={() => setActiveModal('integracoes')}
         />
       </section>
@@ -130,13 +130,13 @@ export function SettingsPage(): JSX.Element {
       {activeModal === 'timezone' ? (
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal-card">
-            <h3>Editar Configuracao de Timezone</h3>
-            <p className="modal-intro">Atualize o fuso horario oficial utilizado pelo condominio.</p>
+            <h3>Editar Configuração de Timezone</h3>
+            <p className="modal-intro">Atualize o fuso horário oficial utilizado pelo condomínio.</p>
             {erro ? <p className="error-box">{erro}</p> : null}
             <form className="form-grid" onSubmit={(event) => void onSave(event)}>
               <label>
-                Nome da instancia
-                <input value="CondoJET Operacao" disabled />
+                Nome da instância
+                <input value="CondoJET Operação" disabled />
               </label>
               <label>
                 Timezone
@@ -172,12 +172,12 @@ export function SettingsPage(): JSX.Element {
       {activeModal === 'notificacoes' ? (
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal-card">
-            <h3>Editar Notificacoes e Alertas</h3>
-            <p className="modal-intro">Este modulo esta preparado para receber parametros em proxima evolucao.</p>
+            <h3>Editar Notificações e Alertas</h3>
+            <p className="modal-intro">Este módulo está preparado para receber parâmetros em próxima evolução.</p>
             <form className="form-grid" onSubmit={(event) => event.preventDefault()}>
               <label>
                 Status
-                <input value="Sem parametros editaveis nesta versao" disabled />
+                <input value="Sem parâmetros editáveis nesta versão" disabled />
               </label>
               <div className="modal-actions">
                 <button type="button" className="button-soft" onClick={() => setActiveModal(null)}>
@@ -195,12 +195,12 @@ export function SettingsPage(): JSX.Element {
       {activeModal === 'integracoes' ? (
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal-card">
-            <h3>Editar Integracoes Operacionais</h3>
-            <p className="modal-intro">Este modulo esta preparado para receber parametros em proxima evolucao.</p>
+            <h3>Editar Integrações Operacionais</h3>
+            <p className="modal-intro">Este módulo está preparado para receber parâmetros em próxima evolução.</p>
             <form className="form-grid" onSubmit={(event) => event.preventDefault()}>
               <label>
                 Status
-                <input value="Sem parametros editaveis nesta versao" disabled />
+                <input value="Sem parâmetros editáveis nesta versão" disabled />
               </label>
               <div className="modal-actions">
                 <button type="button" className="button-soft" onClick={() => setActiveModal(null)}>

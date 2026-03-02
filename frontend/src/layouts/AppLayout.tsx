@@ -14,7 +14,7 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { path: '/dashboard', label: 'Painel CondoJET', shortLabel: 'Painel', icon: 'dashboard', roles: ['ADMIN_GLOBAL', 'ADMIN', 'PORTEIRO', 'MORADOR'] },
-  { path: '/global', label: 'Gestao Global', shortLabel: 'Global', icon: 'global', roles: ['ADMIN_GLOBAL'] },
+  { path: '/global', label: 'Gestão Global', shortLabel: 'Global', icon: 'global', roles: ['ADMIN_GLOBAL'] },
   { path: '/condo/admin/usuarios', label: 'Admin Condomínio', shortLabel: 'Admin', icon: 'admin', roles: ['ADMIN'] },
   { path: '/condo/encomendas', label: 'Encomendas', shortLabel: 'Encomendas', icon: 'packages', roles: ['ADMIN', 'PORTEIRO'] },
   {
@@ -28,7 +28,7 @@ const NAV_ITEMS: NavItem[] = [
 
 const CONFIG_NAV_ITEM: NavItem = {
   path: '/condo/config',
-  label: 'Configuracoes',
+  label: 'Configurações',
   shortLabel: 'Config',
   icon: 'settings',
   roles: ['ADMIN']
@@ -36,23 +36,23 @@ const CONFIG_NAV_ITEM: NavItem = {
 
 const REPORTS_NAV_ITEM: NavItem = {
   path: '/condo/relatorios',
-  label: 'Relatorios',
-  shortLabel: 'Relatorios',
+  label: 'Relatórios',
+  shortLabel: 'Relatórios',
   icon: 'reports',
   roles: ['ADMIN_GLOBAL', 'ADMIN']
 };
 
 const TITLES: Record<string, string> = {
   '/dashboard': 'Painel CondoJET',
-  '/global': 'Gestao Global',
-  '/condo/admin': 'Administracao do Condominio',
-  '/condo/admin/usuarios': 'Administracao do Condominio',
-  '/condo/admin/moradores': 'Administracao do Condominio',
+  '/global': 'Gestão Global',
+  '/condo/admin': 'Administração do Condomínio',
+  '/condo/admin/usuarios': 'Administração do Condomínio',
+  '/condo/admin/moradores': 'Administração do Condomínio',
   '/condo/encomendas': 'Encomendas',
-  '/condo/operacao': 'Operacao de Encomendas',
+  '/condo/operacao': 'Operação de Encomendas',
   '/condo/minhas-encomendas': 'Minhas Encomendas',
-  '/condo/relatorios': 'Relatorios',
-  '/condo/config': 'Configuracoes'
+  '/condo/relatorios': 'Relatórios',
+  '/condo/config': 'Configurações'
 };
 
 function getRoleLabel(role?: UserRole): string {
@@ -197,7 +197,7 @@ export function AppLayout(): JSX.Element {
   const pageTitle = TITLES[location.pathname] ?? 'CondoJET';
   const showTopbarInfo = location.pathname !== '/dashboard';
   const profileLabel = getRoleLabel(user?.role);
-  const usuarioLabel = user ? `${user.nomeUsuario} (${profileLabel})` : 'Usuario';
+  const usuarioLabel = user ? `${user.nomeUsuario} (${profileLabel})` : 'Usuário';
   const condominioLabel = user?.nomeCondominio ?? 'CondoJET Global';
 
   return (
@@ -217,7 +217,7 @@ export function AppLayout(): JSX.Element {
         <div className="brand-block">
           <p className="brand-eyebrow">Plataforma</p>
           <h1>CondoJET</h1>
-          <small>Gestao de encomendas em condominios</small>
+          <small>Gestão de encomendas em condomínios</small>
         </div>
 
         <nav className="sidebar-nav" aria-label="Menu principal">
@@ -323,7 +323,7 @@ export function AppLayout(): JSX.Element {
           <header className="app-topbar">
             <div>
               <h2>{pageTitle}</h2>
-              <p>CondoJET em operacao segura e orientada por perfil.</p>
+              <p>CondoJET em operação segura e orientada por perfil.</p>
             </div>
           </header>
         ) : null}

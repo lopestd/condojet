@@ -447,11 +447,11 @@ export function EncomendasPage(): JSX.Element {
                 <tr>
                   <th>Data Rec</th>
                   <th>Morador</th>
-                  <th>Endereco</th>
+                  <th>Endereço</th>
                   <th>Tipo</th>
                   <th>Data Entrega</th>
                   <th>Status</th>
-                  <th className="actions-col">Acoes</th>
+                  <th className="actions-col">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -568,7 +568,7 @@ export function EncomendasPage(): JSX.Element {
         {filteredAndSortedItems.length > 0 ? (
           <div className="list-pagination">
             <label className="pagination-page-size">
-              Registros por pagina
+              Registros por página
               <select
                 value={pageSize}
                 onChange={(event) => {
@@ -594,14 +594,14 @@ export function EncomendasPage(): JSX.Element {
               >
                 Anterior
               </button>
-              <span>{`Pagina ${currentPage} de ${totalPages}`}</span>
+              <span>{`Página ${currentPage} de ${totalPages}`}</span>
               <button
                 type="button"
                 className="button-soft"
                 disabled={currentPage >= totalPages}
                 onClick={() => setCurrentPage((value) => Math.min(totalPages, value + 1))}
               >
-                Proxima
+                Próxima
               </button>
             </div>
           </div>

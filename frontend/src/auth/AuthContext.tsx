@@ -46,8 +46,8 @@ function parseStoredSession(): SessionUser | null {
       accessToken: parsed.accessToken,
       role: parsed.role,
       condominioId: parsed.condominioId ?? null,
-      nomeUsuario: parsed.nomeUsuario ?? 'Usuario',
-      nomeCondominio: parsed.nomeCondominio ?? (parsed.condominioId ? `Condominio ${parsed.condominioId}` : 'CondoJET Global'),
+      nomeUsuario: parsed.nomeUsuario ?? 'Usuário',
+      nomeCondominio: parsed.nomeCondominio ?? (parsed.condominioId ? `Condomínio ${parsed.condominioId}` : 'CondoJET Global'),
       timezone: parsed.timezone ?? DEFAULT_TIMEZONE
     };
   } catch {

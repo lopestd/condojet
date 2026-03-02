@@ -24,7 +24,7 @@ type AlertItem = {
   nome: string
   apartamento: string
   tempoAguardandoHoras: number
-  risco: 'Atrasado critico' | 'Atrasado'
+  risco: 'Atrasado crítico' | 'Atrasado'
 };
 
 type ViewPeriod = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';
@@ -37,7 +37,7 @@ type DateRange = {
 
 const PERIOD_OPTIONS: Array<{ value: ViewPeriod; label: string }> = [
   { value: 'DAY', label: 'Hoje' },
-  { value: 'WEEK', label: 'Ultimos 7 dias' },
+  { value: 'WEEK', label: 'Últimos 7 dias' },
   { value: 'MONTH', label: 'Mensal' },
   { value: 'YEAR', label: 'Anual' }
 ];
@@ -58,13 +58,13 @@ function resolveDateRange(now: Date, period: ViewPeriod, dataAnchor: Date): Date
     const start = new Date(now);
     start.setDate(start.getDate() - 6);
     start.setHours(0, 0, 0, 0);
-    return { start, end, label: 'nos ultimos 7 dias' };
+    return { start, end, label: 'nos últimos 7 dias' };
   }
   if (period === 'MONTH') {
     const start = new Date(dataAnchor.getFullYear(), dataAnchor.getMonth(), 1, 0, 0, 0, 0);
     const endOfMonth = new Date(dataAnchor.getFullYear(), dataAnchor.getMonth() + 1, 0, 23, 59, 59, 999);
     const monthLabel = capitalizeFirst(start.toLocaleDateString('pt-BR', { month: 'long' }));
-    return { start, end: endOfMonth, label: `no mes de ${monthLabel}` };
+    return { start, end: endOfMonth, label: `no mês de ${monthLabel}` };
   }
   const start = new Date(dataAnchor.getFullYear(), 0, 1, 0, 0, 0, 0);
   const endOfYear = new Date(dataAnchor.getFullYear(), 11, 31, 23, 59, 59, 999);
@@ -169,13 +169,13 @@ export function DashboardPage(): JSX.Element {
     overdueItems.sort((a, b) => b.horas - a.horas);
     const alertPackages: AlertItem[] = overdueItems.slice(0, 6).map(({ item, horas }) => {
       const endereco = enderecosById.get(item.endereco_id);
-      const apartamento = item.endereco_label || (endereco ? `${endereco.quadra}` : `Endereco #${item.endereco_id}`);
+      const apartamento = item.endereco_label || (endereco ? `${endereco.quadra}` : `Endereço #${item.endereco_id}`);
       return {
         id: item.id,
         nome: item.morador_nome ?? `Morador #${item.morador_id}`,
         apartamento,
         tempoAguardandoHoras: horas,
-        risco: horas >= 72 ? 'Atrasado critico' : 'Atrasado'
+        risco: horas >= 72 ? 'Atrasado crítico' : 'Atrasado'
       };
     });
 
@@ -210,10 +210,10 @@ export function DashboardPage(): JSX.Element {
   });
   const alertTitle =
     dashboardData.alertPackages.length > 0
-      ? `${dashboardData.alertPackages.length} encomendas requerem atencao ${periodLabel}`
+      ? `${dashboardData.alertPackages.length} encomendas requerem atenção ${periodLabel}`
       : `Nenhuma encomenda atrasada ${periodLabel}`;
   const hasOverdueAlerts = dashboardData.alertPackages.length > 0;
-  const condominio = user?.nomeCondominio ?? (user?.condominioId ? `Condominio ${user.condominioId}` : 'CondoJET Global');
+  const condominio = user?.nomeCondominio ?? (user?.condominioId ? `Condomínio ${user.condominioId}` : 'CondoJET Global');
   const canCreateEncomenda = user?.role === 'ADMIN' || user?.role === 'PORTEIRO';
 
   return (
@@ -236,9 +236,9 @@ export function DashboardPage(): JSX.Element {
         </div>
       </header>
 
-      <section className="panel dashboard-period-panel" aria-label="Periodo de visualizacao">
-        <p>Periodo de visualizacao</p>
-        <div className="dashboard-period-options" role="tablist" aria-label="Selecionar periodo do painel">
+      <section className="panel dashboard-period-panel" aria-label="Período de visualização">
+        <p>Período de visualização</p>
+        <div className="dashboard-period-options" role="tablist" aria-label="Selecionar período do painel">
           {periodOptions.map((option) => (
             <button
               key={option.value}
@@ -268,12 +268,12 @@ export function DashboardPage(): JSX.Element {
         <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-entregue">
           <span>Entregues</span>
           <strong>{dashboardData.entregue}</strong>
-          <small>{`Concluidas ${periodLabel}`}</small>
+          <small>{`Concluídas ${periodLabel}`}</small>
         </article>
         <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-atrasado">
           <span>Atrasados</span>
           <strong>{dashboardData.atrasado}</strong>
-          <small>{`Pendencias ${periodLabel}`}</small>
+          <small>{`Pendências ${periodLabel}`}</small>
         </article>
       </section>
 
@@ -287,7 +287,7 @@ export function DashboardPage(): JSX.Element {
         <article className="panel dashboard-activity-card dashboard-activity-delivered">
           <h2>Entregues</h2>
           <strong>{dashboardData.todayDelivered}</strong>
-          <p>{`Retiradas concluidas ${periodLabel}.`}</p>
+          <p>{`Retiradas concluídas ${periodLabel}.`}</p>
         </article>
       </section>
 
@@ -313,7 +313,7 @@ export function DashboardPage(): JSX.Element {
                 </div>
                 <div className="dashboard-alert-meta">
                   <small>{`${alert.tempoAguardandoHoras}h aguardando`}</small>
-                  <span className={`status-badge ${alert.risco === 'Atrasado critico' ? 'inactive' : 'recebida'}`}>{alert.risco}</span>
+                  <span className={`status-badge ${alert.risco === 'Atrasado crítico' ? 'inactive' : 'recebida'}`}>{alert.risco}</span>
                 </div>
               </li>
             ))}

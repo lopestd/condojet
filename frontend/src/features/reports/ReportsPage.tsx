@@ -50,9 +50,9 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const FORGOTTEN_DAYS = 15;
 
 const PERIOD_OPTIONS: Array<{ value: PeriodType; label: string }> = [
-  { value: '7d', label: 'Ultimos 7 dias' },
-  { value: '30d', label: 'Ultimos 30 dias' },
-  { value: '90d', label: 'Ultimos 90 dias' },
+  { value: '7d', label: 'Últimos 7 dias' },
+  { value: '30d', label: 'Últimos 30 dias' },
+  { value: '90d', label: 'Últimos 90 dias' },
   { value: 'custom', label: 'Personalizado' }
 ];
 
@@ -115,10 +115,10 @@ function fromIsoDate(value: string): string {
 }
 
 function buildEnderecoLabel(endereco?: Endereco): string {
-  if (!endereco) return 'Nao informado';
+  if (!endereco) return 'Não informado';
   const parts = [endereco.quadra, endereco.conjunto, endereco.lote].filter(Boolean);
   if (parts.length > 0) return parts.join(' - ');
-  return endereco.tipo_endereco || `Endereco ${endereco.id}`;
+  return endereco.tipo_endereco || `Endereço ${endereco.id}`;
 }
 
 function sameDayIso(date: Date): string {
@@ -191,7 +191,7 @@ export function ReportsPage(): JSX.Element {
         start: startOfDay(new Date(now.getTime() - 6 * DAY_MS)),
         end: endOfDay(now),
         valid: true,
-        label: 'Ultimos 7 dias',
+        label: 'Últimos 7 dias',
         error: null
       };
     }
@@ -201,7 +201,7 @@ export function ReportsPage(): JSX.Element {
         start: startOfDay(new Date(now.getTime() - 29 * DAY_MS)),
         end: endOfDay(now),
         valid: true,
-        label: 'Ultimos 30 dias',
+        label: 'Últimos 30 dias',
         error: null
       };
     }
@@ -211,7 +211,7 @@ export function ReportsPage(): JSX.Element {
         start: startOfDay(new Date(now.getTime() - 89 * DAY_MS)),
         end: endOfDay(now),
         valid: true,
-        label: 'Ultimos 90 dias',
+        label: 'Últimos 90 dias',
         error: null
       };
     }
@@ -224,7 +224,7 @@ export function ReportsPage(): JSX.Element {
         start: startOfDay(now),
         end: endOfDay(now),
         valid: false,
-        label: 'Periodo personalizado',
+        label: 'Período personalizado',
         error: null
       };
     }
@@ -356,7 +356,7 @@ export function ReportsPage(): JSX.Element {
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 36;
 
-      const condoName = user?.nomeCondominio || 'Condominio';
+      const condoName = user?.nomeCondominio || 'Condomínio';
       const logoText = condoName
         .split(' ')
         .filter(Boolean)
@@ -374,10 +374,10 @@ export function ReportsPage(): JSX.Element {
       doc.setFontSize(18);
       doc.text('CondoJET', margin + 46, margin + 2);
       doc.setFontSize(11);
-      doc.text(`Relatorio Gerencial - ${condoName}`, margin + 46, margin + 18);
-      doc.text(`Periodo analisado: ${range.label}`, margin + 46, margin + 34);
-      doc.text(`Data de geracao: ${new Date().toLocaleString('pt-BR')}`, margin + 46, margin + 50);
-      doc.text(`Usuario: ${user?.nomeUsuario ?? 'Usuario'}`, margin + 46, margin + 66);
+      doc.text(`Relatório Gerencial - ${condoName}`, margin + 46, margin + 18);
+      doc.text(`Período analisado: ${range.label}`, margin + 46, margin + 34);
+      doc.text(`Data de geração: ${new Date().toLocaleString('pt-BR')}`, margin + 46, margin + 50);
+      doc.text(`Usuário: ${user?.nomeUsuario ?? 'Usuário'}`, margin + 46, margin + 66);
 
       let y = margin + 94;
 
@@ -401,12 +401,12 @@ export function ReportsPage(): JSX.Element {
       y += 46;
 
       const chartBlocks: Array<{ title: string; ref: HTMLDivElement | null }> = [
-        { title: 'Distribuicao por Status', ref: statusChartRef.current },
-        { title: 'Evolucao no Periodo', ref: evolutionChartRef.current }
+        { title: 'Distribuição por Status', ref: statusChartRef.current },
+        { title: 'Evolução no Período', ref: evolutionChartRef.current }
       ];
 
       doc.setFontSize(13);
-      doc.text('Graficos', margin, y);
+      doc.text('Gráficos', margin, y);
       y += 12;
 
       for (const block of chartBlocks) {
@@ -453,7 +453,7 @@ export function ReportsPage(): JSX.Element {
 
       autoTable(doc, {
         startY: y,
-        head: [['Morador', 'Endereco', 'Empresa', 'Data recebimento', 'Data entrega', 'Status', 'Dias aguardando']],
+        head: [['Morador', 'Endereço', 'Empresa', 'Data recebimento', 'Data entrega', 'Status', 'Dias aguardando']],
         body: tableBody,
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 4 },
@@ -466,7 +466,7 @@ export function ReportsPage(): JSX.Element {
         doc.setPage(page);
         doc.setFontSize(8);
         doc.setTextColor(90, 90, 90);
-        doc.text(`Pagina ${page} de ${pageCount}`, pageWidth - margin, pageHeight - 18, { align: 'right' });
+        doc.text(`Página ${page} de ${pageCount}`, pageWidth - margin, pageHeight - 18, { align: 'right' });
         doc.text('Gerado automaticamente pelo CondoJET', margin, pageHeight - 18);
       }
 
@@ -485,13 +485,13 @@ export function ReportsPage(): JSX.Element {
     <section className="page-grid reports-mgr-page">
       <section className="panel reports-mgr-filters">
         <div className="reports-mgr-export-row">
-          <p className="reports-mgr-export-title">Escolha o filtro de periodo</p>
+          <p className="reports-mgr-export-title">Escolha o filtro de período</p>
           <button type="button" className="cta" onClick={() => void exportPdf()} disabled={!range.valid || exporting || loading}>
             {exporting ? 'Gerando PDF...' : 'Exportar PDF'}
           </button>
         </div>
 
-        <div className="reports-mgr-filter-row" role="tablist" aria-label="Filtros rapidos de periodo">
+        <div className="reports-mgr-filter-row" role="tablist" aria-label="Filtros rápidos de período">
           {PERIOD_OPTIONS.map((option) => (
             <button
               key={option.value}
@@ -509,7 +509,7 @@ export function ReportsPage(): JSX.Element {
         {period === 'custom' ? (
           <div className="reports-mgr-custom-cards">
             <label className="reports-mgr-date-card">
-              <span>Data inicio</span>
+              <span>Data início</span>
               <div className="reports-mgr-date-field">
                 <input
                   type="text"
@@ -524,7 +524,7 @@ export function ReportsPage(): JSX.Element {
                 <button
                   type="button"
                   className="reports-mgr-date-trigger"
-                  aria-label="Abrir calendario da data inicio"
+                  aria-label="Abrir calendário da data início"
                   onClick={() => {
                     if (startPickerRef.current?.showPicker) startPickerRef.current.showPicker();
                     else startPickerRef.current?.focus();
@@ -564,7 +564,7 @@ export function ReportsPage(): JSX.Element {
                 <button
                   type="button"
                   className="reports-mgr-date-trigger"
-                  aria-label="Abrir calendario da data fim"
+                  aria-label="Abrir calendário da data fim"
                   onClick={() => {
                     if (!customEnd && customStart) setCustomEnd(customStart);
                     if (endPickerRef.current?.showPicker) endPickerRef.current.showPicker();
@@ -601,7 +601,7 @@ export function ReportsPage(): JSX.Element {
         ) : null}
 
         <div className="reports-mgr-period-row">
-          <small className="reports-mgr-period-caption">Periodo selecionado: {range.label}</small>
+          <small className="reports-mgr-period-caption">Período selecionado: {range.label}</small>
           {period === 'custom' ? (
             <button
               type="button"
@@ -619,7 +619,7 @@ export function ReportsPage(): JSX.Element {
         {range.error ? <p className="error-box">A data final não pode ser anterior à data inicial.</p> : null}
       </section>
 
-      {loading ? <p className="info-box">Carregando relatorios...</p> : null}
+      {loading ? <p className="info-box">Carregando relatórios...</p> : null}
       {error ? <p className="error-box">{error}</p> : null}
 
       {!loading && !error && range.valid ? (
@@ -629,11 +629,11 @@ export function ReportsPage(): JSX.Element {
               <span>TOTAL RECEBIDAS</span>
               <strong>{receivedWithinPeriod.length}</strong>
             </article>
-            <article className="panel reports-mgr-kpi">
+            <article className="panel reports-mgr-kpi reports-mgr-kpi-delivered">
               <span>Entregues</span>
               <strong>{deliveredWithinPeriod.length}</strong>
             </article>
-            <article className="panel reports-mgr-kpi">
+            <article className="panel reports-mgr-kpi reports-mgr-kpi-waiting">
               <span>Aguardando Retirada</span>
               <strong>{aguardando.length}</strong>
             </article>
@@ -646,7 +646,7 @@ export function ReportsPage(): JSX.Element {
 
           <section className="reports-mgr-charts-grid">
             <article className="panel reports-mgr-chart-card">
-              <h2>Distribuicao por Status</h2>
+              <h2>Distribuição por Status</h2>
               <div ref={statusChartRef} className="reports-mgr-chart-wrap">
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
@@ -663,7 +663,7 @@ export function ReportsPage(): JSX.Element {
             </article>
 
             <article className="panel reports-mgr-chart-card">
-              <h2>Evolucao no Periodo</h2>
+              <h2>Evolução no Período</h2>
               <div ref={evolutionChartRef} className="reports-mgr-chart-wrap">
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={dailyEvolutionData} margin={{ top: 8, right: 12, left: 6, bottom: 6 }}>
