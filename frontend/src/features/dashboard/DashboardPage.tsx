@@ -6,25 +6,30 @@ import { backendApi, readApiError } from '../../services/httpClient';
 import { getAppTimezone, parseApiDate } from '../../utils/dateTime';
 import type { Endereco } from '../encomendas/types';
 import type { EncomendaListItem } from '../encomendas/types';
-import { isOverdue } from '../encomendas/utils/statusMapping';
+import { isForgotten } from '../encomendas/utils/statusMapping';
 
 type DashboardData = {
   total: number
   aguardando: number
   notificado: number
   entregue: number
-  atrasado: number
+  esquecida: number
   todayReceived: number
-  todayDelivered: number
   alertPackages: AlertItem[]
 }
 
 type AlertItem = {
   id: number
   nome: string
-  apartamento: string
-  tempoAguardandoHoras: number
-  risco: 'Atrasado crítico' | 'Atrasado'
+  endereco: {
+    quadra: string
+    secondLabel: string
+    secondValue: string
+    thirdLabel: string
+    thirdValue: string
+  }
+  tempoAguardandoDias: number
+  risco: 'Esquecida crítica' | 'Esquecida'
 };
 
 type ViewPeriod = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';
@@ -38,9 +43,16 @@ type DateRange = {
 const PERIOD_OPTIONS: Array<{ value: ViewPeriod; label: string }> = [
   { value: 'DAY', label: 'Hoje' },
   { value: 'WEEK', label: 'Últimos 7 dias' },
-  { value: 'MONTH', label: 'Mensal' },
+  { value: 'MONTH', label: 'Últimos 30 dias' },
   { value: 'YEAR', label: 'Anual' }
 ];
+const DEFAULT_FORGOTTEN_DAYS = 15;
+const DAY_MS = 1000 * 60 * 60 * 24;
+
+type ConfiguracoesResponse = {
+  timezone: string;
+  prazo_dias_encomenda_esquecida: number;
+};
 
 function capitalizeFirst(value: string): string {
   if (!value) return value;
@@ -61,10 +73,10 @@ function resolveDateRange(now: Date, period: ViewPeriod, dataAnchor: Date): Date
     return { start, end, label: 'nos últimos 7 dias' };
   }
   if (period === 'MONTH') {
-    const start = new Date(dataAnchor.getFullYear(), dataAnchor.getMonth(), 1, 0, 0, 0, 0);
-    const endOfMonth = new Date(dataAnchor.getFullYear(), dataAnchor.getMonth() + 1, 0, 23, 59, 59, 999);
-    const monthLabel = capitalizeFirst(start.toLocaleDateString('pt-BR', { month: 'long' }));
-    return { start, end: endOfMonth, label: `no mês de ${monthLabel}` };
+    const start = new Date(now);
+    start.setDate(start.getDate() - 29);
+    start.setHours(0, 0, 0, 0);
+    return { start, end, label: 'nos últimos 30 dias' };
   }
   const start = new Date(dataAnchor.getFullYear(), 0, 1, 0, 0, 0, 0);
   const endOfYear = new Date(dataAnchor.getFullYear(), 11, 31, 23, 59, 59, 999);
@@ -80,6 +92,40 @@ function initials(nome: string): string {
     .join('');
 }
 
+function getEnderecoParts(endereco: Endereco | undefined): {
+  quadra: string
+  secondLabel: string
+  secondValue: string
+  thirdLabel: string
+  thirdValue: string
+} {
+  if (!endereco) {
+    return {
+      quadra: '-',
+      secondLabel: 'Conjunto',
+      secondValue: '-',
+      thirdLabel: 'Lote',
+      thirdValue: '-'
+    };
+  }
+  if (endereco.tipo_endereco === 'QUADRA_SETOR_CHACARA') {
+    return {
+      quadra: endereco.quadra || '-',
+      secondLabel: 'Setor/Chácara',
+      secondValue: endereco.setor_chacara || '-',
+      thirdLabel: 'Número Chácara',
+      thirdValue: endereco.numero_chacara || '-'
+    };
+  }
+  return {
+    quadra: endereco.quadra || '-',
+    secondLabel: 'Conjunto',
+    secondValue: endereco.conjunto || '-',
+    thirdLabel: 'Lote',
+    thirdValue: endereco.lote || '-'
+  };
+}
+
 export function DashboardPage(): JSX.Element {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -89,6 +135,7 @@ export function DashboardPage(): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewPeriod, setViewPeriod] = useState<ViewPeriod>('DAY');
+  const [forgottenDaysThreshold, setForgottenDaysThreshold] = useState<number>(DEFAULT_FORGOTTEN_DAYS);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 60000);
@@ -110,6 +157,16 @@ export function DashboardPage(): JSX.Element {
           map.set(endereco.id, endereco);
         });
         setEnderecosById(map);
+        if (user?.role === 'ADMIN' || user?.role === 'PORTEIRO') {
+          try {
+            const { data } = await backendApi.get<ConfiguracoesResponse>('/configuracoes');
+            setForgottenDaysThreshold(data.prazo_dias_encomenda_esquecida ?? DEFAULT_FORGOTTEN_DAYS);
+          } catch {
+            setForgottenDaysThreshold(DEFAULT_FORGOTTEN_DAYS);
+          }
+        } else {
+          setForgottenDaysThreshold(DEFAULT_FORGOTTEN_DAYS);
+        }
       } catch (err) {
         setError(readApiError(err));
       } finally {
@@ -117,7 +174,7 @@ export function DashboardPage(): JSX.Element {
       }
     }
     void loadDashboardData();
-  }, []);
+  }, [user?.role]);
 
   const dataAnchor = useMemo(() => {
     let latest: Date | null = null;
@@ -136,60 +193,67 @@ export function DashboardPage(): JSX.Element {
     let aguardando = 0;
     let notificado = 0;
     let entregue = 0;
-    let atrasado = 0;
+    let esquecida = 0;
     let todayReceived = 0;
-    let todayDelivered = 0;
-    const overdueItems: Array<{ item: EncomendaListItem; horas: number }> = [];
+    const overdueItems: Array<{ item: EncomendaListItem; dias: number }> = [];
 
     items.forEach((item) => {
       const received = parseApiDate(item.data_recebimento);
       const delivered = parseApiDate(item.data_entrega);
+      const forgotten = isForgotten(item, forgottenDaysThreshold, now.getTime());
       const isReceivedInPeriod = Boolean(received && received >= range.start && received <= range.end);
       const isDeliveredInPeriod = Boolean(delivered && delivered >= range.start && delivered <= range.end);
+      const notified = item.status === 'DISPONIVEL_RETIRADA';
+      const pending = item.status === 'RECEBIDA' || notified || forgotten;
 
+      if (pending) {
+        aguardando += 1;
+      }
+      if (notified) {
+        if (isReceivedInPeriod) {
+          notificado += 1;
+        }
+      }
+      if (forgotten) {
+        esquecida += 1;
+      }
       if (isReceivedInPeriod) {
         todayReceived += 1;
-        if (item.status === 'RECEBIDA' || item.status === 'DISPONIVEL_RETIRADA') aguardando += 1;
-        if (item.status === 'DISPONIVEL_RETIRADA') notificado += 1;
       }
       if (isDeliveredInPeriod) {
-        todayDelivered += 1;
         entregue += 1;
       }
 
-      if (isReceivedInPeriod && isOverdue(item, now.getTime())) {
-        atrasado += 1;
+      if (forgotten) {
         if (received) {
-          const horas = Math.max(1, Math.floor((now.getTime() - received.getTime()) / (1000 * 60 * 60)));
-          overdueItems.push({ item, horas });
+          const dias = Math.max(1, Math.floor((now.getTime() - received.getTime()) / DAY_MS));
+          overdueItems.push({ item, dias });
         }
       }
     });
 
-    overdueItems.sort((a, b) => b.horas - a.horas);
-    const alertPackages: AlertItem[] = overdueItems.slice(0, 6).map(({ item, horas }) => {
+    overdueItems.sort((a, b) => b.dias - a.dias);
+    const alertPackages: AlertItem[] = overdueItems.slice(0, 10).map(({ item, dias }) => {
       const endereco = enderecosById.get(item.endereco_id);
-      const apartamento = item.endereco_label || (endereco ? `${endereco.quadra}` : `Endereço #${item.endereco_id}`);
       return {
         id: item.id,
         nome: item.morador_nome ?? `Morador #${item.morador_id}`,
-        apartamento,
-        tempoAguardandoHoras: horas,
-        risco: horas >= 72 ? 'Atrasado crítico' : 'Atrasado'
+        endereco: getEnderecoParts(endereco),
+        tempoAguardandoDias: dias,
+        risco: dias >= 3 ? 'Esquecida crítica' : 'Esquecida'
       };
     });
 
     return {
-      total: todayReceived + todayDelivered,
+      total: items.length,
       aguardando,
       notificado,
       entregue,
-      atrasado,
+      esquecida,
       todayReceived,
-      todayDelivered,
       alertPackages
     };
-  }, [items, now, enderecosById, viewPeriod, dataAnchor]);
+  }, [items, now, enderecosById, viewPeriod, dataAnchor, forgottenDaysThreshold]);
 
   const appTimezone = getAppTimezone();
   const dataLabel = now.toLocaleDateString('pt-BR', {
@@ -201,17 +265,12 @@ export function DashboardPage(): JSX.Element {
   });
   const horaLabel = now.toLocaleTimeString('pt-BR', { timeZone: appTimezone, hour: '2-digit', minute: '2-digit' });
   const periodLabel = resolveDateRange(now, viewPeriod, dataAnchor).label;
-  const monthPeriodText = capitalizeFirst(dataAnchor.toLocaleDateString('pt-BR', { month: 'long' }));
   const yearPeriodText = String(dataAnchor.getFullYear());
   const periodOptions = PERIOD_OPTIONS.map((option) => {
-    if (option.value === 'MONTH') return { ...option, label: `Mensal (${monthPeriodText})` };
     if (option.value === 'YEAR') return { ...option, label: `Anual (${yearPeriodText})` };
     return option;
   });
-  const alertTitle =
-    dashboardData.alertPackages.length > 0
-      ? `${dashboardData.alertPackages.length} encomendas requerem atenção ${periodLabel}`
-      : `Nenhuma encomenda atrasada ${periodLabel}`;
+  const alertTitle = 'Top 10 encomendas mais antigas aguardando retirada.';
   const hasOverdueAlerts = dashboardData.alertPackages.length > 0;
   const condominio = user?.nomeCondominio ?? (user?.condominioId ? `Condomínio ${user.condominioId}` : 'CondoJET Global');
   const canCreateEncomenda = user?.role === 'ADMIN' || user?.role === 'PORTEIRO';
@@ -255,51 +314,42 @@ export function DashboardPage(): JSX.Element {
       </section>
 
       <section className="kpi-grid dashboard-kpi-grid">
-        <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-aguardando">
-          <span>Aguardando</span>
-          <strong>{dashboardData.aguardando}</strong>
-          <small>{`Prontas para retirada ${periodLabel}`}</small>
-        </article>
-        <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-notificado">
-          <span>Notificados</span>
-          <strong>{dashboardData.notificado}</strong>
-          <small>{`Moradores avisados ${periodLabel}`}</small>
+        <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-recebidas">
+          <span>Recebidas</span>
+          <strong>{dashboardData.todayReceived}</strong>
+          <small>{`Entradas registradas ${periodLabel}`}</small>
         </article>
         <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-entregue">
           <span>Entregues</span>
           <strong>{dashboardData.entregue}</strong>
           <small>{`Concluídas ${periodLabel}`}</small>
         </article>
+        <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-notificado">
+          <span>Notificados</span>
+          <strong>{dashboardData.notificado}</strong>
+          <small>{`Moradores avisados ${periodLabel}`}</small>
+        </article>
+        <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-aguardando">
+          <span>Aguardando retirada</span>
+          <strong>{dashboardData.aguardando}</strong>
+          <small>Pendências ativas (inclui notificadas e esquecidas)</small>
+        </article>
         <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-atrasado">
-          <span>Atrasados</span>
-          <strong>{dashboardData.atrasado}</strong>
-          <small>{`Pendências ${periodLabel}`}</small>
-        </article>
-      </section>
-
-      <section className="dashboard-activity-grid">
-        <article className="panel dashboard-activity-card dashboard-activity-inbound">
-          <h2>Recebidas</h2>
-          <strong>{dashboardData.todayReceived}</strong>
-          <p>{`Entradas registradas ${periodLabel}.`}</p>
-        </article>
-
-        <article className="panel dashboard-activity-card dashboard-activity-delivered">
-          <h2>Entregues</h2>
-          <strong>{dashboardData.todayDelivered}</strong>
-          <p>{`Retiradas concluídas ${periodLabel}.`}</p>
+          <span>Esquecidas</span>
+          <strong>{dashboardData.esquecida}</strong>
+          <small>{`Aguardando retirada há mais de ${forgottenDaysThreshold} dias`}</small>
         </article>
       </section>
 
       <article className={`panel dashboard-alerts-panel ${hasOverdueAlerts ? 'dashboard-alerts-panel-danger' : 'dashboard-alerts-panel-ok'}`}>
         <div className="dashboard-alerts-head">
           <h2>{alertTitle}</h2>
-          <small>{`Total monitorado: ${dashboardData.total} encomendas`}</small>
+          <small>{`Exibindo ${dashboardData.alertPackages.length} de ${dashboardData.esquecida} encomendas esquecidas`}</small>
         </div>
         {loading ? <p className="info-box">Carregando painel...</p> : null}
         {error ? <p className="error-box">{error}</p> : null}
         {!loading && !error && dashboardData.alertPackages.length === 0 ? (
-          <p className="dashboard-empty-alerts">Fluxo normalizado: nenhuma entrega em atraso no momento.</p>
+          <p className="dashboard-empty-alerts">Fluxo normalizado: nenhuma encomenda esquecida no momento.</p>
         ) : !loading && !error ? (
           <ul className="dashboard-alerts-list">
             {dashboardData.alertPackages.map((alert) => (
@@ -308,12 +358,20 @@ export function DashboardPage(): JSX.Element {
                   {initials(alert.nome)}
                 </div>
                 <div className="dashboard-alert-content">
-                  <p>{alert.nome}</p>
-                  <small>{alert.apartamento}</small>
-                </div>
-                <div className="dashboard-alert-meta">
-                  <small>{`${alert.tempoAguardandoHoras}h aguardando`}</small>
-                  <span className={`status-badge ${alert.risco === 'Atrasado crítico' ? 'inactive' : 'recebida'}`}>{alert.risco}</span>
+                  <p className="dashboard-alert-destinatario">
+                    <strong>Destinatário(a):</strong> {alert.nome}
+                  </p>
+                  <div className="dashboard-alert-body">
+                    <div className="address-stack dashboard-alert-address">
+                      <p><strong>Quadra:</strong> {alert.endereco.quadra}</p>
+                      <p><strong>{alert.endereco.secondLabel}:</strong> {alert.endereco.secondValue}</p>
+                      <p><strong>{alert.endereco.thirdLabel}:</strong> {alert.endereco.thirdValue}</p>
+                    </div>
+                    <div className="dashboard-alert-meta">
+                      <small>{`Aguardando --> ${alert.tempoAguardandoDias} dias.`}</small>
+                      <span className={`status-badge ${alert.risco === 'Esquecida crítica' ? 'inactive' : 'recebida'}`}>{alert.risco}</span>
+                    </div>
+                  </div>
                 </div>
               </li>
             ))}

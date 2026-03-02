@@ -22,11 +22,18 @@ class ConfiguracaoRepository:
         self.db.refresh(model)
         return model
 
-    def upsert_timezone(self, condominio_id: int, timezone: str) -> ConfiguracaoModel:
+    def upsert_operacionais(
+        self,
+        condominio_id: int,
+        timezone: str | None = None,
+        prazo_dias_encomenda_esquecida: int | None = None,
+    ) -> ConfiguracaoModel:
         model = self.get_or_create(condominio_id)
-        model.timezone = timezone
+        if timezone is not None:
+            model.timezone = timezone
+        if prazo_dias_encomenda_esquecida is not None:
+            model.prazo_dias_encomenda_esquecida = prazo_dias_encomenda_esquecida
         self.db.add(model)
         self.db.commit()
         self.db.refresh(model)
         return model
-

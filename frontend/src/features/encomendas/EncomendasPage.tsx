@@ -19,11 +19,17 @@ import type {
   Morador
 } from './types'
 import { filterEncomendas, paginateEncomendas, sortEncomendas } from './utils/encomendasSelectors'
-import { statusClass, statusLabel } from './utils/statusMapping'
+import { statusChipLabel, statusClass, statusLabel } from './utils/statusMapping'
 import { formatDateBR } from '../../utils/dateTime'
 
 const DEFAULT_PAGE_SIZE = 10
 const MOBILE_BREAKPOINT = 900
+const DEFAULT_FORGOTTEN_DAYS = 15
+
+type ConfiguracoesResponse = {
+  timezone: string
+  prazo_dias_encomenda_esquecida: number
+}
 
 function buildInitialFormState(): EncomendaFormState {
   return {
@@ -82,6 +88,7 @@ export function EncomendasPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [forgottenDaysThreshold, setForgottenDaysThreshold] = useState<number>(DEFAULT_FORGOTTEN_DAYS)
 
   const [rawSearchTerm, setRawSearchTerm] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
@@ -153,6 +160,12 @@ export function EncomendasPage(): JSX.Element {
       setItems(encomendasResponse.data)
       setMoradores(moradoresResponse.data)
       setEnderecos(enderecosResponse.data)
+      try {
+        const { data } = await backendApi.get<ConfiguracoesResponse>('/configuracoes')
+        setForgottenDaysThreshold(data.prazo_dias_encomenda_esquecida ?? DEFAULT_FORGOTTEN_DAYS)
+      } catch {
+        setForgottenDaysThreshold(DEFAULT_FORGOTTEN_DAYS)
+      }
     } catch (err) {
       setError(readApiError(err))
     } finally {
@@ -186,9 +199,9 @@ export function EncomendasPage(): JSX.Element {
   }, [enderecos])
 
   const filteredAndSortedItems = useMemo(() => {
-    const filtered = filterEncomendas(items, searchTerm, statusFilter)
+    const filtered = filterEncomendas(items, searchTerm, statusFilter, forgottenDaysThreshold)
     return sortEncomendas(filtered, sortBy)
-  }, [items, searchTerm, statusFilter, sortBy])
+  }, [items, searchTerm, statusFilter, sortBy, forgottenDaysThreshold])
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(filteredAndSortedItems.length / pageSize)), [filteredAndSortedItems.length, pageSize])
 
@@ -430,6 +443,7 @@ export function EncomendasPage(): JSX.Element {
                 canEntregar={canEntregar(item)}
                 canReabrir={canReabrir(item)}
                 canExcluir={canExcluir(item)}
+                forgottenDaysThreshold={forgottenDaysThreshold}
                 onView={() => void openViewModal(item)}
                 onEdit={() => void openEditModal(item)}
                 onEntregar={() => openEntregarModal(item)}
@@ -486,7 +500,7 @@ export function EncomendasPage(): JSX.Element {
                     </td>
                     <td>{item.data_entrega ? formatDateBR(item.data_entrega) : '-'}</td>
                     <td>
-                      <span className={`status-badge ${statusClass(item.status)}`}>{statusLabel(item.status)}</span>
+                      <span className={`status-badge ${statusClass(item.status)}`}>{statusChipLabel(item, forgottenDaysThreshold)}</span>
                     </td>
                     <td className="actions-cell">
                       <div className="action-group action-group-icons operation-actions">

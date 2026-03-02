@@ -215,9 +215,9 @@
   }
 
   .dashboard-alert-meta {
-    grid-column: 1 / -1;
-    justify-items: start;
-    margin-left: 2.6rem;
+    justify-items: end;
+    margin-left: 0;
+    min-width: 98px;
   }
 
   .section-card {

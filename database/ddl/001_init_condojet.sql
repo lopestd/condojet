@@ -166,9 +166,11 @@ CREATE TABLE configuracoes (
   whatsapp_token TEXT,
   numero_condominio VARCHAR(30),
   timezone VARCHAR(64) NOT NULL DEFAULT 'America/Sao_Paulo',
+  prazo_dias_encomenda_esquecida BIGINT NOT NULL DEFAULT 15,
   status_conexao status_conexao_whatsapp NOT NULL DEFAULT 'DESCONECTADO',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT ck_configuracoes_prazo_esquecida_valido CHECK (prazo_dias_encomenda_esquecida >= 1)
 );
 
 CREATE TABLE chaves_sistema (

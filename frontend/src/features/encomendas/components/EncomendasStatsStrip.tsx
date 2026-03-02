@@ -3,10 +3,10 @@ type Props = {
   aguardando: number
   notificadas: number
   entregues: number
-  atrasadas: number
+  esquecidas: number
 }
 
-export function EncomendasStatsStrip({ total, aguardando, notificadas, entregues, atrasadas }: Props): JSX.Element {
+export function EncomendasStatsStrip({ total, aguardando, notificadas, entregues, esquecidas }: Props): JSX.Element {
   return (
     <section className="encomendas-stats" aria-label="Resumo das encomendas">
       <article className="kpi-card">
@@ -26,8 +26,8 @@ export function EncomendasStatsStrip({ total, aguardando, notificadas, entregues
         <strong>{entregues}</strong>
       </article>
       <article className="kpi-card kpi-overdue">
-        <span>Atrasadas</span>
-        <strong>{atrasadas}</strong>
+        <span>Esquecidas</span>
+        <strong>{esquecidas}</strong>
       </article>
     </section>
   )

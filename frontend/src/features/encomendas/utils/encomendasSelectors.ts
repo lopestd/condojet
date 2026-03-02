@@ -1,5 +1,5 @@
 import type { EncomendaFilter, EncomendaListItem, EncomendaSort, Endereco } from '../types'
-import { isOverdue } from './statusMapping'
+import { isForgotten } from './statusMapping'
 import { parseApiDate } from '../../../utils/dateTime'
 
 export function formatEnderecoLabel(endereco: Endereco): string {
@@ -26,11 +26,16 @@ function searchKey(item: EncomendaListItem): string {
     .toLowerCase()
 }
 
-export function filterEncomendas(items: EncomendaListItem[], searchTerm: string, status: EncomendaFilter): EncomendaListItem[] {
+export function filterEncomendas(
+  items: EncomendaListItem[],
+  searchTerm: string,
+  status: EncomendaFilter,
+  forgottenDaysThreshold: number
+): EncomendaListItem[] {
   const term = searchTerm.trim().toLowerCase()
   return items.filter((item) => {
-    if (status === 'ATRASADA' && !isOverdue(item)) return false
-    if (status !== 'ALL' && status !== 'ATRASADA' && item.status !== status) return false
+    if (status === 'ESQUECIDA' && !isForgotten(item, forgottenDaysThreshold)) return false
+    if (status !== 'ALL' && status !== 'ESQUECIDA' && item.status !== status) return false
     if (!term) return true
     return searchKey(item).includes(term)
   })

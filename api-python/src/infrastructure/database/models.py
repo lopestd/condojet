@@ -145,6 +145,7 @@ class ConfiguracaoModel(Base):
     whatsapp_token: Mapped[str | None] = mapped_column(Text, nullable=True)
     numero_condominio: Mapped[str | None] = mapped_column(String(30), nullable=True)
     timezone: Mapped[str] = mapped_column(String(64), nullable=False, server_default=text("'America/Sao_Paulo'"))
+    prazo_dias_encomenda_esquecida: Mapped[int] = mapped_column(BIGINT, nullable=False, server_default=text("15"))
     status_conexao: Mapped[str] = mapped_column(
         Enum(
             "DESCONECTADO",

@@ -1,8 +1,7 @@
 import type { EncomendaDetail, EncomendaListItem, EncomendaStatus } from '../types'
 import { parseApiDate } from '../../../utils/dateTime'
 
-const OVERDUE_DAYS = 3
-const OVERDUE_MS = OVERDUE_DAYS * 24 * 60 * 60 * 1000
+const DEFAULT_FORGOTTEN_DAYS = 15
 
 export function statusLabel(status: EncomendaStatus): string {
   if (status === 'RECEBIDA') return 'Aguardando'
@@ -22,14 +21,20 @@ export function getRecebimentoDate(item: EncomendaListItem | EncomendaDetail): D
   return null
 }
 
-export function isOverdue(item: EncomendaListItem | EncomendaDetail, now = Date.now()): boolean {
+export function isForgotten(item: EncomendaListItem | EncomendaDetail, thresholdDays = DEFAULT_FORGOTTEN_DAYS, now = Date.now()): boolean {
   if (item.status === 'ENTREGUE') return false
   const recebidaEm = getRecebimentoDate(item)
   if (!recebidaEm) return false
-  return now - recebidaEm.getTime() > OVERDUE_MS
+  const normalizedThreshold = Math.max(1, thresholdDays)
+  const thresholdMs = normalizedThreshold * 24 * 60 * 60 * 1000
+  return now - recebidaEm.getTime() > thresholdMs
 }
 
-export function statusChipLabel(item: EncomendaListItem): string {
-  if (isOverdue(item)) return 'Atrasada'
+export function statusChipLabel(item: EncomendaListItem, thresholdDays = DEFAULT_FORGOTTEN_DAYS): string {
+  if (isForgotten(item, thresholdDays)) return 'Esquecida'
   return statusLabel(item.status)
+}
+
+export function isOverdue(item: EncomendaListItem | EncomendaDetail, now = Date.now()): boolean {
+  return isForgotten(item, DEFAULT_FORGOTTEN_DAYS, now)
 }

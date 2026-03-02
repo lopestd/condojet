@@ -56,4 +56,4 @@ export type EncomendaFormState = {
 }
 
 export type EncomendaSort = 'RECENTES' | 'ANTIGAS' | 'MORADOR_AZ' | 'MORADOR_ZA'
-export type EncomendaFilter = 'ALL' | EncomendaStatus | 'ATRASADA'
+export type EncomendaFilter = 'ALL' | EncomendaStatus | 'ESQUECIDA'

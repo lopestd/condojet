@@ -21,7 +21,7 @@ import { backendApi, readApiError } from '../../services/httpClient';
 import { formatDateBR, parseApiDate } from '../../utils/dateTime';
 import type { Endereco, EncomendaDetail, EncomendaListItem } from '../encomendas/types';
 
-type PeriodType = '7d' | '30d' | '90d' | 'custom';
+type PeriodType = '7d' | '30d' | '90d' | 'year' | 'custom';
 
 type AnalyticsItem = EncomendaListItem & {
   receivedAt: Date | null;
@@ -45,14 +45,19 @@ type DailyRow = {
   recebidas: number;
   entregues: number;
 };
+type ConfiguracoesResponse = {
+  timezone: string;
+  prazo_dias_encomenda_esquecida: number;
+};
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const FORGOTTEN_DAYS = 15;
+const DEFAULT_FORGOTTEN_DAYS = 15;
 
 const PERIOD_OPTIONS: Array<{ value: PeriodType; label: string }> = [
   { value: '7d', label: 'Últimos 7 dias' },
   { value: '30d', label: 'Últimos 30 dias' },
   { value: '90d', label: 'Últimos 90 dias' },
+  { value: 'year', label: 'Anual' },
   { value: 'custom', label: 'Personalizado' }
 ];
 
@@ -132,11 +137,13 @@ export function ReportsPage(): JSX.Element {
   const [period, setPeriod] = useState<PeriodType>('30d');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [items, setItems] = useState<AnalyticsItem[]>([]);
   const [companyCache, setCompanyCache] = useState<CompanyCache>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [forgottenDaysThreshold, setForgottenDaysThreshold] = useState<number>(DEFAULT_FORGOTTEN_DAYS);
 
   const statusChartRef = useRef<HTMLDivElement | null>(null);
   const evolutionChartRef = useRef<HTMLDivElement | null>(null);
@@ -167,6 +174,16 @@ export function ReportsPage(): JSX.Element {
         });
 
         setItems(normalized);
+        if (user?.role === 'ADMIN') {
+          try {
+            const { data } = await backendApi.get<ConfiguracoesResponse>('/configuracoes');
+            setForgottenDaysThreshold(data.prazo_dias_encomenda_esquecida ?? DEFAULT_FORGOTTEN_DAYS);
+          } catch {
+            setForgottenDaysThreshold(DEFAULT_FORGOTTEN_DAYS);
+          }
+        } else {
+          setForgottenDaysThreshold(DEFAULT_FORGOTTEN_DAYS);
+        }
       } catch (err) {
         setError(readApiError(err));
       } finally {
@@ -175,13 +192,29 @@ export function ReportsPage(): JSX.Element {
     }
 
     void loadData();
-  }, []);
+  }, [user?.role]);
 
   useEffect(() => {
     if (period !== 'custom') return;
     setCustomStart('');
     setCustomEnd('');
   }, [period]);
+
+  const availableYears = useMemo<number[]>(() => {
+    const years = new Set<number>([new Date().getFullYear()]);
+    items.forEach((item) => {
+      if (item.receivedAt) years.add(item.receivedAt.getFullYear());
+      if (item.deliveredAt) years.add(item.deliveredAt.getFullYear());
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [items]);
+
+  useEffect(() => {
+    if (availableYears.length === 0) return;
+    if (!availableYears.includes(selectedYear)) {
+      setSelectedYear(availableYears[0]);
+    }
+  }, [availableYears, selectedYear]);
 
   const range = useMemo<ReportRange>(() => {
     const now = new Date();
@@ -216,6 +249,18 @@ export function ReportsPage(): JSX.Element {
       };
     }
 
+    if (period === 'year') {
+      const start = new Date(selectedYear, 0, 1, 0, 0, 0, 0);
+      const end = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
+      return {
+        start,
+        end,
+        valid: true,
+        label: `01/01/${selectedYear} a 31/12/${selectedYear}`,
+        error: null
+      };
+    }
+
     const start = parseBrDate(customStart);
     const end = parseBrDate(customEnd);
 
@@ -246,7 +291,7 @@ export function ReportsPage(): JSX.Element {
       label: `${formatBrDate(start)} a ${formatBrDate(end)}`,
       error: null
     };
-  }, [customEnd, customStart, period]);
+  }, [customEnd, customStart, period, selectedYear]);
 
   const receivedWithinPeriod = useMemo(() => {
     if (!range.valid) return [] as AnalyticsItem[];
@@ -267,9 +312,9 @@ export function ReportsPage(): JSX.Element {
   }, [receivedWithinPeriod]);
 
   const esquecidas = useMemo(() => {
-    const limit = Date.now() - FORGOTTEN_DAYS * DAY_MS;
+    const limit = Date.now() - Math.max(1, forgottenDaysThreshold) * DAY_MS;
     return aguardando.filter((item) => item.receivedAt && item.receivedAt.getTime() < limit);
-  }, [aguardando]);
+  }, [aguardando, forgottenDaysThreshold]);
 
   const statusChartData = useMemo(() => {
     return [
@@ -506,6 +551,19 @@ export function ReportsPage(): JSX.Element {
           ))}
         </div>
 
+        {period === 'year' ? (
+          <label className="reports-year-select">
+            Ano de referência
+            <select value={selectedYear} onChange={(event) => setSelectedYear(Number(event.target.value))}>
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+
         {period === 'custom' ? (
           <div className="reports-mgr-custom-cards">
             <label className="reports-mgr-date-card">
@@ -637,10 +695,13 @@ export function ReportsPage(): JSX.Element {
               <span>Aguardando Retirada</span>
               <strong>{aguardando.length}</strong>
             </article>
-            <article className="panel reports-mgr-kpi reports-mgr-kpi-alert" title="Encomendas com mais de 15 dias aguardando retirada.">
+            <article
+              className="panel reports-mgr-kpi reports-mgr-kpi-alert"
+              title={`Encomendas com mais de ${forgottenDaysThreshold} dias aguardando retirada.`}
+            >
               <span>Encomendas Esquecidas</span>
               <strong>{esquecidas.length}</strong>
-              <small>Encomendas com mais de 15 dias aguardando retirada.</small>
+              <small>{`Encomendas com mais de ${forgottenDaysThreshold} dias aguardando retirada.`}</small>
             </article>
           </section>
 

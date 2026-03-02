@@ -13,7 +13,7 @@ router = APIRouter(tags=["configuracoes"])
 
 @router.get("/configuracoes")
 def get_configuracoes(
-    principal: Principal = Depends(require_roles("ADMIN")),
+    principal: Principal = Depends(require_roles("ADMIN", "PORTEIRO")),
     db: Session = Depends(get_db),
 ) -> dict:
     if principal.condominio_id is None:
@@ -21,7 +21,10 @@ def get_configuracoes(
     repository = ConfiguracaoRepository(db)
     model = repository.get_or_create(principal.condominio_id)
     timezone = model.timezone or DEFAULT_TIMEZONE
-    return {"timezone": timezone}
+    return {
+        "timezone": timezone,
+        "prazo_dias_encomenda_esquecida": model.prazo_dias_encomenda_esquecida or 15,
+    }
 
 
 @router.put("/configuracoes")
@@ -33,6 +36,13 @@ def update_configuracoes(
     if principal.condominio_id is None:
         raise AppError("forbidden", status_code=403, code="forbidden")
     repository = ConfiguracaoRepository(db)
-    model = repository.upsert_timezone(principal.condominio_id, payload.timezone)
+    model = repository.upsert_operacionais(
+        principal.condominio_id,
+        timezone=payload.timezone,
+        prazo_dias_encomenda_esquecida=payload.prazo_dias_encomenda_esquecida,
+    )
     set_request_timezone(model.timezone or DEFAULT_TIMEZONE)
-    return {"timezone": model.timezone or DEFAULT_TIMEZONE}
+    return {
+        "timezone": model.timezone or DEFAULT_TIMEZONE,
+        "prazo_dias_encomenda_esquecida": model.prazo_dias_encomenda_esquecida or 15,
+    }

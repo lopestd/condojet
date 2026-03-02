@@ -4,9 +4,14 @@ import { z } from 'zod';
 import { proxyToApiPython } from '../../../infrastructure/clients/apiPythonProxyClient.js';
 import { buildValidationError, extractProxyHeaders } from '../utils/proxyRequest.js';
 
-const updateConfiguracaoSchema = z.object({
-  timezone: z.string().min(3).max(64)
-});
+const updateConfiguracaoSchema = z
+  .object({
+    timezone: z.string().min(3).max(64).optional(),
+    prazo_dias_encomenda_esquecida: z.number().int().min(1).max(365).optional()
+  })
+  .refine((payload) => payload.timezone !== undefined || payload.prazo_dias_encomenda_esquecida !== undefined, {
+    message: 'Informe ao menos um campo de configuração.'
+  });
 
 export async function configuracaoRoutes(app: FastifyInstance): Promise<void> {
   app.get('/configuracoes', async (request, reply) => {
@@ -23,4 +28,3 @@ export async function configuracaoRoutes(app: FastifyInstance): Promise<void> {
     return reply.status(200).send(data);
   });
 }
-

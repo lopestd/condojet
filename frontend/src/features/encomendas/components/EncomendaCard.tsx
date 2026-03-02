@@ -10,6 +10,7 @@ type Props = {
   canEntregar: boolean
   canReabrir: boolean
   canExcluir: boolean
+  forgottenDaysThreshold: number
   onView: () => void
   onEdit: () => void
   onEntregar: () => void
@@ -25,6 +26,7 @@ export function EncomendaCard({
   canEntregar,
   canReabrir,
   canExcluir,
+  forgottenDaysThreshold,
   onView,
   onEdit,
   onEntregar,
@@ -46,7 +48,7 @@ export function EncomendaCard({
           <p className="encomenda-code">{item.codigo_interno}</p>
           <small>{item.tipo}</small>
         </div>
-        <span className={`status-badge ${statusClass(item.status)}`}>{statusChipLabel(item)}</span>
+        <span className={`status-badge ${statusClass(item.status)}`}>{statusChipLabel(item, forgottenDaysThreshold)}</span>
       </div>
 
       <dl className="encomenda-card-data">

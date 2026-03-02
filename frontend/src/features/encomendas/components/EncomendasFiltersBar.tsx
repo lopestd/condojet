@@ -15,7 +15,7 @@ const FILTERS: Array<{ value: EncomendaFilter; label: string }> = [
   { value: 'RECEBIDA', label: 'Aguardando' },
   { value: 'DISPONIVEL_RETIRADA', label: 'Notificadas' },
   { value: 'ENTREGUE', label: 'Entregues' },
-  { value: 'ATRASADA', label: 'Atrasadas' }
+  { value: 'ESQUECIDA', label: 'Esquecidas' }
 ]
 
 export function EncomendasFiltersBar({

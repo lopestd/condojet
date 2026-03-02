@@ -810,11 +810,14 @@ th {
 }
 
 .dashboard-hero-main {
-  max-width: 680px;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
 }
 
 .dashboard-hero-main p {
   margin-top: 0.32rem;
+  line-height: 1.35;
   color: rgba(244, 250, 255, 0.8);
 }
 
@@ -828,7 +831,9 @@ th {
 .dashboard-hero-side {
   display: grid;
   gap: 0.62rem;
-  min-width: min(480px, 100%);
+  flex: 0 0 auto;
+  min-width: 0;
+  align-items: start;
 }
 
 .dashboard-hero-cta {
@@ -845,6 +850,8 @@ th {
 .dashboard-hero h1 {
   font-family: 'Sora', 'DM Sans', sans-serif;
   font-size: 1.8rem;
+  line-height: 1.18;
+  text-wrap: balance;
   color: #ffffff;
 }
 
@@ -881,6 +888,10 @@ th {
 .dashboard-kpi-grid .dashboard-kpi {
   border-left: 4px solid transparent;
   background: linear-gradient(180deg, #ffffff, #f9fbff);
+}
+
+.dashboard-kpi-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .dashboard-period-panel {
@@ -929,8 +940,21 @@ th {
   font-size: 0.78rem;
 }
 
+.dashboard-kpi span {
+  display: inline-block;
+  font-weight: 800;
+  font-size: 0.92rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #14385f;
+}
+
 .dashboard-kpi-aguardando {
   border-left-color: var(--warning);
+}
+
+.dashboard-kpi-recebidas {
+  border-left-color: #3d79d6;
 }
 
 .dashboard-kpi-notificado {
@@ -947,6 +971,10 @@ th {
 
 .dashboard-kpi-aguardando strong {
   color: #b9740b;
+}
+
+.dashboard-kpi-recebidas strong {
+  color: #2e5fa9;
 }
 
 .dashboard-kpi-notificado strong {
@@ -1060,15 +1088,16 @@ th {
   padding: 0;
   list-style: none;
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
-  max-height: 330px;
+  max-height: 560px;
   overflow: auto;
 }
 
 .dashboard-alert-item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
+  grid-template-columns: auto 1fr;
+  align-items: start;
   gap: 0.62rem;
   border-radius: 10px;
   border: 1px solid #f5cccc;
@@ -1094,16 +1123,38 @@ th {
 
 .dashboard-alert-content p {
   font-weight: 700;
+  margin: 0;
 }
 
-.dashboard-alert-content small {
+.dashboard-alert-destinatario {
+  font-size: 0.84rem;
+  line-height: 1.2;
+}
+
+.dashboard-alert-body {
+  margin-top: 0.28rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 0.48rem;
+}
+
+.dashboard-alert-address {
+  min-width: 0;
+}
+
+.dashboard-alert-address p {
+  font-size: 0.72rem;
+  line-height: 1.16;
   color: #805252;
 }
 
 .dashboard-alert-meta {
   display: grid;
   justify-items: end;
-  gap: 0.2rem;
+  align-content: start;
+  gap: 0.28rem;
+  min-width: 112px;
 }
 
 .dashboard-alert-meta small {
@@ -1779,7 +1830,7 @@ th {
 
 .reports-mgr-filter-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.45rem;
 }
 
@@ -1803,6 +1854,25 @@ th {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.58rem;
+}
+
+.reports-year-select {
+  display: grid;
+  gap: 0.32rem;
+  max-width: 220px;
+  color: #244661;
+  font-weight: 700;
+  font-size: 0.84rem;
+}
+
+.reports-year-select select {
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid #cfdceb;
+  background: #f3f8ff;
+  color: #254664;
+  font-weight: 700;
+  padding: 0 0.6rem;
 }
 
 .reports-mgr-custom-actions {
