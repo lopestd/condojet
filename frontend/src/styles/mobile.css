@@ -328,3 +328,63 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 1100px) {
+  .reports-bi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reports-insights-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .reports-header {
+    display: grid;
+  }
+
+  .reports-header .button-soft {
+    width: 100%;
+  }
+
+  .reports-period-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reports-custom-cards,
+  .reports-bi-grid,
+  .reports-charts-grid,
+  .reports-insights-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .reports-period-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1100px) {
+  .reports-mgr-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .reports-mgr-header {
+    display: grid;
+  }
+
+  .reports-mgr-header .cta {
+    width: 100%;
+  }
+
+  .reports-mgr-filter-row,
+  .reports-mgr-custom-cards,
+  .reports-mgr-kpis,
+  .reports-mgr-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
