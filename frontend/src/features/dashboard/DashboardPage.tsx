@@ -329,15 +329,25 @@ export function DashboardPage(): JSX.Element {
           <strong>{dashboardData.notificado}</strong>
           <small>{`Moradores avisados ${periodLabel}`}</small>
         </article>
-        <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-aguardando">
+        <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-aguardando dashboard-kpi-stock">
           <span>Aguardando retirada</span>
-          <strong>{dashboardData.aguardando}</strong>
-          <small>Pendências ativas (inclui notificadas e esquecidas)</small>
+          <div className="dashboard-kpi-value-row">
+            <strong>{dashboardData.aguardando}</strong>
+            <em className="dashboard-kpi-stock-tag">ESTOQUE ATUAL</em>
+          </div>
+          <small>Todas as encomendas ainda não entregues (independente do período).</small>
         </article>
-        <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-atrasado">
+        <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-atrasado dashboard-kpi-stock">
           <span>Esquecidas</span>
-          <strong>{dashboardData.esquecida}</strong>
-          <small>{`Aguardando retirada há mais de ${forgottenDaysThreshold} dias`}</small>
+          <div className="dashboard-kpi-value-row">
+            <strong>{dashboardData.esquecida}</strong>
+            <em className="dashboard-kpi-stock-tag">ESTOQUE ATUAL</em>
+          </div>
+          <small>
+            Encomendas aguardando retirada{' '}
+            <strong>{`há mais de ${forgottenDaysThreshold} dias`}</strong>
+            {' '} (independente do período).
+          </small>
         </article>
       </section>
 

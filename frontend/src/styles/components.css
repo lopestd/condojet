@@ -989,6 +989,50 @@ th {
   color: #cc3636;
 }
 
+.dashboard-kpi-atrasado small strong {
+  display: inline;
+  margin-top: 0;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  font-weight: 700;
+}
+
+.dashboard-kpi-stock {
+  border-width: 2px;
+  border-style: solid;
+  border-color: rgba(14, 41, 68, 0.2);
+  box-shadow: 0 10px 20px rgba(14, 41, 68, 0.12);
+}
+
+.dashboard-kpi-stock.dashboard-kpi-aguardando {
+  background: linear-gradient(180deg, #fff9ec, #ffefca);
+}
+
+.dashboard-kpi-stock.dashboard-kpi-atrasado {
+  background: linear-gradient(180deg, #fff4f4, #ffe3e3);
+}
+
+.dashboard-kpi-value-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+}
+
+.dashboard-kpi-stock-tag {
+  font-style: normal;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #0f2f50;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(15, 47, 80, 0.24);
+  border-radius: 999px;
+  padding: 0.14rem 0.42rem;
+  white-space: nowrap;
+}
+
 .dashboard-activity-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1159,7 +1203,8 @@ th {
 
 .dashboard-alert-meta small {
   color: #805252;
-  font-size: 0.76rem;
+  font-size: 0.92rem;
+  font-weight: 700;
 }
 
 .dashboard-panel h2 {
