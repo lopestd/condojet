@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
@@ -187,6 +187,9 @@ export function AppLayout(): JSX.Element {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.innerWidth <= 900 : false
+  );
 
   const visible = useMemo(() => NAV_ITEMS.filter((item) => (user ? item.roles.includes(user.role) : false)), [user]);
   const showAdminMenu = user?.role === 'ADMIN';
@@ -195,7 +198,16 @@ export function AppLayout(): JSX.Element {
   const isAdminSection = location.pathname.startsWith('/condo/admin');
   const bottomNavItems = useMemo(() => getBottomNavItems(user?.role, visible), [user?.role, visible]);
   const pageTitle = TITLES[location.pathname] ?? 'CondoJET';
-  const showTopbarInfo = location.pathname !== '/dashboard';
+  useEffect(() => {
+    function handleResize(): void {
+      setIsMobileViewport(window.innerWidth <= 900);
+    }
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const showTopbarInfo = location.pathname !== '/dashboard' || isMobileViewport;
   const profileLabel = getRoleLabel(user?.role);
   const usuarioLabel = user ? `${user.nomeUsuario} (${profileLabel})` : 'Usuário';
   const condominioLabel = user?.nomeCondominio ?? 'CondoJET Global';
