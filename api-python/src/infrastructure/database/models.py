@@ -161,6 +161,18 @@ class ConfiguracaoModel(Base):
     updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
 
 
+class EmpresaResponsavelGlobalModel(Base):
+    __tablename__ = "empresas_responsaveis_globais"
+    __table_args__ = {"schema": settings.db_schema}
+
+    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    nome: Mapped[str] = mapped_column(String(120), nullable=False)
+    nome_normalizado: Mapped[str] = mapped_column(String(120), nullable=False)
+    ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
+    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
+
+
 class ChaveSistemaModel(Base):
     __tablename__ = "chaves_sistema"
     __table_args__ = {"schema": settings.db_schema}

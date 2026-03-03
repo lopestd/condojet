@@ -31,6 +31,12 @@ type ConfiguracoesResponse = {
   prazo_dias_encomenda_esquecida: number
 }
 
+type EmpresaResponsavelGlobal = {
+  id: number
+  nome: string
+  ativo: boolean
+}
+
 function buildInitialFormState(): EncomendaFormState {
   return {
     tipo: 'PACOTE',
@@ -84,6 +90,7 @@ export function EncomendasPage(): JSX.Element {
   const [items, setItems] = useState<EncomendaListItem[]>([])
   const [moradores, setMoradores] = useState<Morador[]>([])
   const [enderecos, setEnderecos] = useState<Endereco[]>([])
+  const [empresasResponsaveis, setEmpresasResponsaveis] = useState<string[]>([])
 
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
@@ -152,14 +159,21 @@ export function EncomendasPage(): JSX.Element {
     setLoading(true)
     setError(null)
     try {
-      const [encomendasResponse, moradoresResponse, enderecosResponse] = await Promise.all([
+      const [encomendasResponse, moradoresResponse, enderecosResponse, empresasResponse] = await Promise.all([
         backendApi.get<EncomendaListItem[]>('/encomendas'),
         backendApi.get<Morador[]>('/moradores'),
-        backendApi.get<Endereco[]>('/enderecos')
+        backendApi.get<Endereco[]>('/enderecos'),
+        backendApi.get<EmpresaResponsavelGlobal[]>('/empresas-responsaveis-globais')
       ])
       setItems(encomendasResponse.data)
       setMoradores(moradoresResponse.data)
       setEnderecos(enderecosResponse.data)
+      setEmpresasResponsaveis(
+        empresasResponse.data
+          .filter((item) => item.ativo)
+          .map((item) => item.nome.trim())
+          .filter((value, index, array) => Boolean(value) && array.indexOf(value) === index)
+      )
       try {
         const { data } = await backendApi.get<ConfiguracoesResponse>('/configuracoes')
         setForgottenDaysThreshold(data.prazo_dias_encomenda_esquecida ?? DEFAULT_FORGOTTEN_DAYS)
@@ -629,6 +643,7 @@ export function EncomendasPage(): JSX.Element {
           setForm={setForm}
           moradores={moradores}
           enderecos={enderecos}
+          empresasResponsaveis={empresasResponsaveis}
           loading={savingForm}
           onClose={closeFormModal}
           onSubmit={onSaveForm}

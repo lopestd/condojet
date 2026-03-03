@@ -8,6 +8,7 @@ type Props = {
   setForm: (next: EncomendaFormState) => void
   moradores: Morador[]
   enderecos: Endereco[]
+  empresasResponsaveis: string[]
   loading: boolean
   onClose: () => void
   onSubmit: (event: FormEvent) => Promise<void>
@@ -39,11 +40,21 @@ export function NewEncomendaWizardModal({
   setForm,
   moradores,
   enderecos,
+  empresasResponsaveis,
   loading,
   onClose,
   onSubmit
 }: Props): JSX.Element {
   const [step, setStep] = useState<1 | 2>(1)
+  const empresaAtual = form.empresa_entregadora.trim()
+  const empresaCatalogadaInicial = useMemo(
+    () => empresasResponsaveis.find((item) => item.trim() === empresaAtual) ?? '',
+    [empresasResponsaveis, empresaAtual]
+  )
+  const [empresaMode, setEmpresaMode] = useState<'catalogo' | 'manual'>(() =>
+    empresaCatalogadaInicial ? 'catalogo' : 'manual'
+  )
+  const [empresaManual, setEmpresaManual] = useState<string>(() => (empresaCatalogadaInicial ? '' : empresaAtual))
 
   const enderecoSelecionado = useMemo(
     () => enderecos.find((item) => item.id === Number(form.endereco_id)),
@@ -61,6 +72,18 @@ export function NewEncomendaWizardModal({
 
   const canNextStep1 = Boolean(form.tipo && form.codigo_externo.trim() && form.empresa_entregadora.trim())
   const canNextStep2 = Boolean(form.morador_id && form.endereco_id)
+
+  function onEmpresaSelectChange(value: string): void {
+    if (value === '__manual__') {
+      setEmpresaMode('manual')
+      const nextManual = empresaManual || form.empresa_entregadora || ''
+      setEmpresaManual(nextManual)
+      setForm({ ...form, empresa_entregadora: nextManual })
+      return
+    }
+    setEmpresaMode('catalogo')
+    setForm({ ...form, empresa_entregadora: value })
+  }
 
   async function onWizardSubmit(event: FormEvent): Promise<void> {
     event.preventDefault()
@@ -107,12 +130,34 @@ export function NewEncomendaWizardModal({
               </label>
               <label>
                 Empresa responsável
-                <input
-                  value={form.empresa_entregadora}
-                  onChange={(event) => setForm({ ...form, empresa_entregadora: event.target.value })}
+                <select
+                  value={empresaMode === 'catalogo' ? form.empresa_entregadora : '__manual__'}
+                  onChange={(event) => onEmpresaSelectChange(event.target.value)}
                   required
-                />
+                >
+                  <option value="">Selecione</option>
+                  {empresasResponsaveis.map((empresa) => (
+                    <option key={empresa} value={empresa}>
+                      {empresa}
+                    </option>
+                  ))}
+                  <option value="__manual__">Informar manualmente</option>
+                </select>
               </label>
+              {empresaMode === 'manual' ? (
+                <label>
+                  Empresa responsável (manual)
+                  <input
+                    value={empresaManual}
+                    onChange={(event) => {
+                      const value = event.target.value
+                      setEmpresaManual(value)
+                      setForm({ ...form, empresa_entregadora: value })
+                    }}
+                    required
+                  />
+                </label>
+              ) : null}
               <label>
                 Descrição
                 <textarea

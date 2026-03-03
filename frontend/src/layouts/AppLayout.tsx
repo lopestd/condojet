@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type CSSProperties, useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../auth/AuthContext';
@@ -34,6 +34,14 @@ const CONFIG_NAV_ITEM: NavItem = {
   roles: ['ADMIN']
 };
 
+const GLOBAL_CONFIG_NAV_ITEM: NavItem = {
+  path: '/global/config',
+  label: 'Configurações',
+  shortLabel: 'Config',
+  icon: 'settings',
+  roles: ['ADMIN_GLOBAL']
+};
+
 const REPORTS_NAV_ITEM: NavItem = {
   path: '/condo/relatorios',
   label: 'Relatórios',
@@ -45,6 +53,7 @@ const REPORTS_NAV_ITEM: NavItem = {
 const TITLES: Record<string, string> = {
   '/dashboard': 'Painel CondoJET',
   '/global': 'Gestão Global',
+  '/global/config': 'Configurações Globais',
   '/condo/admin': 'Administração do Condomínio',
   '/condo/admin/usuarios': 'Administração do Condomínio',
   '/condo/admin/moradores': 'Administração do Condomínio',
@@ -63,6 +72,7 @@ function getRoleLabel(role?: UserRole): string {
 function findNavItem(path: string): NavItem | undefined {
   if (path === REPORTS_NAV_ITEM.path) return REPORTS_NAV_ITEM;
   if (path === CONFIG_NAV_ITEM.path) return CONFIG_NAV_ITEM;
+  if (path === GLOBAL_CONFIG_NAV_ITEM.path) return GLOBAL_CONFIG_NAV_ITEM;
   return NAV_ITEMS.find((item) => item.path === path);
 }
 
@@ -157,7 +167,7 @@ function getBottomNavItems(role: UserRole | undefined, visible: NavItem[]): NavI
     addItem(items, '/dashboard');
     addItem(items, '/global');
     addItem(items, '/condo/relatorios');
-    addItem(items, '/condo/config');
+    addItem(items, '/global/config');
     const extraShortcut = visible.find((item) => item.path !== '/dashboard' && item.path !== '/global');
     if (extraShortcut) addItem(items, extraShortcut.path);
     return items;
@@ -165,10 +175,8 @@ function getBottomNavItems(role: UserRole | undefined, visible: NavItem[]): NavI
 
   if (role === 'ADMIN') {
     addItem(items, '/dashboard');
-    addItem(items, '/condo/admin/usuarios');
     addItem(items, '/condo/encomendas');
     addItem(items, '/condo/relatorios');
-    addItem(items, '/condo/config');
     return items;
   }
 
@@ -193,7 +201,9 @@ export function AppLayout(): JSX.Element {
 
   const visible = useMemo(() => NAV_ITEMS.filter((item) => (user ? item.roles.includes(user.role) : false)), [user]);
   const showAdminMenu = user?.role === 'ADMIN';
-  const showConfigItem = user ? CONFIG_NAV_ITEM.roles.includes(user.role) : false;
+  const condoConfigVisible = user ? CONFIG_NAV_ITEM.roles.includes(user.role) : false;
+  const globalConfigVisible = user ? GLOBAL_CONFIG_NAV_ITEM.roles.includes(user.role) : false;
+  const configNavItem = globalConfigVisible ? GLOBAL_CONFIG_NAV_ITEM : condoConfigVisible ? CONFIG_NAV_ITEM : null;
   const showReportsItem = user ? REPORTS_NAV_ITEM.roles.includes(user.role) : false;
   const isAdminSection = location.pathname.startsWith('/condo/admin');
   const bottomNavItems = useMemo(() => getBottomNavItems(user?.role, visible), [user?.role, visible]);
@@ -304,13 +314,13 @@ export function AppLayout(): JSX.Element {
             </NavLink>
           ) : null}
 
-          {showConfigItem ? (
+          {configNavItem ? (
             <NavLink
-              to={CONFIG_NAV_ITEM.path}
+              to={configNavItem.path}
               className={({ isActive }) => (isActive ? 'sidebar-link active' : 'sidebar-link')}
               onClick={() => setMobileMenuOpen(false)}
             >
-              <SidebarLinkLabel icon={CONFIG_NAV_ITEM.icon} label={CONFIG_NAV_ITEM.label} />
+              <SidebarLinkLabel icon={configNavItem.icon} label={configNavItem.label} />
             </NavLink>
           ) : null}
         </nav>
@@ -345,7 +355,11 @@ export function AppLayout(): JSX.Element {
         </section>
 
         {bottomNavItems.length > 0 ? (
-          <nav className="bottom-nav" aria-label="Atalhos">
+          <nav
+            className="bottom-nav"
+            aria-label="Atalhos"
+            style={{ ['--bottom-nav-columns' as const]: String(bottomNavItems.length) } as CSSProperties}
+          >
             {bottomNavItems.map((item) => {
               const isAdminShortcut = item.path === '/condo/admin/usuarios';
               const className = isAdminShortcut && isAdminSection ? 'bottom-link active' : undefined;
