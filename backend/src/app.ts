@@ -13,6 +13,8 @@ import { enderecoRoutes } from './interfaces/http/routes/enderecoRoutes.js';
 import { healthRoutes } from './interfaces/http/routes/healthRoutes.js';
 import { moradorRoutes } from './interfaces/http/routes/moradorRoutes.js';
 import { usuarioRoutes } from './interfaces/http/routes/usuarioRoutes.js';
+import { webhookN8nRoutes } from './interfaces/http/routes/webhookN8nRoutes.js';
+import { whatsappConnectionRoutes } from './interfaces/http/routes/whatsappConnectionRoutes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
@@ -40,6 +42,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(enderecoRoutes, { prefix: '/api/v1' });
   await app.register(moradorRoutes, { prefix: '/api/v1' });
   await app.register(encomendaRoutes, { prefix: '/api/v1' });
+  await app.register(webhookN8nRoutes, { prefix: '/api/v1' });
+  await app.register(whatsappConnectionRoutes, { prefix: '/api/v1' });
 
   return app;
 }

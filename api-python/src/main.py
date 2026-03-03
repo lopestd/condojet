@@ -1,7 +1,12 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
+from src.application.services.system_bootstrap_service import sync_global_defaults
 from src.infrastructure.config.settings import settings
+from src.infrastructure.database.session import SessionLocal
 from src.interfaces.http.middlewares.error_handler import configure_error_handler
 from src.interfaces.http.middlewares.request_observability import configure_request_observability
 from src.interfaces.http.routes.auth_routes import router as auth_router
@@ -14,8 +19,11 @@ from src.interfaces.http.routes.health_routes import router as health_router
 from src.interfaces.http.routes.morador_routes import router as morador_router
 from src.interfaces.http.routes.system_routes import router as system_router
 from src.interfaces.http.routes.usuario_routes import router as usuario_router
+from src.interfaces.http.routes.webhook_n8n_routes import router as webhook_n8n_router
+from src.interfaces.http.routes.whatsapp_connection_routes import router as whatsapp_connection_router
 
 app = FastAPI(title=settings.app_name)
+logger = logging.getLogger("condojet.api")
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,6 +36,22 @@ app.add_middleware(
 configure_error_handler(app)
 configure_request_observability(app)
 
+
+@app.on_event("startup")
+def sync_global_defaults_on_startup() -> None:
+    db = SessionLocal()
+    try:
+        db.execute(text(f"SET search_path TO {settings.db_schema}, public"))
+        result = sync_global_defaults(db)
+        logger.info(
+            "Global defaults synchronized on startup: api_key_created=%s global_admin_created=%s global_admin_email=%s",
+            result["api_key"]["created"],
+            result["global_admin"]["created"],
+            result["global_admin"]["email"],
+        )
+    finally:
+        db.close()
+
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(system_router, prefix="/api/v1")
 app.include_router(condominio_router, prefix="/api/v1")
@@ -38,3 +62,5 @@ app.include_router(usuario_router, prefix="/api/v1")
 app.include_router(endereco_router, prefix="/api/v1")
 app.include_router(morador_router, prefix="/api/v1")
 app.include_router(encomenda_router, prefix="/api/v1")
+app.include_router(webhook_n8n_router, prefix="/api/v1")
+app.include_router(whatsapp_connection_router, prefix="/api/v1")

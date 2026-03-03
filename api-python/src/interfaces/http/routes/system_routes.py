@@ -1,13 +1,10 @@
 from fastapi import APIRouter, Depends, Header
 from sqlalchemy.orm import Session
 
+from src.application.services.system_bootstrap_service import sync_global_defaults
 from src.application.services.exceptions import AppError
 from src.infrastructure.config.settings import settings
 from src.infrastructure.database.session import get_db
-from src.infrastructure.repositories.chave_sistema_repository import ChaveSistemaRepository
-from src.infrastructure.repositories.email_registry_repository import EmailRegistryRepository
-from src.infrastructure.repositories.usuario_global_repository import UsuarioGlobalRepository
-from src.infrastructure.security.password import hash_password
 
 router = APIRouter(tags=["system"])
 
@@ -24,9 +21,13 @@ def sync_global_api_key(
     if x_global_api_key != settings.global_api_key:
         raise AppError("invalid_global_api_key", status_code=403, code="invalid_global_api_key")
 
-    repository = ChaveSistemaRepository(db)
-    model, created = repository.upsert_global_api_key(x_global_api_key)
-    return {"status": "ok", "created": created, "id": model.id, "nome": model.nome}
+    result = sync_global_defaults(db)
+    return {
+        "status": "ok",
+        "created": result["api_key"]["created"],
+        "id": result["api_key"]["id"],
+        "nome": result["api_key"]["nome"],
+    }
 
 
 @router.post("/internal/global-admin/sync")
@@ -39,15 +40,11 @@ def sync_global_admin(
     if x_global_api_key != settings.global_api_key:
         raise AppError("invalid_global_api_key", status_code=403, code="invalid_global_api_key")
 
-    email_registry_repository = EmailRegistryRepository(db)
-    owner = email_registry_repository.find_owner(settings.global_admin_email)
-    if owner is not None and owner[0] != "usuarios_globais":
-        raise AppError("email_already_exists", status_code=409, code="email_already_exists")
-
-    repository = UsuarioGlobalRepository(db)
-    model, created = repository.upsert_admin_global(
-        nome=settings.global_admin_name,
-        email=settings.global_admin_email,
-        senha_hash=hash_password(settings.global_admin_password),
-    )
-    return {"status": "ok", "created": created, "id": model.id, "email": model.email, "perfil": model.perfil}
+    result = sync_global_defaults(db)
+    return {
+        "status": "ok",
+        "created": result["global_admin"]["created"],
+        "id": result["global_admin"]["id"],
+        "email": result["global_admin"]["email"],
+        "perfil": result["global_admin"]["perfil"],
+    }

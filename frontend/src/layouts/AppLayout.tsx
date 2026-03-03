@@ -47,7 +47,7 @@ const REPORTS_NAV_ITEM: NavItem = {
   label: 'Relatórios',
   shortLabel: 'Relatórios',
   icon: 'reports',
-  roles: ['ADMIN_GLOBAL', 'ADMIN']
+  roles: ['ADMIN']
 };
 
 const TITLES: Record<string, string> = {
@@ -168,7 +168,6 @@ function getBottomNavItems(role: UserRole | undefined, visible: NavItem[]): NavI
   if (role === 'ADMIN_GLOBAL') {
     addItem(items, '/dashboard');
     addItem(items, '/global');
-    addItem(items, '/condo/relatorios');
     addItem(items, '/global/config');
     const extraShortcut = visible.find((item) => item.path !== '/dashboard' && item.path !== '/global');
     if (extraShortcut) addItem(items, extraShortcut.path);
@@ -206,7 +205,7 @@ export function AppLayout(): JSX.Element {
   const condoConfigVisible = user ? CONFIG_NAV_ITEM.roles.includes(user.role) : false;
   const globalConfigVisible = user ? GLOBAL_CONFIG_NAV_ITEM.roles.includes(user.role) : false;
   const configNavItem = globalConfigVisible ? GLOBAL_CONFIG_NAV_ITEM : condoConfigVisible ? CONFIG_NAV_ITEM : null;
-  const showReportsItem = user ? REPORTS_NAV_ITEM.roles.includes(user.role) : false;
+  const showReportsItem = user?.role === 'ADMIN';
   const isAdminSection = location.pathname.startsWith('/condo/admin');
   const isConfigSection = location.pathname.startsWith('/condo/config');
   const bottomNavItems = useMemo(() => getBottomNavItems(user?.role, visible), [user?.role, visible]);

@@ -54,6 +54,13 @@ type ConfiguracoesResponse = {
   prazo_dias_encomenda_esquecida: number;
 };
 
+type MinhasEncomendasResponseItem = {
+  id: number
+  codigo_interno: string
+  status: EncomendaListItem['status']
+  tipo: EncomendaListItem['tipo']
+}
+
 function resolveDateRange(now: Date, period: ViewPeriod, dataAnchor: Date): DateRange {
   const end = new Date(now);
   if (period === 'DAY') {
@@ -142,24 +149,43 @@ export function DashboardPage(): JSX.Element {
       setLoading(true);
       setError(null);
       try {
-        const [encomendasResponse, enderecosResponse] = await Promise.all([
-          backendApi.get<EncomendaListItem[]>('/encomendas'),
-          backendApi.get<Endereco[]>('/enderecos')
-        ]);
-        setItems(encomendasResponse.data);
-        const map = new Map<number, Endereco>();
-        enderecosResponse.data.forEach((endereco) => {
-          map.set(endereco.id, endereco);
-        });
-        setEnderecosById(map);
         if (user?.role === 'ADMIN' || user?.role === 'PORTEIRO') {
+          const [encomendasResponse, enderecosResponse] = await Promise.all([
+            backendApi.get<EncomendaListItem[]>('/encomendas'),
+            backendApi.get<Endereco[]>('/enderecos')
+          ]);
+          setItems(encomendasResponse.data);
+          const map = new Map<number, Endereco>();
+          enderecosResponse.data.forEach((endereco) => {
+            map.set(endereco.id, endereco);
+          });
+          setEnderecosById(map);
           try {
             const { data } = await backendApi.get<ConfiguracoesResponse>('/configuracoes');
             setForgottenDaysThreshold(data.prazo_dias_encomenda_esquecida ?? DEFAULT_FORGOTTEN_DAYS);
           } catch {
             setForgottenDaysThreshold(DEFAULT_FORGOTTEN_DAYS);
           }
+        } else if (user?.role === 'MORADOR') {
+          const { data } = await backendApi.get<MinhasEncomendasResponseItem[]>('/minhas-encomendas');
+          setItems(
+            data.map((item) => ({
+              id: item.id,
+              condominio_id: 0,
+              codigo_interno: item.codigo_interno,
+              status: item.status,
+              tipo: item.tipo,
+              morador_id: 0,
+              endereco_id: 0,
+              data_recebimento: null,
+              data_entrega: null
+            }))
+          );
+          setEnderecosById(new Map());
+          setForgottenDaysThreshold(DEFAULT_FORGOTTEN_DAYS);
         } else {
+          setItems([]);
+          setEnderecosById(new Map());
           setForgottenDaysThreshold(DEFAULT_FORGOTTEN_DAYS);
         }
       } catch (err) {

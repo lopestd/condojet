@@ -85,6 +85,26 @@ Opcional: informar arquivo de ambiente customizado.
 scripts/up_docker_stack.sh ./config/env/.env.dsv
 ```
 
+## Atualizacao de banco (desenvolvimento)
+
+Para aplicar apenas migracoes pendentes no banco de desenvolvimento:
+
+```bash
+scripts/db_dev_migrate.sh
+```
+
+Para reset completo do schema (destrutivo) e reaplicar tudo do zero:
+
+```bash
+scripts/db_dev_reset_and_migrate.sh --yes
+```
+
+Opcional: subir stack e resetar banco no mesmo comando:
+
+```bash
+scripts/up_docker_stack.sh --reset-db
+```
+
 ## Estratégia de execução e testes (API Python)
 
 1. `local`:

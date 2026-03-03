@@ -161,6 +161,24 @@ class ConfiguracaoModel(Base):
     updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
 
 
+class WebhookN8nCondominioModel(Base):
+    __tablename__ = "webhooks_n8n_condominio"
+    __table_args__ = {"schema": settings.db_schema}
+
+    id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    condominio_id: Mapped[int] = mapped_column(
+        BIGINT,
+        ForeignKey(f"{settings.db_schema}.condominios.id"),
+        nullable=False,
+    )
+    tipo: Mapped[str] = mapped_column(String(32), nullable=False)
+    url: Mapped[str] = mapped_column(Text, nullable=False)
+    ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    updated_by_usuario_id: Mapped[int | None] = mapped_column(BIGINT, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
+    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
+
+
 class EmpresaResponsavelGlobalModel(Base):
     __tablename__ = "empresas_responsaveis_globais"
     __table_args__ = {"schema": settings.db_schema}

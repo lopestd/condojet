@@ -92,7 +92,7 @@ export const appRouter = createBrowserRouter([
         children: [{ path: '/condo/minhas-encomendas', element: <ResidentPage /> }]
       },
       {
-        element: <ProtectedRoute allowedRoles={['ADMIN_GLOBAL', 'ADMIN']} />,
+        element: <ProtectedRoute allowedRoles={['ADMIN']} />,
         children: [{ path: '/condo/relatorios', element: <ReportsPageRoute /> }]
       },
       {
