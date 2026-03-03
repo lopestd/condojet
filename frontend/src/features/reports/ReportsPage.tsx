@@ -22,7 +22,7 @@ import { formatDateBR, parseApiDate } from '../../utils/dateTime';
 import type { Endereco, EncomendaListItem } from '../encomendas/types';
 
 type PeriodType = '7d' | '30d' | '90d' | 'year' | 'custom';
-type DetailStatus = 'RECEBIDAS' | 'ENTREGUES' | 'AGUARDANDO_RETIRADA' | 'ESQUECIDAS';
+type DetailStatus = 'ENTREGUES' | 'AGUARDANDO_RETIRADA' | 'ESQUECIDAS';
 
 type AnalyticsItem = EncomendaListItem & {
   receivedAt: Date | null;
@@ -51,6 +51,8 @@ type ReportDetailRow = {
   status: DetailStatus;
   statusLabel: string;
   dataEntrada: string;
+  dataEntrega: string;
+  aguardandoDias: number | null;
   dataEntradaOrder: number;
   moradorNome: string;
   contatoMorador: string;
@@ -85,7 +87,6 @@ const PERIOD_OPTIONS: Array<{ value: PeriodType; label: string }> = [
 ];
 
 const DETAIL_STATUS_OPTIONS: Array<{ value: DetailStatus; label: string }> = [
-  { value: 'RECEBIDAS', label: 'Recebidas' },
   { value: 'ENTREGUES', label: 'Entregues' },
   { value: 'AGUARDANDO_RETIRADA', label: 'Aguardando Retirada' },
   { value: 'ESQUECIDAS', label: 'Esquecidas' }
@@ -200,10 +201,21 @@ function sameDayIso(date: Date): string {
 }
 
 function statusLabel(status: DetailStatus): string {
-  if (status === 'ENTREGUES') return 'Entregues';
+  if (status === 'ENTREGUES') return 'Entregue';
   if (status === 'AGUARDANDO_RETIRADA') return 'Aguardando Retirada';
-  if (status === 'ESQUECIDAS') return 'Esquecidas';
-  return 'Recebidas';
+  return 'Esquecida';
+}
+
+function formatAguardandoValue(row: ReportDetailRow): string {
+  if (row.status === 'ENTREGUES') return '-';
+  return row.aguardandoDias === null ? '-' : `${row.aguardandoDias} dias`;
+}
+
+function matchesDetailStatusFilter(row: ReportDetailRow, selected: Set<DetailStatus>): boolean {
+  if (selected.has(row.status)) return true;
+  // "Aguardando Retirada" deve cobrir toda encomenda não entregue, incluindo esquecidas.
+  if (selected.has('AGUARDANDO_RETIRADA') && row.status === 'ESQUECIDAS') return true;
+  return false;
 }
 
 export function ReportsPage(): JSX.Element {
@@ -454,7 +466,7 @@ export function ReportsPage(): JSX.Element {
 
     return Array.from(pool.values())
       .map((item) => {
-        let status: DetailStatus = 'RECEBIDAS';
+        let status: DetailStatus = 'AGUARDANDO_RETIRADA';
 
         if (deliveredWithinPeriodIds.has(item.id)) {
           status = 'ENTREGUES';
@@ -469,6 +481,13 @@ export function ReportsPage(): JSX.Element {
           status,
           statusLabel: statusLabel(status),
           dataEntrada: formatDateBR(item.data_recebimento),
+          dataEntrega: status === 'ENTREGUES' ? formatDateBR(item.data_entrega) : '-',
+          aguardandoDias:
+            status === 'ENTREGUES'
+              ? null
+              : item.receivedAt
+                ? Math.max(1, Math.floor((new Date().getTime() - item.receivedAt.getTime()) / DAY_MS))
+                : 0,
           dataEntradaOrder: item.receivedAt?.getTime() ?? 0,
           moradorNome: item.morador_nome?.trim() || `Morador ${item.morador_id}`,
           contatoMorador: moradorContatoMap[item.morador_id] || '-',
@@ -480,13 +499,12 @@ export function ReportsPage(): JSX.Element {
 
   const filteredDetailRows = useMemo(() => {
     const selected = new Set(detailStatuses);
-    return detailRows.filter((row) => selected.has(row.status));
+    return detailRows.filter((row) => matchesDetailStatusFilter(row, selected));
   }, [detailRows, detailStatuses]);
 
   function toggleDetailStatus(status: DetailStatus): void {
     setDetailStatuses((previous) => {
       if (previous.includes(status)) {
-        if (previous.length === 1) return previous;
         return previous.filter((item) => item !== status);
       }
       return [...previous, status];
@@ -498,7 +516,7 @@ export function ReportsPage(): JSX.Element {
   }
 
   function clearDetailStatus(): void {
-    setDetailStatuses(['RECEBIDAS']);
+    setDetailStatuses([]);
   }
 
   async function exportDetailPdf(): Promise<void> {
@@ -523,6 +541,8 @@ export function ReportsPage(): JSX.Element {
       const body = filteredDetailRows.map((row) => [
         row.statusLabel,
         row.dataEntrada,
+        formatAguardandoValue(row),
+        row.dataEntrega,
         row.moradorNome,
         `Quadra: ${row.endereco.quadra}\n${row.endereco.secondLabel}: ${row.endereco.secondValue}\n${row.endereco.thirdLabel}: ${row.endereco.thirdValue}`,
         row.contatoMorador
@@ -530,7 +550,7 @@ export function ReportsPage(): JSX.Element {
 
       autoTable(doc, {
         startY: margin + 84,
-        head: [['Situação', 'Data de entrada', 'Morador(a)', 'Endereço morador', 'Contato morador']],
+        head: [['Situação', 'DATA_ENTRADA', 'AGUARDANDO', 'DATA_ENTREGA', 'Morador(a)', 'Endereço', 'Contato']],
         body,
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 4, valign: 'middle' },
@@ -562,9 +582,11 @@ export function ReportsPage(): JSX.Element {
       const data = filteredDetailRows.map((row) => ({
         SITUACAO: row.statusLabel,
         DATA_ENTRADA: row.dataEntrada,
+        AGUARDANDO: formatAguardandoValue(row),
+        DATA_ENTREGA: row.dataEntrega,
         MORADOR: row.moradorNome,
-        ENDERECO_MORADOR: `Quadra: ${row.endereco.quadra} | ${row.endereco.secondLabel}: ${row.endereco.secondValue} | ${row.endereco.thirdLabel}: ${row.endereco.thirdValue}`,
-        CONTATO_MORADOR: row.contatoMorador
+        ENDERECO: `Quadra: ${row.endereco.quadra} | ${row.endereco.secondLabel}: ${row.endereco.secondValue} | ${row.endereco.thirdLabel}: ${row.endereco.thirdValue}`,
+        CONTATO: row.contatoMorador
       }));
 
       const worksheet = XLSX.utils.json_to_sheet(data);
@@ -591,7 +613,10 @@ export function ReportsPage(): JSX.Element {
             disabled={!range.valid || loading}
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 2 9 8l-6 3 6 3 3 8 3-8 6-3-6-3-3-6Z" fill="currentColor" />
+              <path
+                d="M5 3h10l4 4v13a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm9 1.5V8h3.5L14 4.5ZM7 11a1 1 0 0 0 0 2h8a1 1 0 1 0 0-2H7Zm0 4a1 1 0 0 0 0 2h8a1 1 0 1 0 0-2H7Z"
+                fill="currentColor"
+              />
             </svg>
             <span>Detalhar relatório</span>
           </button>
@@ -866,10 +891,12 @@ export function ReportsPage(): JSX.Element {
                 <thead>
                   <tr>
                     <th>Situação</th>
-                    <th>Data de entrada</th>
+                    <th>DATA_ENTRADA</th>
+                    <th>AGUARDANDO</th>
+                    <th>DATA_ENTREGA</th>
                     <th>Morador(a)</th>
-                    <th>Endereço morador</th>
-                    <th>Contato morador</th>
+                    <th>Endereço</th>
+                    <th>Contato</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -877,6 +904,8 @@ export function ReportsPage(): JSX.Element {
                     <tr key={row.id}>
                       <td>{row.statusLabel}</td>
                       <td>{row.dataEntrada}</td>
+                      <td>{formatAguardandoValue(row)}</td>
+                      <td>{row.dataEntrega}</td>
                       <td>{row.moradorNome}</td>
                       <td>
                         <div className="reports-mgr-endereco-stack">
@@ -896,7 +925,7 @@ export function ReportsPage(): JSX.Element {
                   ))}
                   {filteredDetailRows.length === 0 ? (
                     <tr>
-                      <td colSpan={5}>Nenhuma encomenda encontrada para os filtros selecionados.</td>
+                      <td colSpan={7}>Nenhuma encomenda encontrada para os filtros selecionados.</td>
                     </tr>
                   ) : null}
                 </tbody>
