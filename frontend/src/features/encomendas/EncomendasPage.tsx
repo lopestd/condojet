@@ -14,7 +14,6 @@ import type {
   EncomendaFormState,
   EncomendaListItem,
   EncomendaSort,
-  EncomendaStatus,
   Endereco,
   Morador
 } from './types'
@@ -241,7 +240,10 @@ export function EncomendasPage(): JSX.Element {
   const canEditar = (item: EncomendaListItem): boolean =>
     (user?.role === 'ADMIN' || user?.role === 'PORTEIRO') &&
     (item.status === 'RECEBIDA' || item.status === 'DISPONIVEL_RETIRADA')
-  const canVisualizar = (_item: EncomendaListItem): boolean => user?.role === 'ADMIN' || user?.role === 'PORTEIRO'
+  const canVisualizar = (item: EncomendaListItem): boolean => {
+    void item
+    return user?.role === 'ADMIN' || user?.role === 'PORTEIRO'
+  }
   const canExcluir = (item: EncomendaListItem): boolean => user?.role === 'ADMIN' && item.status !== 'ENTREGUE'
 
   async function loadDetail(encomendaId: number): Promise<EncomendaDetail | null> {

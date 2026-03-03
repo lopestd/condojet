@@ -243,6 +243,15 @@
     border-radius: 13px;
     padding: 0.72rem;
   }
+
+  .scanner-card {
+    width: 100%;
+    padding: 0.72rem;
+  }
+
+  .scanner-video {
+    max-height: 58vh;
+  }
 }
 
 @media (max-width: 480px) {

@@ -54,11 +54,6 @@ type ConfiguracoesResponse = {
   prazo_dias_encomenda_esquecida: number;
 };
 
-function capitalizeFirst(value: string): string {
-  if (!value) return value;
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
 function resolveDateRange(now: Date, period: ViewPeriod, dataAnchor: Date): DateRange {
   const end = new Date(now);
   if (period === 'DAY') {

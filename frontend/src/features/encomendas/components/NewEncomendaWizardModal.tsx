@@ -1,6 +1,8 @@
-import { FormEvent, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 
+import { canOpenScannerCamera, isMobileScannerAvailable } from '../utils/mobileScanner'
 import type { EncomendaFormState, EncomendaTipo, Endereco, Morador } from '../types'
+import { BarcodeScanner } from './BarcodeScanner'
 
 type Props = {
   mode: 'create' | 'edit'
@@ -46,15 +48,13 @@ export function NewEncomendaWizardModal({
   onSubmit
 }: Props): JSX.Element {
   const [step, setStep] = useState<1 | 2>(1)
-  const empresaAtual = form.empresa_entregadora.trim()
-  const empresaCatalogadaInicial = useMemo(
-    () => empresasResponsaveis.find((item) => item.trim() === empresaAtual) ?? '',
-    [empresasResponsaveis, empresaAtual]
-  )
-  const [empresaMode, setEmpresaMode] = useState<'catalogo' | 'manual'>(() =>
-    empresaCatalogadaInicial ? 'catalogo' : 'manual'
-  )
-  const [empresaManual, setEmpresaManual] = useState<string>(() => (empresaCatalogadaInicial ? '' : empresaAtual))
+  const [isScannerOpen, setIsScannerOpen] = useState(false)
+  const [cameraError, setCameraError] = useState<string | null>(null)
+  const [scannerAvailable, setScannerAvailable] = useState<boolean>(() => isMobileScannerAvailable())
+  const trackingInputRef = useRef<HTMLInputElement | null>(null)
+  const empresaInitRef = useRef(false)
+  const [empresaMode, setEmpresaMode] = useState<'catalogo' | 'manual'>('catalogo')
+  const [empresaManual, setEmpresaManual] = useState<string>('')
 
   const enderecoSelecionado = useMemo(
     () => enderecos.find((item) => item.id === Number(form.endereco_id)),
@@ -72,6 +72,21 @@ export function NewEncomendaWizardModal({
 
   const canNextStep1 = Boolean(form.tipo && form.codigo_externo.trim() && form.empresa_entregadora.trim())
   const canNextStep2 = Boolean(form.morador_id && form.endereco_id)
+
+  useEffect(() => {
+    function onViewportChange(): void {
+      setScannerAvailable(isMobileScannerAvailable())
+    }
+    window.addEventListener('resize', onViewportChange)
+    return () => window.removeEventListener('resize', onViewportChange)
+  }, [])
+
+  useEffect(() => {
+    if (empresaInitRef.current) return
+    empresaInitRef.current = true
+    if (!form.empresa_entregadora) return
+    setForm({ ...form, empresa_entregadora: '' })
+  }, [form, setForm])
 
   function onEmpresaSelectChange(value: string): void {
     if (value === '__manual__') {
@@ -93,6 +108,27 @@ export function NewEncomendaWizardModal({
       return
     }
     await onSubmit(event)
+  }
+
+  function openScanner(): void {
+    if (!canOpenScannerCamera()) {
+      setCameraError('Scanner indisponível neste navegador. Acesse por HTTPS ou localhost e permita câmera.')
+      return
+    }
+    setCameraError(null)
+    setIsScannerOpen(true)
+  }
+
+  function closeScanner(): void {
+    setIsScannerOpen(false)
+  }
+
+  function handleScannerDetected(code: string): void {
+    setForm({ ...form, codigo_externo: code })
+    setIsScannerOpen(false)
+    window.requestAnimationFrame(() => {
+      trackingInputRef.current?.focus()
+    })
   }
 
   return (
@@ -122,12 +158,27 @@ export function NewEncomendaWizardModal({
               </label>
               <label>
                 Código de Rastreio
-                <input
-                  value={form.codigo_externo}
-                  onChange={(event) => setForm({ ...form, codigo_externo: event.target.value })}
-                  required
-                />
+                <div className="input-action-wrap">
+                  <input
+                    ref={trackingInputRef}
+                    value={form.codigo_externo}
+                    onChange={(event) => setForm({ ...form, codigo_externo: event.target.value })}
+                    required
+                  />
+                  {scannerAvailable ? (
+                    <button
+                      type="button"
+                      className="input-inline-action scanner-open-action"
+                      onClick={openScanner}
+                      aria-label="Abrir scanner"
+                      title="Ler com câmera"
+                    >
+                      Scan
+                    </button>
+                  ) : null}
+                </div>
               </label>
+              {cameraError ? <p className="error-box scanner-field-error">{cameraError}</p> : null}
               <label>
                 Empresa responsável
                 <select
@@ -136,12 +187,12 @@ export function NewEncomendaWizardModal({
                   required
                 >
                   <option value="">Selecione</option>
+                  <option value="__manual__">Informar manualmente</option>
                   {empresasResponsaveis.map((empresa) => (
                     <option key={empresa} value={empresa}>
                       {empresa}
                     </option>
                   ))}
-                  <option value="__manual__">Informar manualmente</option>
                 </select>
               </label>
               {empresaMode === 'manual' ? (
@@ -231,6 +282,9 @@ export function NewEncomendaWizardModal({
           </div>
         </form>
       </div>
+      {isScannerOpen ? (
+        <BarcodeScanner onDetected={handleScannerDetected} onClose={closeScanner} onError={setCameraError} />
+      ) : null}
     </div>
   )
 }

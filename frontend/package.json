@@ -10,6 +10,7 @@
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
+    "@zxing/browser": "^0.1.5",
     "axios": "1.8.1",
     "html2canvas": "1.4.1",
     "jspdf": "2.5.2",
