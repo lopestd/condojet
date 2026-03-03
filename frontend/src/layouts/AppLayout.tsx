@@ -61,7 +61,9 @@ const TITLES: Record<string, string> = {
   '/condo/operacao': 'Operação de Encomendas',
   '/condo/minhas-encomendas': 'Minhas Encomendas',
   '/condo/relatorios': 'Relatórios',
-  '/condo/config': 'Configurações'
+  '/condo/config': 'Configurações',
+  '/condo/config/gerais': 'Configurações - Gerais',
+  '/condo/config/whatsapp': 'Configurações - WhatsApp'
 };
 
 function getRoleLabel(role?: UserRole): string {
@@ -206,6 +208,7 @@ export function AppLayout(): JSX.Element {
   const configNavItem = globalConfigVisible ? GLOBAL_CONFIG_NAV_ITEM : condoConfigVisible ? CONFIG_NAV_ITEM : null;
   const showReportsItem = user ? REPORTS_NAV_ITEM.roles.includes(user.role) : false;
   const isAdminSection = location.pathname.startsWith('/condo/admin');
+  const isConfigSection = location.pathname.startsWith('/condo/config');
   const bottomNavItems = useMemo(() => getBottomNavItems(user?.role, visible), [user?.role, visible]);
   const pageTitle = TITLES[location.pathname] ?? 'CondoJET';
   useEffect(() => {
@@ -315,13 +318,57 @@ export function AppLayout(): JSX.Element {
           ) : null}
 
           {configNavItem ? (
-            <NavLink
-              to={configNavItem.path}
-              className={({ isActive }) => (isActive ? 'sidebar-link active' : 'sidebar-link')}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <SidebarLinkLabel icon={configNavItem.icon} label={configNavItem.label} />
-            </NavLink>
+            globalConfigVisible ? (
+              <NavLink
+                to={configNavItem.path}
+                className={({ isActive }) => (isActive ? 'sidebar-link active' : 'sidebar-link')}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <SidebarLinkLabel icon={configNavItem.icon} label={configNavItem.label} />
+              </NavLink>
+            ) : (
+              <div className="sidebar-group">
+                <NavLink
+                  to={configNavItem.path}
+                  className={isConfigSection ? 'sidebar-link active' : 'sidebar-link'}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <SidebarLinkLabel icon={configNavItem.icon} label={configNavItem.label} />
+                </NavLink>
+                <div className="sidebar-subnav">
+                  <NavLink
+                    to="/condo/config/gerais"
+                    className={({ isActive }) => (isActive ? 'sidebar-sublink active' : 'sidebar-sublink')}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <span className="sidebar-link-content">
+                      <span className="sidebar-link-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <circle cx="12" cy="12" r="3.4" />
+                          <path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.2a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3h.1a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8v.1a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.2a1.6 1.6 0 0 0-1.5 1z" />
+                        </svg>
+                      </span>
+                      <span>Gerais</span>
+                    </span>
+                  </NavLink>
+                  <NavLink
+                    to="/condo/config/whatsapp"
+                    className={({ isActive }) => (isActive ? 'sidebar-sublink active' : 'sidebar-sublink')}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <span className="sidebar-link-content">
+                      <span className="sidebar-link-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M6.2 19.1 7 15.9a7.5 7.5 0 1 1 2.7 2.2z" />
+                          <path d="M10.2 9.2c.2-.4.3-.4.5-.4h.4c.1 0 .3 0 .4.3l.6 1.4c.1.2.1.3 0 .4l-.3.5c-.1.1-.2.2-.1.4.3.6.8 1.2 1.5 1.6.2.1.3 0 .4-.1l.5-.6c.1-.1.3-.2.4-.1l1.3.6c.2.1.3.2.3.4v.4c0 .2 0 .4-.3.5-.4.2-1 .3-1.5.2-2.3-.5-4.4-2.7-4.9-5-.1-.5 0-1.1.2-1.5z" />
+                        </svg>
+                      </span>
+                      <span>WhatsApp</span>
+                    </span>
+                  </NavLink>
+                </div>
+              </div>
+            )
           ) : null}
         </nav>
 

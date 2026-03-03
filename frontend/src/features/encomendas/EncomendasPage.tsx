@@ -382,7 +382,7 @@ export function EncomendasPage(): JSX.Element {
     setFeedback(null)
     try {
       await backendApi.put(`/encomendas/${selectedEncomendaId}/reabrir`, { motivo_reabertura: motivoReabertura })
-      setFeedback('Encomenda reaberta com sucesso.')
+      setFeedback('Entrega revertida com sucesso.')
       setShowReabrirModal(false)
       setSelectedEncomendaId(null)
       setMotivoReabertura('')
@@ -558,8 +558,8 @@ export function EncomendasPage(): JSX.Element {
                             event.stopPropagation()
                             openReabrirModal(item)
                           }}
-                          title={canReabrir(item) ? 'Reabrir encomenda' : 'Reabertura indisponível'}
-                          aria-label={canReabrir(item) ? 'Reabrir encomenda' : 'Reabertura indisponível'}
+                          title={canReabrir(item) ? 'Reverter entrega' : 'Reversão indisponível'}
+                          aria-label={canReabrir(item) ? 'Reverter entrega' : 'Reversão indisponível'}
                           disabled={!canReabrir(item)}
                         >
                           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -737,10 +737,10 @@ export function EncomendasPage(): JSX.Element {
       {showReabrirModal ? (
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal-card">
-            <h3>Reabrir encomenda</h3>
+            <h3>Reverter entrega</h3>
             <form className="form-grid" onSubmit={(event) => void onConfirmReabrir(event)}>
               <label>
-                Motivo da reabertura
+                Motivo da reversão
                 <textarea value={motivoReabertura} onChange={(event) => setMotivoReabertura(event.target.value)} rows={3} required />
               </label>
               <div className="modal-actions">
@@ -757,7 +757,7 @@ export function EncomendasPage(): JSX.Element {
                   Cancelar
                 </button>
                 <button type="submit" className="button-warning" disabled={savingReabertura}>
-                  {savingReabertura ? 'Processando...' : 'Confirmar reabertura'}
+                  {savingReabertura ? 'Processando...' : 'Confirmar reversão'}
                 </button>
               </div>
             </form>

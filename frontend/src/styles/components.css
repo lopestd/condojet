@@ -2183,6 +2183,8 @@ th {
   justify-content: space-between;
   align-items: flex-start;
   gap: 0.62rem;
+  position: relative;
+  padding-right: 3.1rem;
 }
 
 .reports-mgr-detail-head h3 {
@@ -2195,6 +2197,38 @@ th {
   margin: 0.2rem 0 0;
   color: #52697f;
   font-size: 1rem;
+}
+
+.reports-mgr-modal-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid #8fb3d9;
+  border-radius: 999px;
+  background: #f2f8ff;
+  color: #113355;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.reports-mgr-modal-close svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.reports-mgr-modal-close path {
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.reports-mgr-modal-close:hover {
+  background: #dcecff;
 }
 
 .reports-mgr-detail-filters {

@@ -13,7 +13,6 @@ type Props = {
 const FILTERS: Array<{ value: EncomendaFilter; label: string }> = [
   { value: 'ALL', label: 'Todas' },
   { value: 'RECEBIDA', label: 'Aguardando' },
-  { value: 'DISPONIVEL_RETIRADA', label: 'Notificadas' },
   { value: 'ENTREGUE', label: 'Entregues' },
   { value: 'ESQUECIDA', label: 'Esquecidas' }
 ]
@@ -46,6 +45,19 @@ export function EncomendasFiltersBar({
         </label>
       </div>
 
+      <div className="encomendas-sort-wrap">
+        <select
+          aria-label="Ordenação"
+          value={sortBy}
+          onChange={(event) => onSortByChange(event.target.value as EncomendaSort)}
+        >
+          <option value="RECENTES">Mais recentes</option>
+          <option value="ANTIGAS">Mais antigas</option>
+          <option value="MORADOR_AZ">Morador A-Z</option>
+          <option value="MORADOR_ZA">Morador Z-A</option>
+        </select>
+      </div>
+
       <div className="encomendas-filter-actions">
         <div className="encomendas-chip-filters" role="group" aria-label="Filtro por status">
           {FILTERS.map((item) => (
@@ -58,19 +70,6 @@ export function EncomendasFiltersBar({
               {item.label}
             </button>
           ))}
-        </div>
-
-        <div className="encomendas-sort-wrap">
-          <select
-            aria-label="Ordenação"
-            value={sortBy}
-            onChange={(event) => onSortByChange(event.target.value as EncomendaSort)}
-          >
-            <option value="RECENTES">Mais recentes</option>
-            <option value="ANTIGAS">Mais antigas</option>
-            <option value="MORADOR_AZ">Morador A-Z</option>
-            <option value="MORADOR_ZA">Morador Z-A</option>
-          </select>
         </div>
       </div>
     </section>

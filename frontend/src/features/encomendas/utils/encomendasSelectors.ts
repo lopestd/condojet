@@ -35,7 +35,8 @@ export function filterEncomendas(
   const term = searchTerm.trim().toLowerCase()
   return items.filter((item) => {
     if (status === 'ESQUECIDA' && !isForgotten(item, forgottenDaysThreshold)) return false
-    if (status !== 'ALL' && status !== 'ESQUECIDA' && item.status !== status) return false
+    if (status === 'RECEBIDA' && item.status !== 'RECEBIDA' && item.status !== 'DISPONIVEL_RETIRADA') return false
+    if (status !== 'ALL' && status !== 'ESQUECIDA' && status !== 'RECEBIDA' && item.status !== status) return false
     if (!term) return true
     return searchKey(item).includes(term)
   })

@@ -836,8 +836,16 @@ export function ReportsPage(): JSX.Element {
                 <h3>Detalhamento de Relatório</h3>
                 <p>Período: {range.label}</p>
               </div>
-              <button type="button" className="button-soft" onClick={() => setShowDetailModal(false)}>
-                Fechar
+              <button
+                type="button"
+                className="reports-mgr-modal-close"
+                aria-label="Fechar modal"
+                onClick={() => setShowDetailModal(false)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 6L18 18" />
+                  <path d="M18 6L6 18" />
+                </svg>
               </button>
             </div>
 
@@ -855,11 +863,11 @@ export function ReportsPage(): JSX.Element {
             </div>
 
             <div className="reports-mgr-detail-toolbar">
-              <div className="action-group">
-                <button type="button" className="button-soft small" onClick={selectAllDetailStatus}>
+              <div className="action-group reports-mgr-selection-actions">
+                <button type="button" className="button-soft small reports-mgr-selection-btn" onClick={selectAllDetailStatus}>
                   Marcar todos
                 </button>
-                <button type="button" className="button-soft small" onClick={clearDetailStatus}>
+                <button type="button" className="button-soft small reports-mgr-selection-btn" onClick={clearDetailStatus}>
                   Limpar seleção
                 </button>
               </div>

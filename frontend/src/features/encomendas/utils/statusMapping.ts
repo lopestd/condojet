@@ -5,7 +5,7 @@ const DEFAULT_FORGOTTEN_DAYS = 15
 
 export function statusLabel(status: EncomendaStatus): string {
   if (status === 'RECEBIDA') return 'Aguardando'
-  if (status === 'DISPONIVEL_RETIRADA') return 'Notificado'
+  if (status === 'DISPONIVEL_RETIRADA') return 'Aguardando'
   return 'Entregue'
 }
 

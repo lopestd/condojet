@@ -34,18 +34,19 @@ export function EncomendaCard({
   onDelete
 }: Props): JSX.Element {
   const endereco = item.endereco_label ?? (enderecosById.get(item.endereco_id) ? formatEnderecoLabel(enderecosById.get(item.endereco_id) as Endereco) : `Endereço #${item.endereco_id}`)
+  const codigoRastreio = item.codigo_externo?.trim() ? item.codigo_externo : '-'
 
   return (
     <article
       className="encomenda-card"
-      aria-label={`Encomenda ${item.codigo_interno}`}
+      aria-label={`Encomenda ${codigoRastreio}`}
       onClick={() => {
         if (canVisualizar) onView()
       }}
     >
       <div className="encomenda-card-head">
         <div>
-          <p className="encomenda-code">{item.codigo_interno}</p>
+          <p className="encomenda-code">{codigoRastreio}</p>
           <small>{item.tipo}</small>
         </div>
         <span className={`status-badge ${statusClass(item.status)}`}>{statusChipLabel(item, forgottenDaysThreshold)}</span>
@@ -105,8 +106,8 @@ export function EncomendaCard({
             event.stopPropagation()
             onReabrir()
           }}
-          title={canReabrir ? 'Reabrir encomenda' : 'Reabertura indisponível'}
-          aria-label={canReabrir ? 'Reabrir encomenda' : 'Reabertura indisponível'}
+          title={canReabrir ? 'Reverter entrega' : 'Reversão indisponível'}
+          aria-label={canReabrir ? 'Reverter entrega' : 'Reversão indisponível'}
           disabled={!canReabrir}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">

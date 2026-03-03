@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 
 import { ProtectedRoute, defaultPathByRole } from '../auth/ProtectedRoute';
@@ -10,9 +11,28 @@ import { ResidentPage } from '../features/condo/ResidentPage';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { GlobalManagementPage } from '../features/global/GlobalManagementPage';
 import { GlobalSettingsPage } from '../features/global/GlobalSettingsPage';
-import { ReportsPage } from '../features/reports/ReportsPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
+import { WhatsAppSettingsPage } from '../features/settings/WhatsAppSettingsPage';
 import { AppLayout } from '../layouts/AppLayout';
+
+const LazyReportsPage = lazy(async () => {
+  const module = await import('../features/reports/ReportsPage');
+  return { default: module.ReportsPage };
+});
+
+function ReportsPageRoute(): JSX.Element {
+  return (
+    <Suspense
+      fallback={
+        <section className="page-grid reports-mgr-page" aria-live="polite">
+          <p className="info-box">Carregando relatórios...</p>
+        </section>
+      }
+    >
+      <LazyReportsPage />
+    </Suspense>
+  );
+}
 
 function HomeRedirect(): JSX.Element {
   const { user } = useAuth();
@@ -73,11 +93,15 @@ export const appRouter = createBrowserRouter([
       },
       {
         element: <ProtectedRoute allowedRoles={['ADMIN_GLOBAL', 'ADMIN']} />,
-        children: [{ path: '/condo/relatorios', element: <ReportsPage /> }]
+        children: [{ path: '/condo/relatorios', element: <ReportsPageRoute /> }]
       },
       {
         element: <ProtectedRoute allowedRoles={['ADMIN']} />,
-        children: [{ path: '/condo/config', element: <SettingsPage /> }]
+        children: [
+          { path: '/condo/config', element: <Navigate to="/condo/config/gerais" replace /> },
+          { path: '/condo/config/gerais', element: <SettingsPage /> },
+          { path: '/condo/config/whatsapp', element: <WhatsAppSettingsPage /> }
+        ]
       }
     ]
   },
