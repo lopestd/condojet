@@ -12,24 +12,24 @@ import {
   XAxis,
   YAxis
 } from 'recharts';
-import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 import { useAuth } from '../../auth/AuthContext';
 import { backendApi, readApiError } from '../../services/httpClient';
 import { formatDateBR, parseApiDate } from '../../utils/dateTime';
-import type { Endereco, EncomendaDetail, EncomendaListItem } from '../encomendas/types';
+import type { Endereco, EncomendaListItem } from '../encomendas/types';
 
 type PeriodType = '7d' | '30d' | '90d' | 'year' | 'custom';
+type DetailStatus = 'RECEBIDAS' | 'ENTREGUES' | 'AGUARDANDO_RETIRADA' | 'ESQUECIDAS';
 
 type AnalyticsItem = EncomendaListItem & {
   receivedAt: Date | null;
   deliveredAt: Date | null;
   enderecoNome: string;
+  endereco?: Endereco;
 };
-
-type CompanyCache = Record<number, string>;
 
 type ReportRange = {
   start: Date;
@@ -45,9 +45,32 @@ type DailyRow = {
   recebidas: number;
   entregues: number;
 };
+
+type ReportDetailRow = {
+  id: number;
+  status: DetailStatus;
+  statusLabel: string;
+  dataEntrada: string;
+  dataEntradaOrder: number;
+  moradorNome: string;
+  contatoMorador: string;
+  endereco: {
+    quadra: string;
+    secondLabel: string;
+    secondValue: string;
+    thirdLabel: string;
+    thirdValue: string;
+  };
+};
+
 type ConfiguracoesResponse = {
   timezone: string;
   prazo_dias_encomenda_esquecida: number;
+};
+
+type MoradorContato = {
+  id: number;
+  telefone?: string | null;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -59,6 +82,13 @@ const PERIOD_OPTIONS: Array<{ value: PeriodType; label: string }> = [
   { value: '90d', label: 'Últimos 90 dias' },
   { value: 'year', label: 'Anual' },
   { value: 'custom', label: 'Personalizado' }
+];
+
+const DETAIL_STATUS_OPTIONS: Array<{ value: DetailStatus; label: string }> = [
+  { value: 'RECEBIDAS', label: 'Recebidas' },
+  { value: 'ENTREGUES', label: 'Entregues' },
+  { value: 'AGUARDANDO_RETIRADA', label: 'Aguardando Retirada' },
+  { value: 'ESQUECIDAS', label: 'Esquecidas' }
 ];
 
 function startOfDay(date: Date): Date {
@@ -73,6 +103,7 @@ function parseDateTime(date?: string | null, time?: string | null): Date | null 
   const parsed = parseApiDate(date);
   if (!parsed) return null;
   if (!time) return parsed;
+
   const parts = time.split(':').map((item) => Number(item));
   const hour = Number.isFinite(parts[0]) ? parts[0] : 0;
   const minute = Number.isFinite(parts[1]) ? parts[1] : 0;
@@ -126,27 +157,74 @@ function buildEnderecoLabel(endereco?: Endereco): string {
   return endereco.tipo_endereco || `Endereço ${endereco.id}`;
 }
 
+function getEnderecoParts(endereco: Endereco | undefined): {
+  quadra: string;
+  secondLabel: string;
+  secondValue: string;
+  thirdLabel: string;
+  thirdValue: string;
+} {
+  if (!endereco) {
+    return {
+      quadra: '-',
+      secondLabel: 'Conjunto',
+      secondValue: '-',
+      thirdLabel: 'Lote',
+      thirdValue: '-'
+    };
+  }
+
+  if (endereco.tipo_endereco === 'QUADRA_SETOR_CHACARA') {
+    return {
+      quadra: endereco.quadra || '-',
+      secondLabel: 'Setor/Chácara',
+      secondValue: endereco.setor_chacara || '-',
+      thirdLabel: 'Número Chácara',
+      thirdValue: endereco.numero_chacara || '-'
+    };
+  }
+
+  return {
+    quadra: endereco.quadra || '-',
+    secondLabel: 'Conjunto',
+    secondValue: endereco.conjunto || '-',
+    thirdLabel: 'Lote',
+    thirdValue: endereco.lote || '-'
+  };
+}
+
 function sameDayIso(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
+function statusLabel(status: DetailStatus): string {
+  if (status === 'ENTREGUES') return 'Entregues';
+  if (status === 'AGUARDANDO_RETIRADA') return 'Aguardando Retirada';
+  if (status === 'ESQUECIDAS') return 'Esquecidas';
+  return 'Recebidas';
+}
+
 export function ReportsPage(): JSX.Element {
   const { user } = useAuth();
+
   const [period, setPeriod] = useState<PeriodType>('30d');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+
   const [items, setItems] = useState<AnalyticsItem[]>([]);
-  const [companyCache, setCompanyCache] = useState<CompanyCache>({});
+  const [moradorContatoMap, setMoradorContatoMap] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [exporting, setExporting] = useState(false);
   const [forgottenDaysThreshold, setForgottenDaysThreshold] = useState<number>(DEFAULT_FORGOTTEN_DAYS);
 
-  const statusChartRef = useRef<HTMLDivElement | null>(null);
-  const evolutionChartRef = useRef<HTMLDivElement | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailStatuses, setDetailStatuses] = useState<DetailStatus[]>(() => DETAIL_STATUS_OPTIONS.map((item) => item.value));
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
+
   const startPickerRef = useRef<HTMLInputElement | null>(null);
   const endPickerRef = useRef<HTMLInputElement | null>(null);
 
@@ -154,26 +232,36 @@ export function ReportsPage(): JSX.Element {
     async function loadData(): Promise<void> {
       setLoading(true);
       setError(null);
+
       try {
-        const [encomendasResponse, enderecosResponse] = await Promise.all([
+        const [encomendasResponse, enderecosResponse, moradoresResponse] = await Promise.all([
           backendApi.get<EncomendaListItem[]>('/encomendas'),
-          backendApi.get<Endereco[]>('/enderecos')
+          backendApi.get<Endereco[]>('/enderecos'),
+          backendApi.get<MoradorContato[]>('/moradores')
         ]);
 
         const enderecoById = new Map<number, Endereco>();
         enderecosResponse.data.forEach((endereco) => enderecoById.set(endereco.id, endereco));
 
+        const contatoByMorador: Record<number, string> = {};
+        moradoresResponse.data.forEach((morador) => {
+          contatoByMorador[morador.id] = morador.telefone?.trim() || '-';
+        });
+
         const normalized = encomendasResponse.data.map((item) => {
-          const enderecoLabel = item.endereco_label?.trim() || buildEnderecoLabel(enderecoById.get(item.endereco_id));
+          const endereco = enderecoById.get(item.endereco_id);
           return {
             ...item,
             receivedAt: parseDateTime(item.data_recebimento, item.hora_recebimento),
             deliveredAt: parseDateTime(item.data_entrega),
-            enderecoNome: enderecoLabel
+            enderecoNome: item.endereco_label?.trim() || buildEnderecoLabel(endereco),
+            endereco
           };
         });
 
         setItems(normalized);
+        setMoradorContatoMap(contatoByMorador);
+
         if (user?.role === 'ADMIN') {
           try {
             const { data } = await backendApi.get<ConfiguracoesResponse>('/configuracoes');
@@ -303,10 +391,6 @@ export function ReportsPage(): JSX.Element {
     return items.filter((item) => item.status === 'ENTREGUE' && item.deliveredAt && item.deliveredAt >= range.start && item.deliveredAt <= range.end);
   }, [items, range]);
 
-  const recebidas = useMemo(() => {
-    return receivedWithinPeriod.filter((item) => item.status === 'RECEBIDA');
-  }, [receivedWithinPeriod]);
-
   const aguardando = useMemo(() => {
     return receivedWithinPeriod.filter((item) => item.status === 'RECEBIDA' || item.status === 'DISPONIVEL_RETIRADA');
   }, [receivedWithinPeriod]);
@@ -315,6 +399,10 @@ export function ReportsPage(): JSX.Element {
     const limit = Date.now() - Math.max(1, forgottenDaysThreshold) * DAY_MS;
     return aguardando.filter((item) => item.receivedAt && item.receivedAt.getTime() < limit);
   }, [aguardando, forgottenDaysThreshold]);
+
+  const deliveredWithinPeriodIds = useMemo(() => {
+    return new Set<number>(deliveredWithinPeriod.map((item) => item.id));
+  }, [deliveredWithinPeriod]);
 
   const statusChartData = useMemo(() => {
     return [
@@ -355,153 +443,97 @@ export function ReportsPage(): JSX.Element {
     return Array.from(days.values());
   }, [deliveredWithinPeriod, range, receivedWithinPeriod]);
 
-  const detailedRows = useMemo(() => {
-    const ids = new Set<number>();
-    const rows: AnalyticsItem[] = [];
-    [...aguardando, ...deliveredWithinPeriod].forEach((item) => {
-      if (ids.has(item.id)) return;
-      ids.add(item.id);
-      rows.push(item);
-    });
-    return rows.sort((a, b) => (b.receivedAt?.getTime() ?? 0) - (a.receivedAt?.getTime() ?? 0));
-  }, [aguardando, deliveredWithinPeriod]);
+  const detailRows = useMemo<ReportDetailRow[]>(() => {
+    if (!range.valid) return [];
 
-  async function ensureCompanies(ids: number[]): Promise<Record<number, string>> {
-    const missing = ids.filter((id) => !companyCache[id]);
-    if (missing.length === 0) return companyCache;
+    const pool = new Map<number, AnalyticsItem>();
+    receivedWithinPeriod.forEach((item) => pool.set(item.id, item));
+    deliveredWithinPeriod.forEach((item) => pool.set(item.id, item));
 
-    const loadedEntries = await Promise.all(
-      missing.map(async (id) => {
-        try {
-          const response = await backendApi.get<EncomendaDetail>(`/encomendas/${id}`);
-          return [id, response.data.empresa_entregadora?.trim() || '-'] as const;
-        } catch {
-          return [id, '-'] as const;
+    const forgottenLimit = Date.now() - Math.max(1, forgottenDaysThreshold) * DAY_MS;
+
+    return Array.from(pool.values())
+      .map((item) => {
+        let status: DetailStatus = 'RECEBIDAS';
+
+        if (deliveredWithinPeriodIds.has(item.id)) {
+          status = 'ENTREGUES';
+        } else if (item.status === 'RECEBIDA' || item.status === 'DISPONIVEL_RETIRADA') {
+          status = item.receivedAt && item.receivedAt.getTime() < forgottenLimit ? 'ESQUECIDAS' : 'AGUARDANDO_RETIRADA';
         }
-      })
-    );
 
-    const next: CompanyCache = { ...companyCache };
-    loadedEntries.forEach(([id, company]) => {
-      next[id] = company;
+        const parts = getEnderecoParts(item.endereco);
+
+        return {
+          id: item.id,
+          status,
+          statusLabel: statusLabel(status),
+          dataEntrada: formatDateBR(item.data_recebimento),
+          dataEntradaOrder: item.receivedAt?.getTime() ?? 0,
+          moradorNome: item.morador_nome?.trim() || `Morador ${item.morador_id}`,
+          contatoMorador: moradorContatoMap[item.morador_id] || '-',
+          endereco: parts
+        };
+      })
+      .sort((a, b) => b.dataEntradaOrder - a.dataEntradaOrder);
+  }, [deliveredWithinPeriod, deliveredWithinPeriodIds, forgottenDaysThreshold, moradorContatoMap, range.valid, receivedWithinPeriod]);
+
+  const filteredDetailRows = useMemo(() => {
+    const selected = new Set(detailStatuses);
+    return detailRows.filter((row) => selected.has(row.status));
+  }, [detailRows, detailStatuses]);
+
+  function toggleDetailStatus(status: DetailStatus): void {
+    setDetailStatuses((previous) => {
+      if (previous.includes(status)) {
+        if (previous.length === 1) return previous;
+        return previous.filter((item) => item !== status);
+      }
+      return [...previous, status];
     });
-    setCompanyCache(next);
-    return next;
   }
 
-  async function exportPdf(): Promise<void> {
-    if (!range.valid || exporting) return;
-    setExporting(true);
-    try {
-      const rows = detailedRows;
-      const companies = await ensureCompanies(rows.map((item) => item.id));
+  function selectAllDetailStatus(): void {
+    setDetailStatuses(DETAIL_STATUS_OPTIONS.map((item) => item.value));
+  }
 
+  function clearDetailStatus(): void {
+    setDetailStatuses(['RECEBIDAS']);
+  }
+
+  async function exportDetailPdf(): Promise<void> {
+    if (exportingPdf || filteredDetailRows.length === 0) return;
+
+    setExportingPdf(true);
+    try {
       const doc = new jsPDF({ unit: 'pt', format: 'a4' });
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 36;
 
-      const condoName = user?.nomeCondominio || 'Condomínio';
-      const logoText = condoName
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0]?.toUpperCase() || '')
-        .join('');
-
-      doc.setFillColor(15, 37, 64);
-      doc.circle(margin + 18, margin + 8, 18, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(12);
-      doc.text(logoText || 'CJ', margin + 18, margin + 12, { align: 'center' });
-
+      doc.setFontSize(16);
       doc.setTextColor(15, 37, 64);
-      doc.setFontSize(18);
-      doc.text('CondoJET', margin + 46, margin + 2);
+      doc.text('CondoJET - Detalhamento de Relatório', margin, margin);
       doc.setFontSize(11);
-      doc.text(`Relatório Gerencial - ${condoName}`, margin + 46, margin + 18);
-      doc.text(`Período analisado: ${range.label}`, margin + 46, margin + 34);
-      doc.text(`Data de geração: ${new Date().toLocaleString('pt-BR')}`, margin + 46, margin + 50);
-      doc.text(`Usuário: ${user?.nomeUsuario ?? 'Usuário'}`, margin + 46, margin + 66);
+      doc.text(`Período: ${range.label}`, margin, margin + 20);
+      doc.text(`Status: ${DETAIL_STATUS_OPTIONS.filter((item) => detailStatuses.includes(item.value)).map((item) => item.label).join(', ')}`, margin, margin + 36);
+      doc.text(`Total de encomendas: ${filteredDetailRows.length}`, margin, margin + 52);
+      doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, margin, margin + 68);
 
-      let y = margin + 94;
-
-      doc.setFontSize(13);
-      doc.text('Resumo Executivo', margin, y);
-      y += 12;
-
-      const kpis = [
-        `Total Recebidas: ${receivedWithinPeriod.length}`,
-        `Entregues: ${deliveredWithinPeriod.length}`,
-        `Aguardando Retirada: ${aguardando.length}`,
-        `Encomendas Esquecidas: ${esquecidas.length}`
-      ];
-
-      doc.setFontSize(10);
-      kpis.forEach((line, index) => {
-        const row = Math.floor(index / 2);
-        const col = index % 2;
-        doc.text(line, margin + col * 250, y + row * 16);
-      });
-      y += 46;
-
-      const chartBlocks: Array<{ title: string; ref: HTMLDivElement | null }> = [
-        { title: 'Distribuição por Status', ref: statusChartRef.current },
-        { title: 'Evolução no Período', ref: evolutionChartRef.current }
-      ];
-
-      doc.setFontSize(13);
-      doc.text('Gráficos', margin, y);
-      y += 12;
-
-      for (const block of chartBlocks) {
-        if (!block.ref) continue;
-        const canvas = await html2canvas(block.ref, { backgroundColor: '#ffffff', scale: 2 });
-        const imageData = canvas.toDataURL('image/png', 1.0);
-        const renderWidth = pageWidth - margin * 2;
-        const renderHeight = Math.min(180, (canvas.height * renderWidth) / canvas.width);
-
-        if (y + 22 + renderHeight > pageHeight - margin - 130) {
-          doc.addPage();
-          y = margin;
-        }
-
-        doc.setFontSize(11);
-        doc.text(block.title, margin, y + 11);
-        doc.addImage(imageData, 'PNG', margin, y + 16, renderWidth, renderHeight);
-        y += renderHeight + 26;
-      }
-
-      if (y > pageHeight - 240) {
-        doc.addPage();
-        y = margin;
-      }
-
-      doc.setFontSize(13);
-      doc.text('Tabela Detalhada', margin, y);
-      y += 8;
-
-      const tableBody = rows.map((item) => {
-        const daysWaiting = item.receivedAt
-          ? Math.max(0, Math.ceil(((item.deliveredAt ?? new Date()).getTime() - item.receivedAt.getTime()) / DAY_MS))
-          : 0;
-        return [
-          item.morador_nome || `Morador ${item.morador_id}`,
-          item.enderecoNome,
-          companies[item.id] || '-',
-          formatDateBR(item.data_recebimento),
-          formatDateBR(item.data_entrega),
-          item.status,
-          String(daysWaiting)
-        ];
-      });
+      const body = filteredDetailRows.map((row) => [
+        row.statusLabel,
+        row.dataEntrada,
+        row.moradorNome,
+        `Quadra: ${row.endereco.quadra}\n${row.endereco.secondLabel}: ${row.endereco.secondValue}\n${row.endereco.thirdLabel}: ${row.endereco.thirdValue}`,
+        row.contatoMorador
+      ]);
 
       autoTable(doc, {
-        startY: y,
-        head: [['Morador', 'Endereço', 'Empresa', 'Data recebimento', 'Data entrega', 'Status', 'Dias aguardando']],
-        body: tableBody,
+        startY: margin + 84,
+        head: [['Situação', 'Data de entrada', 'Morador(a)', 'Endereço morador', 'Contato morador']],
+        body,
         theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 4 },
+        styles: { fontSize: 8, cellPadding: 4, valign: 'middle' },
         headStyles: { fillColor: [15, 37, 64] },
         margin: { left: margin, right: margin }
       });
@@ -512,14 +544,35 @@ export function ReportsPage(): JSX.Element {
         doc.setFontSize(8);
         doc.setTextColor(90, 90, 90);
         doc.text(`Página ${page} de ${pageCount}`, pageWidth - margin, pageHeight - 18, { align: 'right' });
-        doc.text('Gerado automaticamente pelo CondoJET', margin, pageHeight - 18);
       }
 
-      doc.save(`relatorio-condojet-${Date.now()}.pdf`);
+      doc.save(`detalhamento-relatorio-${Date.now()}.pdf`);
     } catch (err) {
       setError(readApiError(err));
     } finally {
-      setExporting(false);
+      setExportingPdf(false);
+    }
+  }
+
+  function exportDetailExcel(): void {
+    if (exportingExcel || filteredDetailRows.length === 0) return;
+
+    setExportingExcel(true);
+    try {
+      const data = filteredDetailRows.map((row) => ({
+        SITUACAO: row.statusLabel,
+        DATA_ENTRADA: row.dataEntrada,
+        MORADOR: row.moradorNome,
+        ENDERECO_MORADOR: `Quadra: ${row.endereco.quadra} | ${row.endereco.secondLabel}: ${row.endereco.secondValue} | ${row.endereco.thirdLabel}: ${row.endereco.thirdValue}`,
+        CONTATO_MORADOR: row.contatoMorador
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Detalhamento');
+      XLSX.writeFile(workbook, `detalhamento-relatorio-${Date.now()}.xlsx`);
+    } finally {
+      setExportingExcel(false);
     }
   }
 
@@ -531,8 +584,16 @@ export function ReportsPage(): JSX.Element {
       <section className="panel reports-mgr-filters">
         <div className="reports-mgr-export-row">
           <p className="reports-mgr-export-title">Escolha o filtro de período</p>
-          <button type="button" className="cta" onClick={() => void exportPdf()} disabled={!range.valid || exporting || loading}>
-            {exporting ? 'Gerando PDF...' : 'Exportar PDF'}
+          <button
+            type="button"
+            className="cta reports-mgr-detail-btn"
+            onClick={() => setShowDetailModal(true)}
+            disabled={!range.valid || loading}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2 9 8l-6 3 6 3 3 8 3-8 6-3-6-3-3-6Z" fill="currentColor" />
+            </svg>
+            <span>Detalhar relatório</span>
           </button>
         </div>
 
@@ -574,9 +635,21 @@ export function ReportsPage(): JSX.Element {
                   inputMode="numeric"
                   placeholder="dd/mm/aaaa"
                   value={customStart}
-                  onChange={(event) => setCustomStart(normalizeBrDate(event.target.value))}
+                  onChange={(event) => {
+                    const normalized = normalizeBrDate(event.target.value);
+                    setCustomStart(normalized);
+                  }}
                   onFocus={() => {
                     if (startPickerRef.current?.showPicker) startPickerRef.current.showPicker();
+                  }}
+                />
+                <input
+                  ref={startPickerRef}
+                  type="date"
+                  className="reports-mgr-date-hidden"
+                  value={customStartIso}
+                  onChange={(event) => {
+                    setCustomStart(fromIsoDate(event.target.value));
                   }}
                 />
                 <button
@@ -595,13 +668,6 @@ export function ReportsPage(): JSX.Element {
                     />
                   </svg>
                 </button>
-                <input
-                  ref={startPickerRef}
-                  type="date"
-                  className="reports-mgr-date-hidden"
-                  value={customStartIso}
-                  onChange={(event) => setCustomStart(fromIsoDate(event.target.value))}
-                />
               </div>
             </label>
 
@@ -613,10 +679,22 @@ export function ReportsPage(): JSX.Element {
                   inputMode="numeric"
                   placeholder="dd/mm/aaaa"
                   value={customEnd}
-                  onChange={(event) => setCustomEnd(normalizeBrDate(event.target.value))}
+                  onChange={(event) => {
+                    const normalized = normalizeBrDate(event.target.value);
+                    setCustomEnd(normalized);
+                  }}
                   onFocus={() => {
-                    if (!customEnd && customStart) setCustomEnd(customStart);
                     if (endPickerRef.current?.showPicker) endPickerRef.current.showPicker();
+                  }}
+                />
+                <input
+                  ref={endPickerRef}
+                  type="date"
+                  className="reports-mgr-date-hidden"
+                  value={customEndIso}
+                  min={customStartIso || undefined}
+                  onChange={(event) => {
+                    setCustomEnd(fromIsoDate(event.target.value));
                   }}
                 />
                 <button
@@ -624,7 +702,6 @@ export function ReportsPage(): JSX.Element {
                   className="reports-mgr-date-trigger"
                   aria-label="Abrir calendário da data fim"
                   onClick={() => {
-                    if (!customEnd && customStart) setCustomEnd(customStart);
                     if (endPickerRef.current?.showPicker) endPickerRef.current.showPicker();
                     else endPickerRef.current?.focus();
                   }}
@@ -636,23 +713,6 @@ export function ReportsPage(): JSX.Element {
                     />
                   </svg>
                 </button>
-                <input
-                  ref={endPickerRef}
-                  type="date"
-                  className="reports-mgr-date-hidden"
-                  value={customEndIso}
-                  min={customStartIso || undefined}
-                  onChange={(event) => {
-                    const nextBr = fromIsoDate(event.target.value);
-                    const start = parseBrDate(customStart);
-                    const end = parseBrDate(nextBr);
-                    if (start && end && end.getTime() < start.getTime()) {
-                      setCustomEnd(nextBr);
-                      return;
-                    }
-                    setCustomEnd(nextBr);
-                  }}
-                />
               </div>
             </label>
           </div>
@@ -708,7 +768,7 @@ export function ReportsPage(): JSX.Element {
           <section className="reports-mgr-charts-grid">
             <article className="panel reports-mgr-chart-card">
               <h2>Distribuição por Status</h2>
-              <div ref={statusChartRef} className="reports-mgr-chart-wrap">
+              <div className="reports-mgr-chart-wrap">
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie data={statusChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={58} outerRadius={94} paddingAngle={3}>
@@ -725,7 +785,7 @@ export function ReportsPage(): JSX.Element {
 
             <article className="panel reports-mgr-chart-card">
               <h2>Evolução no Período</h2>
-              <div ref={evolutionChartRef} className="reports-mgr-chart-wrap">
+              <div className="reports-mgr-chart-wrap">
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={dailyEvolutionData} margin={{ top: 8, right: 12, left: 6, bottom: 6 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#dce6f2" />
@@ -739,9 +799,111 @@ export function ReportsPage(): JSX.Element {
                 </ResponsiveContainer>
               </div>
             </article>
-
           </section>
         </>
+      ) : null}
+
+      {showDetailModal ? (
+        <div className="modal-overlay" role="dialog" aria-modal="true">
+          <div className="modal-card modal-card-wide reports-mgr-detail-modal">
+            <div className="reports-mgr-detail-head">
+              <div>
+                <h3>Detalhamento de Relatório</h3>
+                <p>Período: {range.label}</p>
+              </div>
+              <button type="button" className="button-soft" onClick={() => setShowDetailModal(false)}>
+                Fechar
+              </button>
+            </div>
+
+            <div className="reports-mgr-detail-filters">
+              {DETAIL_STATUS_OPTIONS.map((option) => (
+                <label key={option.value} className={`reports-mgr-status-chip ${detailStatuses.includes(option.value) ? 'active' : ''}`}>
+                  <input
+                    type="checkbox"
+                    checked={detailStatuses.includes(option.value)}
+                    onChange={() => toggleDetailStatus(option.value)}
+                  />
+                  <span>{option.label}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="reports-mgr-detail-toolbar">
+              <div className="action-group">
+                <button type="button" className="button-soft small" onClick={selectAllDetailStatus}>
+                  Marcar todos
+                </button>
+                <button type="button" className="button-soft small" onClick={clearDetailStatus}>
+                  Limpar seleção
+                </button>
+              </div>
+
+              <strong className="reports-mgr-detail-total">Total de encomendas: {filteredDetailRows.length}</strong>
+
+              <div className="action-group">
+                <button
+                  type="button"
+                  className="button-soft small"
+                  onClick={exportDetailExcel}
+                  disabled={filteredDetailRows.length === 0 || exportingExcel}
+                >
+                  {exportingExcel ? 'Exportando Excel...' : 'Exportar Excel'}
+                </button>
+                <button
+                  type="button"
+                  className="cta small"
+                  onClick={() => void exportDetailPdf()}
+                  disabled={filteredDetailRows.length === 0 || exportingPdf}
+                >
+                  {exportingPdf ? 'Exportando PDF...' : 'Exportar PDF'}
+                </button>
+              </div>
+            </div>
+
+            <div className="table-wrap reports-mgr-detail-table-wrap">
+              <table className="reports-mgr-detail-table">
+                <thead>
+                  <tr>
+                    <th>Situação</th>
+                    <th>Data de entrada</th>
+                    <th>Morador(a)</th>
+                    <th>Endereço morador</th>
+                    <th>Contato morador</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredDetailRows.map((row) => (
+                    <tr key={row.id}>
+                      <td>{row.statusLabel}</td>
+                      <td>{row.dataEntrada}</td>
+                      <td>{row.moradorNome}</td>
+                      <td>
+                        <div className="reports-mgr-endereco-stack">
+                          <p>
+                            <strong>Quadra:</strong> {row.endereco.quadra}
+                          </p>
+                          <p>
+                            <strong>{row.endereco.secondLabel}:</strong> {row.endereco.secondValue}
+                          </p>
+                          <p>
+                            <strong>{row.endereco.thirdLabel}:</strong> {row.endereco.thirdValue}
+                          </p>
+                        </div>
+                      </td>
+                      <td>{row.contatoMorador}</td>
+                    </tr>
+                  ))}
+                  {filteredDetailRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={5}>Nenhuma encomenda encontrada para os filtros selecionados.</td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       ) : null}
     </section>
   );

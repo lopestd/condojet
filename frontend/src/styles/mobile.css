@@ -387,4 +387,40 @@
   .reports-mgr-charts-grid {
     grid-template-columns: 1fr;
   }
+
+  .reports-mgr-export-row {
+    display: grid;
+  }
+
+  .reports-mgr-detail-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .reports-mgr-detail-modal {
+    width: calc(100vw - 24px);
+    max-height: calc(100vh - 20px);
+    padding: 0.72rem;
+  }
+
+  .reports-mgr-detail-head {
+    display: grid;
+  }
+
+  .reports-mgr-detail-head .button-soft {
+    width: 100%;
+  }
+
+  .reports-mgr-detail-toolbar {
+    display: grid;
+    justify-items: stretch;
+  }
+
+  .reports-mgr-detail-toolbar .action-group {
+    width: 100%;
+  }
+
+  .reports-mgr-detail-toolbar .action-group button {
+    flex: 1 1 0;
+  }
 }
