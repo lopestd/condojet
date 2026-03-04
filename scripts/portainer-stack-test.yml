@@ -38,7 +38,7 @@ services:
         psql -h postgres -U condojethmg -d condojethmg -v ON_ERROR_STOP=1 -f /sql/001_init_condojet.sql
 
   api-python:
-    image: brdocker2020/condojet-api-python:v0.0.1
+    image: brdocker2020/condojet-api-python:latest
     container_name: condojet-api-python
     restart: unless-stopped
     depends_on:
@@ -75,7 +75,7 @@ services:
       retries: 12
 
   backend:
-    image: brdocker2020/condojet-backend:v0.0.1
+    image: brdocker2020/condojet-backend:latest
     container_name: condojet-backend
     restart: unless-stopped
     depends_on:
@@ -112,7 +112,7 @@ services:
       - portainer_default
 
   frontend:
-    image: brdocker2020/condojet-frontend:v0.0.1
+    image: brdocker2020/condojet-frontend:latest
     container_name: condojet-frontend
     restart: unless-stopped
     depends_on:

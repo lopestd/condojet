@@ -87,6 +87,7 @@ def notify_encomenda_whatsapp(db: Session, encomenda: EncomendaModel, morador: M
         "nome_morador": morador.nome,
         "codigo_rastreio": encomenda.codigo_externo or "",
         "tipo_encomenda": encomenda.tipo,
+        "status_encomenda": encomenda.status,
         "data_recebimento": str(encomenda.data_recebimento),
         "empresa_responsavel": encomenda.empresa_entregadora or "",
         "nome_condominio": condominio_nome,
