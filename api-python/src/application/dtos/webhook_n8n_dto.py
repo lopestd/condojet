@@ -2,7 +2,7 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, field_validator
 
-WEBHOOK_TYPES = ("whatsapp_create", "whatsapp_query")
+WEBHOOK_TYPES = ("whatsapp_create", "whatsapp_query", "whatsapp_notify")
 
 
 class UpsertWebhookN8nDTO(BaseModel):

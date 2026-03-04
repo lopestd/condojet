@@ -126,6 +126,14 @@
   .content-two {
     grid-template-columns: 1fr;
   }
+
+  .wa-connection-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .wa-qr-frame {
+    min-height: 320px;
+  }
 }
 
 @media (max-width: 768px) {

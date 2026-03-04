@@ -69,7 +69,9 @@ export const appRouter = createBrowserRouter([
         element: <ProtectedRoute allowedRoles={['ADMIN_GLOBAL']} />,
         children: [
           { path: '/global', element: <GlobalManagementPage /> },
-          { path: '/global/config', element: <GlobalSettingsPage /> }
+          { path: '/global/config', element: <Navigate to="/global/config/gerais" replace /> },
+          { path: '/global/config/gerais', element: <GlobalSettingsPage /> },
+          { path: '/global/config/whatsapp', element: <WhatsAppSettingsPage /> }
         ]
       },
       {
@@ -99,8 +101,7 @@ export const appRouter = createBrowserRouter([
         element: <ProtectedRoute allowedRoles={['ADMIN']} />,
         children: [
           { path: '/condo/config', element: <Navigate to="/condo/config/gerais" replace /> },
-          { path: '/condo/config/gerais', element: <SettingsPage /> },
-          { path: '/condo/config/whatsapp', element: <WhatsAppSettingsPage /> }
+          { path: '/condo/config/gerais', element: <SettingsPage /> }
         ]
       }
     ]

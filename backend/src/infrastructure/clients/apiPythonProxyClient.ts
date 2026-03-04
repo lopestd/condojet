@@ -42,10 +42,17 @@ export async function proxyToApiPython<T>(
   } catch (error) {
     const axiosError = error as AxiosError;
     const statusCode = axiosError.response?.status ?? 502;
-    const responsePayload = axiosError.response?.data ?? {
-      message: 'upstream_error',
-      detail: axiosError.message
-    };
+    const responsePayload =
+      axiosError.response?.data ??
+      (axiosError.code === 'ECONNABORTED'
+        ? {
+            message: 'upstream_timeout',
+            detail: axiosError.message
+          }
+        : {
+            message: 'upstream_error',
+            detail: axiosError.message
+          });
     throw new ApiProxyError(statusCode, responsePayload);
   }
 }

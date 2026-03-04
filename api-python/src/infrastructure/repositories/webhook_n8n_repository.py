@@ -1,33 +1,25 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src.infrastructure.database.models import WebhookN8nCondominioModel
+from src.infrastructure.database.models import WebhookN8nGlobalModel
 
 
 class WebhookN8nRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def list_by_condominio_id(self, condominio_id: int) -> list[WebhookN8nCondominioModel]:
-        stmt = (
-            select(WebhookN8nCondominioModel)
-            .where(WebhookN8nCondominioModel.condominio_id == condominio_id)
-            .order_by(WebhookN8nCondominioModel.tipo.asc())
-        )
+    def list_all(self) -> list[WebhookN8nGlobalModel]:
+        stmt = select(WebhookN8nGlobalModel).order_by(WebhookN8nGlobalModel.tipo.asc())
         return list(self.db.execute(stmt).scalars().all())
 
-    def find_by_tipo(self, condominio_id: int, tipo: str) -> WebhookN8nCondominioModel | None:
-        stmt = select(WebhookN8nCondominioModel).where(
-            WebhookN8nCondominioModel.condominio_id == condominio_id,
-            WebhookN8nCondominioModel.tipo == tipo,
-        )
+    def find_by_tipo(self, tipo: str) -> WebhookN8nGlobalModel | None:
+        stmt = select(WebhookN8nGlobalModel).where(WebhookN8nGlobalModel.tipo == tipo)
         return self.db.execute(stmt).scalar_one_or_none()
 
-    def upsert(self, condominio_id: int, tipo: str, url: str, ativo: bool, updated_by_usuario_id: int) -> WebhookN8nCondominioModel:
-        model = self.find_by_tipo(condominio_id, tipo)
+    def upsert(self, tipo: str, url: str, ativo: bool, updated_by_usuario_id: int) -> WebhookN8nGlobalModel:
+        model = self.find_by_tipo(tipo)
         if model is None:
-            model = WebhookN8nCondominioModel(
-                condominio_id=condominio_id,
+            model = WebhookN8nGlobalModel(
                 tipo=tipo,
                 url=url,
                 ativo=ativo,

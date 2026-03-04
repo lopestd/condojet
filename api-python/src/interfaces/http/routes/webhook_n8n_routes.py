@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urlparse, urlunparse
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, Depends
@@ -36,69 +36,50 @@ def _to_out(model) -> dict:
     }
 
 
-def _fallback_webhook_url(url: str) -> str | None:
-    parsed = urlparse(url)
-    if "/webhook/" not in parsed.path:
-        return None
-    fallback_path = parsed.path.replace("/webhook/", "/webhook-test/")
-    return urlunparse(parsed._replace(path=fallback_path))
-
-
-def _call_webhook(tipo: str, url: str, condominio_id: int) -> tuple[bool, int | None, str]:
-    targets = [url]
-    fallback_url = _fallback_webhook_url(url)
-    if fallback_url and fallback_url != url:
-        targets.append(fallback_url)
-
-    for target in targets:
-        try:
-            if tipo == "whatsapp_query":
-                query = urlencode({"condominio_id": condominio_id, "healthcheck": "true"})
-                separator = "&" if "?" in target else "?"
-                final_url = f"{target}{separator}{query}"
-                request = Request(final_url, method="GET")
-                with urlopen(request, timeout=10) as response:  # noqa: S310
-                    status_code = int(response.status)
-                    if 200 <= status_code < 400:
-                        return True, status_code, "ok"
-                    return False, status_code, "status_invalido"
-
-            payload = json.dumps(
-                {
-                    "mode": "test",
-                    "condominio_id": condominio_id,
-                    "instanceName": f"condominio-{condominio_id}-test",
-                    "phone": "00000000000",
-                }
-            ).encode("utf-8")
-            request = Request(target, data=payload, method="POST", headers={"Content-Type": "application/json"})
+def _call_webhook(tipo: str, url: str) -> tuple[bool, int | None, str]:
+    try:
+        if tipo == "whatsapp_query":
+            query = urlencode({"scope": "global", "healthcheck": "true"})
+            separator = "&" if "?" in url else "?"
+            final_url = f"{url}{separator}{query}"
+            request = Request(final_url, method="GET")
             with urlopen(request, timeout=10) as response:  # noqa: S310
                 status_code = int(response.status)
                 if 200 <= status_code < 400:
                     return True, status_code, "ok"
                 return False, status_code, "status_invalido"
-        except HTTPError as err:
-            return False, err.code, "http_error"
-        except URLError:
-            continue
 
-    return False, 0, "network_error"
+        payload = json.dumps(
+            {
+                "mode": "test",
+                "scope": "global",
+                "instanceName": "condojet-global-test",
+                "phone": "00000000000",
+            }
+        ).encode("utf-8")
+        request = Request(url, data=payload, method="POST", headers={"Content-Type": "application/json"})
+        with urlopen(request, timeout=10) as response:  # noqa: S310
+            status_code = int(response.status)
+            if 200 <= status_code < 400:
+                return True, status_code, "ok"
+            return False, status_code, "status_invalido"
+    except HTTPError as err:
+        return False, err.code, "http_error"
+    except URLError:
+        return False, 0, "network_error"
 
 
 @router.get("/webhooks-n8n")
 def list_webhooks_n8n(
     contexto: str = "whatsapp",
-    principal: Principal = Depends(require_roles("ADMIN", "PORTEIRO")),
+    _principal: Principal = Depends(require_roles("ADMIN_GLOBAL")),
     db: Session = Depends(get_db),
 ) -> dict:
-    if principal.condominio_id is None:
-        raise AppError("forbidden", status_code=403, code="forbidden")
-
     if contexto != "whatsapp":
         raise AppError("contexto_invalido", status_code=422, code="contexto_invalido")
 
     repository = WebhookN8nRepository(db)
-    models = repository.list_by_condominio_id(principal.condominio_id)
+    models = repository.list_all()
     return {
         "contexto": contexto,
         "items": [_to_out(model) for model in models],
@@ -108,15 +89,12 @@ def list_webhooks_n8n(
 @router.get("/webhooks-n8n/{tipo}")
 def get_webhook_n8n(
     tipo: str,
-    principal: Principal = Depends(require_roles("ADMIN", "PORTEIRO")),
+    _principal: Principal = Depends(require_roles("ADMIN_GLOBAL")),
     db: Session = Depends(get_db),
 ) -> dict:
-    if principal.condominio_id is None:
-        raise AppError("forbidden", status_code=403, code="forbidden")
-
     tipo_normalizado = _ensure_tipo(tipo)
     repository = WebhookN8nRepository(db)
-    model = repository.find_by_tipo(principal.condominio_id, tipo_normalizado)
+    model = repository.find_by_tipo(tipo_normalizado)
     if model is None:
         raise AppError("webhook_nao_encontrado", status_code=404, code="webhook_nao_encontrado")
     return _to_out(model)
@@ -126,16 +104,12 @@ def get_webhook_n8n(
 def upsert_webhook_n8n(
     tipo: str,
     payload: UpsertWebhookN8nDTO,
-    principal: Principal = Depends(require_roles("ADMIN")),
+    principal: Principal = Depends(require_roles("ADMIN_GLOBAL")),
     db: Session = Depends(get_db),
 ) -> dict:
-    if principal.condominio_id is None:
-        raise AppError("forbidden", status_code=403, code="forbidden")
-
     tipo_normalizado = _ensure_tipo(tipo)
     repository = WebhookN8nRepository(db)
     model = repository.upsert(
-        condominio_id=principal.condominio_id,
         tipo=tipo_normalizado,
         url=payload.url,
         ativo=payload.ativo,
@@ -148,20 +122,17 @@ def upsert_webhook_n8n(
 def test_webhook_n8n(
     tipo: str,
     payload: WebhookN8nTestDTO,
-    principal: Principal = Depends(require_roles("ADMIN")),
+    _principal: Principal = Depends(require_roles("ADMIN_GLOBAL")),
     db: Session = Depends(get_db),
 ) -> dict:
-    if principal.condominio_id is None:
-        raise AppError("forbidden", status_code=403, code="forbidden")
-
     tipo_normalizado = _ensure_tipo(tipo)
     repository = WebhookN8nRepository(db)
-    model = repository.find_by_tipo(principal.condominio_id, tipo_normalizado)
+    model = repository.find_by_tipo(tipo_normalizado)
     target_url = payload.url or (model.url if model is not None else None)
     if not target_url:
         raise AppError("webhook_nao_encontrado", status_code=404, code="webhook_nao_encontrado")
 
-    ok, status_code, detail = _call_webhook(tipo_normalizado, target_url, principal.condominio_id)
+    ok, status_code, detail = _call_webhook(tipo_normalizado, target_url)
     return {
         "tipo": tipo_normalizado,
         "ok": ok,

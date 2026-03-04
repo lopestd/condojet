@@ -1,6 +1,6 @@
 import { backendApi } from './httpClient';
 
-export type WebhookTipo = 'whatsapp_create' | 'whatsapp_query';
+export type WebhookTipo = 'whatsapp_create' | 'whatsapp_query' | 'whatsapp_notify';
 
 export type WebhookN8nItem = {
   tipo: WebhookTipo;
@@ -32,11 +32,7 @@ export type WhatsAppConnectionItem = {
 
 export type WhatsAppConnectionsResponse = {
   items: WhatsAppConnectionItem[];
-  condominio: {
-    id: number | null;
-    nome: string;
-    slug: string;
-  };
+  escopo: 'global';
 };
 
 export async function listWhatsAppWebhooks(): Promise<ListWebhooksResponse> {
@@ -65,14 +61,15 @@ export async function listWhatsAppConnections(instancia?: string): Promise<Whats
 }
 
 export async function createWhatsAppConnection(payload: { instanceName: string; phone: string }): Promise<{ ok: boolean }> {
-  const { data } = await backendApi.post<{ ok: boolean }>('/whatsapp/conexoes', payload);
+  const { data } = await backendApi.post<{ ok: boolean }>('/whatsapp/conexoes', payload, { timeout: 60000 });
   return data;
 }
 
 export async function renewWhatsAppQr(payload: { instanceName: string; phone: string }): Promise<{ ok: boolean }> {
   const { data } = await backendApi.post<{ ok: boolean }>(
     `/whatsapp/conexoes/${encodeURIComponent(payload.instanceName)}/renovar-qr`,
-    { phone: payload.phone }
+    { phone: payload.phone },
+    { timeout: 60000 }
   );
   return data;
 }

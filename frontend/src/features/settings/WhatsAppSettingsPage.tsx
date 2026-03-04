@@ -33,6 +33,11 @@ const WEBHOOK_TYPES: Array<{ tipo: WebhookTipo; titulo: string; descricao: strin
     tipo: 'whatsapp_query',
     titulo: 'Webhook de Consulta',
     descricao: 'Usado para consultar status, telefone e QR Code das instâncias.'
+  },
+  {
+    tipo: 'whatsapp_notify',
+    titulo: 'Endpoint para notificação pelo WhatsApp',
+    descricao: 'Usado para disparar notificações automatizadas no WhatsApp.'
   }
 ];
 
@@ -59,14 +64,24 @@ function normalizeStatusLabel(input: string): string {
   return input;
 }
 
+function isConnectionActive(status: string): boolean {
+  const normalized = status.trim().toLowerCase();
+  return normalized === 'true' || normalized.includes('open') || normalized.includes('online') || normalized.includes('connected') || normalized.includes('conectado');
+}
+
+function isTimeoutError(error: unknown): boolean {
+  const maybeAxios = error as { code?: string; message?: string };
+  return maybeAxios?.code === 'ECONNABORTED' || String(maybeAxios?.message ?? '').toLowerCase().includes('timeout');
+}
+
 function buildDefaultInstanceName(condominioId: number | null): string {
-  if (!condominioId) return 'condominio-zap';
-  return `condominio-${condominioId}-zap`;
+  void condominioId;
+  return 'condojet-global-zap';
 }
 
 export function WhatsAppSettingsPage(): JSX.Element {
   const { user } = useAuth();
-  const canEdit = user?.role === 'ADMIN' && Boolean(user?.condominioId);
+  const canEdit = user?.role === 'ADMIN_GLOBAL';
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [loadingWebhooks, setLoadingWebhooks] = useState(false);
@@ -75,14 +90,17 @@ export function WhatsAppSettingsPage(): JSX.Element {
   const [testing, setTesting] = useState<WebhookTipo | null>(null);
   const [creatingConnection, setCreatingConnection] = useState(false);
   const [renewingQr, setRenewingQr] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [connectionActionError, setConnectionActionError] = useState<string | null>(null);
 
   const [forms, setForms] = useState<Record<WebhookTipo, WebhookFormState>>({
     whatsapp_create: { url: '', ativo: true, updatedAt: null },
-    whatsapp_query: { url: '', ativo: true, updatedAt: null }
+    whatsapp_query: { url: '', ativo: true, updatedAt: null },
+    whatsapp_notify: { url: '', ativo: true, updatedAt: null }
   });
 
   const [connections, setConnections] = useState<WhatsAppConnectionItem[]>([]);
@@ -113,7 +131,8 @@ export function WhatsAppSettingsPage(): JSX.Element {
       const byType = new Map(data.items.map((item) => [item.tipo, item]));
       setForms({
         whatsapp_create: toFormState(byType.get('whatsapp_create')),
-        whatsapp_query: toFormState(byType.get('whatsapp_query'))
+        whatsapp_query: toFormState(byType.get('whatsapp_query')),
+        whatsapp_notify: toFormState(byType.get('whatsapp_notify'))
       });
     } catch (err) {
       setError(readApiError(err));
@@ -125,6 +144,7 @@ export function WhatsAppSettingsPage(): JSX.Element {
   async function loadConnections(instanceName?: string): Promise<void> {
     setLoadingConnections(true);
     setConnectionError(null);
+    setConnectionActionError(null);
     try {
       const data = await listWhatsAppConnections(instanceName);
       setConnections(data.items);
@@ -155,17 +175,22 @@ export function WhatsAppSettingsPage(): JSX.Element {
     }
   }, [activeTab]);
 
-  const webhooksProntos = useMemo(() => {
-    return WEBHOOK_TYPES.every(({ tipo }) => {
-      const item = forms[tipo];
-      return item.url.trim().length > 0 && item.ativo;
-    });
-  }, [forms]);
+  const webhookCreateReady = forms.whatsapp_create.url.trim().length > 0 && forms.whatsapp_create.ativo;
+  const webhookQueryReady = forms.whatsapp_query.url.trim().length > 0 && forms.whatsapp_query.ativo;
 
   const selectedConnection = useMemo(() => {
     if (!selectedConnectionName) return null;
     return connections.find((item) => item.name === selectedConnectionName) ?? null;
   }, [connections, selectedConnectionName]);
+  const hasActiveConnection = useMemo(() => connections.some((item) => isConnectionActive(item.status)), [connections]);
+  const selectedStatusLabel = normalizeStatusLabel(selectedConnection?.status ?? '');
+  const statusToneClass = useMemo(() => {
+    const normalized = selectedStatusLabel.toLowerCase();
+    if (normalized.includes('aguardando')) return 'pending';
+    if (normalized.includes('desconectado')) return 'disconnected';
+    if (normalized.includes('conectado')) return 'connected';
+    return 'disconnected';
+  }, [selectedStatusLabel]);
 
   function setTab(tab: WhatsAppTab): void {
     const next = new URLSearchParams(searchParams);
@@ -221,11 +246,11 @@ export function WhatsAppSettingsPage(): JSX.Element {
 
   async function onCreateConnection(event: FormEvent): Promise<void> {
     event.preventDefault();
-    setError(null);
+    setConnectionActionError(null);
     setFeedback(null);
 
-    if (connections.length > 0) {
-      setError('Já existe conexão cadastrada. Use a ação de gerar novo QR Code para renovar a sessão.');
+    if (hasActiveConnection) {
+      setConnectionActionError('Já existe conexão ativa. Desconecte a instância atual antes de criar uma nova.');
       return;
     }
 
@@ -234,9 +259,21 @@ export function WhatsAppSettingsPage(): JSX.Element {
       const trimmedName = createInstanceName.trim();
       await createWhatsAppConnection({ instanceName: trimmedName, phone: createPhone });
       setFeedback('Conexão criada com sucesso. Atualizando listagem...');
+      setShowCreateModal(false);
       await loadConnections(trimmedName);
+      setCreatePhone('');
     } catch (err) {
-      setError(readApiError(err));
+      const trimmedName = createInstanceName.trim();
+      if (isTimeoutError(err)) {
+        setShowCreateModal(false);
+        setFeedback('Solicitação enviada. O servidor demorou para responder; verificando conexões criadas...');
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          await new Promise((resolve) => window.setTimeout(resolve, 1800));
+          await loadConnections(trimmedName);
+        }
+        return;
+      }
+      setConnectionActionError(readApiError(err));
     } finally {
       setCreatingConnection(false);
     }
@@ -244,7 +281,7 @@ export function WhatsAppSettingsPage(): JSX.Element {
 
   async function onRenewQr(): Promise<void> {
     if (!selectedConnection) {
-      setError('Selecione uma conexão para renovar o QR Code.');
+      setConnectionActionError('Selecione uma conexão para renovar o QR Code.');
       return;
     }
 
@@ -255,14 +292,22 @@ export function WhatsAppSettingsPage(): JSX.Element {
     }
 
     setRenewingQr(true);
-    setError(null);
+    setConnectionActionError(null);
     setFeedback(null);
     try {
       await renewWhatsAppQr({ instanceName: selectedConnection.name, phone: selectedConnection.phone });
       setFeedback('Solicitação de novo QR Code enviada. Atualizando dados da conexão...');
       await loadConnections(selectedConnection.name);
     } catch (err) {
-      setError(readApiError(err));
+      if (isTimeoutError(err)) {
+        setFeedback('Solicitação enviada. O servidor demorou para responder; atualizando dados da conexão...');
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          await new Promise((resolve) => window.setTimeout(resolve, 1800));
+          await loadConnections(selectedConnection.name);
+        }
+        return;
+      }
+      setConnectionActionError(readApiError(err));
     } finally {
       setRenewingQr(false);
     }
@@ -272,7 +317,7 @@ export function WhatsAppSettingsPage(): JSX.Element {
     <section className="page-grid settings-page">
       <header className="page-header">
         <h1>Configurações de WhatsApp</h1>
-        <p>Gerencie conexão operacional e webhooks n8n por condomínio.</p>
+        <p>Gerencie conexão operacional e webhooks n8n no escopo global da plataforma.</p>
       </header>
 
       <section className="panel" aria-label="Abas de configuração do WhatsApp">
@@ -290,37 +335,114 @@ export function WhatsAppSettingsPage(): JSX.Element {
       {feedback ? <p className="info-box">{feedback}</p> : null}
 
       {activeTab === 'conexao' ? (
-        <section className="settings-cards-grid" aria-label="Conexão WhatsApp">
-          <article className="panel report-card">
-            <h2>Conexões Salvas</h2>
-            <p>Selecione uma instância para visualizar status e QR Code.</p>
-            <div className="modal-actions">
-              <button type="button" className="button-soft" onClick={() => void loadConnections()} disabled={loadingConnections || !webhooksProntos}>
-                {loadingConnections ? 'Atualizando...' : 'Atualizar'}
-              </button>
-            </div>
-            {connectionError ? <p className="error-box">{connectionError}</p> : null}
-            {!webhooksProntos ? (
-              <p className="info-box">Configure e ative os webhooks na aba "Webhooks n8n" para operar esta aba.</p>
-            ) : null}
-            <div className="report-list">
-              {connections.map((item) => (
+        <section className="wa-connection-layout" aria-label="Conexão WhatsApp">
+          <div className="wa-left-column">
+            <article className="panel wa-card">
+              <div className="wa-card-header">
+                <h2>Conexões Salvas</h2>
                 <button
-                  key={`${item.name}-${String(item.id ?? 'x')}`}
                   type="button"
-                  className={selectedConnectionName === item.name ? 'button-soft active' : 'button-soft'}
-                  onClick={() => setSelectedConnectionName(item.name)}
+                  className="wa-create-button"
+                  onClick={() => setShowCreateModal(true)}
+                  disabled={!canEdit || creatingConnection || hasActiveConnection}
                 >
-                  {item.name}
+                  + Criar conexão
                 </button>
-              ))}
-              {connections.length === 0 && !loadingConnections ? <p>Nenhuma conexão encontrada.</p> : null}
-            </div>
+              </div>
+
+              {connectionError ? (
+                <div className="wa-empty-state">
+                  <div className="wa-empty-icon">!</div>
+                  <strong>Erro ao carregar</strong>
+                  <small>{connectionError}</small>
+                </div>
+              ) : null}
+
+              {!connectionError && !webhookQueryReady ? (
+                <div className="wa-empty-state">
+                  <div className="wa-empty-icon">!</div>
+                  <strong>Webhook de consulta não configurado</strong>
+                  <small>Ative o webhook `whatsapp_query` na aba "Webhooks n8n".</small>
+                </div>
+              ) : null}
+
+              {!connectionError && webhookQueryReady ? (
+                <div className="wa-connection-list">
+                  {loadingConnections ? <p>Atualizando conexões...</p> : null}
+                  {!loadingConnections &&
+                    connections.map((item) => (
+                      <button
+                        key={`${item.name}-${String(item.id ?? 'x')}`}
+                        type="button"
+                        className={selectedConnectionName === item.name ? 'button-soft active' : 'button-soft'}
+                        onClick={() => setSelectedConnectionName(item.name)}
+                      >
+                        {item.name}
+                      </button>
+                    ))}
+                  {!loadingConnections && connections.length === 0 ? <p>Nenhuma conexão encontrada.</p> : null}
+                </div>
+              ) : null}
+
+              {hasActiveConnection ? <p className="info-box">Criação bloqueada: já existe conexão ativa.</p> : null}
+              {connectionActionError ? <p className="error-box">{connectionActionError}</p> : null}
+            </article>
+
+            <article className="panel wa-help-card">
+              <h3>Como conectar:</h3>
+              <ol>
+                <li>Clique em "Criar conexão" ou selecione uma existente</li>
+                <li>Abra o WhatsApp no seu celular</li>
+                <li>Vá em Configurações → Aparelhos conectados → Conectar aparelho</li>
+                <li>Escaneie o QR Code exibido na tela</li>
+                <li>Aguarde a confirmação de conexão</li>
+              </ol>
+            </article>
+          </div>
+
+          <article className="panel wa-detail-card">
+            <h2>Detalhes da Conexão</h2>
+            <label>
+              Nome da Conexão
+              <input value={selectedConnection?.name ?? '—'} readOnly />
+            </label>
+            <label>
+              Status
+              <span className={`wa-status-pill ${statusToneClass}`}>{selectedConnection ? selectedStatusLabel : '—'}</span>
+            </label>
+            <label>
+              Telefone
+              <input value={selectedConnection?.phone || 'Não informado'} readOnly />
+            </label>
+            <button
+              type="button"
+              className="wa-qr-button"
+              onClick={() => void onRenewQr()}
+              disabled={!canEdit || !selectedConnection || renewingQr || !webhookCreateReady}
+            >
+              {renewingQr ? 'Gerando novo QR Code...' : 'Gerar novo QR Code'}
+            </button>
           </article>
 
-          <article className="panel report-card">
-            <h2>Criar conexão</h2>
-            <p>Criar conexão inicial do condomínio com WhatsApp.</p>
+          <article className="panel wa-qr-card">
+            <h2>QR Code</h2>
+            <div className="wa-qr-frame">
+              {selectedConnection?.qr ? (
+                <img src={selectedConnection.qr} alt={`QR Code da conexão ${selectedConnection.name}`} />
+              ) : (
+                <p>Selecione uma conexão para ver o QR Code</p>
+              )}
+            </div>
+            <small>Escaneie o QR Code com o WhatsApp do celular para conectar</small>
+          </article>
+        </section>
+      ) : null}
+
+      {showCreateModal ? (
+        <div className="modal-overlay" role="dialog" aria-modal="true">
+          <section className="modal-card">
+            <h3>Criar conexão WhatsApp</h3>
+            <p className="modal-intro">Informe os dados para iniciar uma nova conexão.</p>
             <form className="form-grid" onSubmit={(event) => void onCreateConnection(event)}>
               <label>
                 Nome da conexão
@@ -331,51 +453,16 @@ export function WhatsAppSettingsPage(): JSX.Element {
                 <input value={createPhone} onChange={(event) => setCreatePhone(event.target.value)} disabled={!canEdit || creatingConnection} required />
               </label>
               <div className="modal-actions">
-                <button type="submit" className="cta" disabled={!canEdit || creatingConnection || !webhooksProntos}>
+                <button type="button" className="button-soft" onClick={() => setShowCreateModal(false)} disabled={creatingConnection}>
+                  Cancelar
+                </button>
+                <button type="submit" className="cta" disabled={!canEdit || creatingConnection || hasActiveConnection}>
                   {creatingConnection ? 'Criando...' : 'Criar conexão'}
                 </button>
               </div>
             </form>
-            {!canEdit ? <p className="info-box">Somente administradores podem criar conexão.</p> : null}
-          </article>
-
-          <article className="panel report-card">
-            <h2>Detalhes da Conexão</h2>
-            {selectedConnection ? (
-              <dl>
-                <div>
-                  <dt>Nome</dt>
-                  <dd>{selectedConnection.name}</dd>
-                </div>
-                <div>
-                  <dt>Status</dt>
-                  <dd>{normalizeStatusLabel(selectedConnection.status)}</dd>
-                </div>
-                <div>
-                  <dt>Telefone</dt>
-                  <dd>{selectedConnection.phone || '-'}</dd>
-                </div>
-              </dl>
-            ) : (
-              <p>Selecione uma conexão para visualizar os detalhes.</p>
-            )}
-
-            <div className="modal-actions">
-              <button type="button" className="button-soft" onClick={() => void onRenewQr()} disabled={!canEdit || !selectedConnection || renewingQr || !webhooksProntos}>
-                {renewingQr ? 'Gerando QR...' : 'Gerar novo QR Code'}
-              </button>
-            </div>
-
-            <div>
-              <h3>QR Code</h3>
-              {selectedConnection?.qr ? (
-                <img src={selectedConnection.qr} alt={`QR Code da conexão ${selectedConnection.name}`} style={{ maxWidth: '220px', width: '100%' }} />
-              ) : (
-                <p>QR Code indisponível para a conexão selecionada.</p>
-              )}
-            </div>
-          </article>
-        </section>
+          </section>
+        </div>
       ) : null}
 
       {activeTab === 'webhooks' ? (
@@ -410,7 +497,7 @@ export function WhatsAppSettingsPage(): JSX.Element {
                       onChange={(event) => updateForm(item.tipo, { ativo: event.target.checked })}
                       disabled={!canEdit || loadingWebhooks || isSaving}
                     />
-                    Webhook ativo
+                    Webhook ativo ({item.tipo})
                   </label>
 
                   <small>
@@ -436,7 +523,7 @@ export function WhatsAppSettingsPage(): JSX.Element {
           })}
 
           {!canEdit ? (
-            <p className="info-box">Somente administrador do condomínio pode alterar webhooks. O perfil atual possui acesso de leitura.</p>
+            <p className="info-box">Somente administrador global pode alterar webhooks. O perfil atual possui acesso de leitura.</p>
           ) : null}
         </section>
       ) : null}

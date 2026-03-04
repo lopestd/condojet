@@ -4,5 +4,5 @@ import { env } from '../config/env.js';
 
 export const apiPythonClient = axios.create({
   baseURL: env.apiPythonBaseUrl,
-  timeout: 10000
+  timeout: 70000
 });

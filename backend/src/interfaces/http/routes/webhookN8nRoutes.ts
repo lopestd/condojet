@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { proxyToApiPython } from '../../../infrastructure/clients/apiPythonProxyClient.js';
 import { buildValidationError, extractProxyHeaders } from '../utils/proxyRequest.js';
 
-const webhookTypes = ['whatsapp_create', 'whatsapp_query'] as const;
+const webhookTypes = ['whatsapp_create', 'whatsapp_query', 'whatsapp_notify'] as const;
 
 const webhookTypeSchema = z.enum(webhookTypes);
 
