@@ -9,6 +9,10 @@ export function statusLabel(status: EncomendaStatus): string {
   return 'Entregue'
 }
 
+export function isNotified(item: EncomendaListItem | EncomendaDetail): boolean {
+  return item.notificacao_status === 'ENVIADO'
+}
+
 export function statusClass(status: EncomendaStatus): string {
   if (status === 'RECEBIDA') return 'recebida'
   if (status === 'DISPONIVEL_RETIRADA') return 'disponivel'

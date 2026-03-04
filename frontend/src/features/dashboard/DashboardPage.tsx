@@ -6,7 +6,7 @@ import { backendApi, readApiError } from '../../services/httpClient';
 import { getAppTimezone, parseApiDate } from '../../utils/dateTime';
 import type { Endereco } from '../encomendas/types';
 import type { EncomendaListItem } from '../encomendas/types';
-import { isForgotten } from '../encomendas/utils/statusMapping';
+import { isForgotten, isNotified } from '../encomendas/utils/statusMapping';
 
 type DashboardData = {
   total: number
@@ -224,8 +224,8 @@ export function DashboardPage(): JSX.Element {
       const forgotten = isForgotten(item, forgottenDaysThreshold, now.getTime());
       const isReceivedInPeriod = Boolean(received && received >= range.start && received <= range.end);
       const isDeliveredInPeriod = Boolean(delivered && delivered >= range.start && delivered <= range.end);
-      const notified = item.status === 'DISPONIVEL_RETIRADA';
-      const pending = item.status === 'RECEBIDA' || notified || forgotten;
+      const notified = isNotified(item);
+      const pending = item.status !== 'ENTREGUE';
 
       if (pending) {
         aguardando += 1;

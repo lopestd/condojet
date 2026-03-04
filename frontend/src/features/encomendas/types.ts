@@ -15,6 +15,10 @@ export type EncomendaListItem = {
   data_recebimento?: string | null
   hora_recebimento?: string | null
   data_entrega?: string | null
+  notificado_em?: string | null
+  notificado_por?: string | null
+  notificacao_status?: 'PENDENTE' | 'ENVIADO' | 'FALHA' | null
+  notificacao_erro?: string | null
 }
 
 export type EncomendaDetail = EncomendaListItem & {

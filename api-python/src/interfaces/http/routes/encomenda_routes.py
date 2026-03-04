@@ -67,6 +67,10 @@ def list_encomendas(
             "morador_id": item.morador_id,
             "morador_nome": morador_nome,
             "endereco_id": item.endereco_id,
+            "notificado_em": item.notificado_em,
+            "notificado_por": item.notificado_por,
+            "notificacao_status": item.notificacao_status,
+            "notificacao_erro": item.notificacao_erro,
             "endereco_label": format_endereco_label(
                 {
                     "tipo_endereco": endereco.tipo_endereco if endereco else None,

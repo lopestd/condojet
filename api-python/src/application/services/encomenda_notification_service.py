@@ -6,6 +6,7 @@ from urllib.request import Request, urlopen
 from sqlalchemy.orm import Session
 
 from src.infrastructure.database.models import EncomendaModel, MoradorModel
+from src.infrastructure.repositories.condominio_repository import CondominioRepository
 from src.infrastructure.repositories.webhook_n8n_repository import WebhookN8nRepository
 
 
@@ -76,6 +77,11 @@ def notify_encomenda_whatsapp(db: Session, encomenda: EncomendaModel, morador: M
     if webhook is None or not webhook.ativo:
         return False, "webhook_notify_nao_configurado"
 
+    condominio_nome = ""
+    condominio = CondominioRepository(db).find_by_id(encomenda.condominio_id)
+    if condominio is not None and condominio.nome:
+        condominio_nome = condominio.nome
+
     payload = {
         "telefone_morador": morador.telefone,
         "nome_morador": morador.nome,
@@ -83,6 +89,7 @@ def notify_encomenda_whatsapp(db: Session, encomenda: EncomendaModel, morador: M
         "tipo_encomenda": encomenda.tipo,
         "data_recebimento": str(encomenda.data_recebimento),
         "empresa_responsavel": encomenda.empresa_entregadora or "",
+        "nome_condominio": condominio_nome,
         "encomenda_id": encomenda.id,
         "condominio_id": encomenda.condominio_id,
         "scope": "condominio",
