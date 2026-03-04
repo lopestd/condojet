@@ -16,6 +16,7 @@ from src.application.services.encomenda_service import (
     ensure_update_allowed,
     format_endereco_label,
 )
+from src.application.services.encomenda_notification_service import notify_encomenda_whatsapp
 from src.application.services.exceptions import AppError
 from src.infrastructure.database.session import get_db
 from src.infrastructure.repositories.encomenda_repository import EncomendaRepository
@@ -39,6 +40,8 @@ def create_encomenda(
 
     repository = EncomendaRepository(db)
     model = repository.create(build_encomenda_payload(payload.model_dump(), principal.user_id, condominio_id))
+    notify_success, notify_error = notify_encomenda_whatsapp(db, model, morador)
+    repository.register_notification_result(model, notify_success, "whatsapp_notify", notify_error)
     return {"id": model.id, "codigo_interno": model.codigo_interno, "status": model.status}
 
 
@@ -127,6 +130,10 @@ def get_encomenda(
         "motivo_reabertura": item.motivo_reabertura,
         "reaberto_por_usuario_id": item.reaberto_por_usuario_id,
         "reaberto_em": item.reaberto_em,
+        "notificado_em": item.notificado_em,
+        "notificado_por": item.notificado_por,
+        "notificacao_status": item.notificacao_status,
+        "notificacao_erro": item.notificacao_erro,
     }
 
 

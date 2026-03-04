@@ -88,6 +88,18 @@ class EncomendaRepository:
         self.db.refresh(model)
         return model
 
+    def register_notification_result(
+        self, model: EncomendaModel, success: bool, notificado_por: str, erro: str | None = None
+    ) -> EncomendaModel:
+        model.notificado_em = app_now()
+        model.notificado_por = notificado_por
+        model.notificacao_status = "ENVIADO" if success else "FALHA"
+        model.notificacao_erro = None if success else (erro or "notificacao_falhou")
+        self.db.add(model)
+        self.db.commit()
+        self.db.refresh(model)
+        return model
+
     def entregar(self, model: EncomendaModel, entregue_por_usuario_id: int, retirado_por_nome: str) -> EncomendaModel:
         model.status = "ENTREGUE"
         model.data_entrega = app_now()

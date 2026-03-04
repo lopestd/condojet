@@ -28,6 +28,8 @@ export type EncomendaDetail = EncomendaListItem & {
   reaberto_em?: string | null
   notificado_em?: string | null
   notificado_por?: string | null
+  notificacao_status?: 'PENDENTE' | 'ENVIADO' | 'FALHA' | null
+  notificacao_erro?: string | null
 }
 
 export type Morador = {

@@ -1,9 +1,32 @@
 import type { EncomendaDetail } from '../types'
+import { getAppTimezone, parseApiDate } from '../../../utils/dateTime'
 
 type TimelineEvent = {
   label: string
   date: string
   caption?: string
+}
+
+function formatTimelineDateTime(value?: string | null): string {
+  if (!value) return '-'
+  const raw = value.trim()
+  if (!raw) return '-'
+
+  const parsed = parseApiDate(raw)
+  if (!parsed) return raw
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return parsed.toLocaleDateString('pt-BR', { timeZone: getAppTimezone() })
+  }
+
+  const datePart = parsed.toLocaleDateString('pt-BR', { timeZone: getAppTimezone() })
+  const timePart = parsed.toLocaleTimeString('pt-BR', {
+    timeZone: getAppTimezone(),
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  })
+  return `${datePart} - ${timePart}`
 }
 
 function buildTimeline(detail: EncomendaDetail): TimelineEvent[] {
@@ -15,11 +38,19 @@ function buildTimeline(detail: EncomendaDetail): TimelineEvent[] {
     caption: detail.hora_recebimento || undefined
   })
 
-  if (detail.notificado_em || detail.status === 'DISPONIVEL_RETIRADA' || detail.status === 'ENTREGUE') {
+  if (detail.notificacao_status === 'ENVIADO') {
     events.push({
       label: 'Morador notificado',
-      date: detail.notificado_em ?? detail.data_recebimento ?? '-',
+      date: formatTimelineDateTime(detail.notificado_em ?? detail.data_recebimento ?? '-'),
       caption: detail.notificado_por || 'Notificação operacional'
+    })
+  }
+
+  if (detail.notificacao_status === 'FALHA') {
+    events.push({
+      label: 'Falha ao notificar',
+      date: formatTimelineDateTime(detail.notificado_em ?? detail.data_recebimento ?? '-'),
+      caption: detail.notificacao_erro || detail.notificado_por || 'Falha na notificação operacional'
     })
   }
 

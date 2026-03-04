@@ -130,6 +130,10 @@ class EncomendaModel(Base):
     motivo_reabertura: Mapped[str | None] = mapped_column(Text, nullable=True)
     reaberto_por_usuario_id: Mapped[int | None] = mapped_column(BIGINT, nullable=True)
     reaberto_em: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    notificado_em: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
+    notificado_por: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    notificacao_status: Mapped[str] = mapped_column(String(20), nullable=False, server_default=text("'PENDENTE'"))
+    notificacao_erro: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class ConfiguracaoModel(Base):
