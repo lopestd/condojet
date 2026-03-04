@@ -222,8 +222,68 @@ def minhas_encomendas(
         {
             "id": item.id,
             "codigo_interno": item.codigo_interno,
+            "codigo_externo": item.codigo_externo,
             "status": item.status,
             "tipo": item.tipo,
+            "empresa_entregadora": item.empresa_entregadora,
+            "data_recebimento": item.data_recebimento.isoformat() if item.data_recebimento else None,
+            "data_entrega": item.data_entrega.isoformat() if item.data_entrega else None,
+            "retirado_por_nome": item.retirado_por_nome,
         }
         for item in items
     ]
+
+
+@router.get("/minhas-encomendas/{encomenda_id}")
+def get_minha_encomenda(
+    encomenda_id: int,
+    principal: Principal = Depends(require_roles("MORADOR")),
+    db: Session = Depends(get_db),
+) -> dict:
+    repository = EncomendaRepository(db)
+    condominio_id = principal.condominio_id
+    details = repository.find_by_id_with_details(encomenda_id, condominio_id=condominio_id)
+    if details is None:
+        raise AppError("encomenda_not_found", status_code=404, code="encomenda_not_found")
+
+    item, morador_nome, endereco = details
+    if item.morador_id != principal.user_id:
+        raise AppError("encomenda_not_found", status_code=404, code="encomenda_not_found")
+
+    return {
+        "id": item.id,
+        "condominio_id": item.condominio_id,
+        "codigo_interno": item.codigo_interno,
+        "status": item.status,
+        "tipo": item.tipo,
+        "morador_id": item.morador_id,
+        "morador_nome": morador_nome,
+        "endereco_id": item.endereco_id,
+        "endereco_label": format_endereco_label(
+            {
+                "tipo_endereco": endereco.tipo_endereco if endereco else None,
+                "quadra": endereco.quadra if endereco else None,
+                "conjunto": endereco.conjunto if endereco else None,
+                "lote": endereco.lote if endereco else None,
+                "setor_chacara": endereco.setor_chacara if endereco else None,
+                "numero_chacara": endereco.numero_chacara if endereco else None,
+            }
+            if endereco is not None
+            else None
+        ),
+        "codigo_externo": item.codigo_externo,
+        "descricao": item.descricao,
+        "empresa_entregadora": item.empresa_entregadora,
+        "data_recebimento": item.data_recebimento,
+        "hora_recebimento": item.hora_recebimento,
+        "data_entrega": item.data_entrega,
+        "entregue_por_usuario_id": item.entregue_por_usuario_id,
+        "retirado_por_nome": item.retirado_por_nome,
+        "motivo_reabertura": item.motivo_reabertura,
+        "reaberto_por_usuario_id": item.reaberto_por_usuario_id,
+        "reaberto_em": item.reaberto_em,
+        "notificado_em": item.notificado_em,
+        "notificado_por": item.notificado_por,
+        "notificacao_status": item.notificacao_status,
+        "notificacao_erro": item.notificacao_erro,
+    }

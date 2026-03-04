@@ -147,4 +147,14 @@ export async function encomendaRoutes(app: FastifyInstance): Promise<void> {
     const data = await proxyToApiPython('GET', '/minhas-encomendas', extractProxyHeaders(request.headers));
     return reply.status(200).send(data);
   });
+
+  app.get('/minhas-encomendas/:id', async (request, reply) => {
+    const params = encomendaPathParamsSchema.safeParse(request.params);
+    if (!params.success) {
+      return reply.status(422).send(buildValidationError(params.error));
+    }
+
+    const data = await proxyToApiPython('GET', `/minhas-encomendas/${params.data.id}`, extractProxyHeaders(request.headers));
+    return reply.status(200).send(data);
+  });
 }

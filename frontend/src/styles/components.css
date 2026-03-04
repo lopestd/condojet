@@ -969,6 +969,10 @@ th {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
+.dashboard-kpi-grid.dashboard-kpi-grid-morador {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .dashboard-period-panel {
   border: 1px solid #d7e2ef;
   background: linear-gradient(180deg, #ffffff, #f8fbff);

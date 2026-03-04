@@ -291,7 +291,10 @@ export function DashboardPage(): JSX.Element {
     if (option.value === 'YEAR') return { ...option, label: `Anual (${yearPeriodText})` };
     return option;
   });
-  const alertTitle = 'Top 10 encomendas mais antigas aguardando retirada.';
+  const isMoradorView = user?.role === 'MORADOR';
+  const alertTitle = isMoradorView
+    ? 'Encomendas pendentes de retirada que necessitam de atenção'
+    : 'Top 10 encomendas mais antigas aguardando retirada.';
   const hasOverdueAlerts = dashboardData.alertPackages.length > 0;
   const condominio = user?.nomeCondominio ?? (user?.condominioId ? `Condomínio ${user.condominioId}` : 'CondoJET Global');
   const canCreateEncomenda = user?.role === 'ADMIN' || user?.role === 'PORTEIRO';
@@ -334,7 +337,7 @@ export function DashboardPage(): JSX.Element {
         </div>
       </section>
 
-      <section className="kpi-grid dashboard-kpi-grid">
+      <section className={`kpi-grid dashboard-kpi-grid${isMoradorView ? ' dashboard-kpi-grid-morador' : ''}`}>
         <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-recebidas">
           <span>Recebidas</span>
           <strong>{dashboardData.todayReceived}</strong>
@@ -345,11 +348,13 @@ export function DashboardPage(): JSX.Element {
           <strong>{dashboardData.entregue}</strong>
           <small>{`Concluídas ${periodLabel}`}</small>
         </article>
-        <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-notificado">
-          <span>Notificados</span>
-          <strong>{dashboardData.notificado}</strong>
-          <small>{`Moradores avisados ${periodLabel}`}</small>
-        </article>
+        {!isMoradorView ? (
+          <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-notificado">
+            <span>Notificados</span>
+            <strong>{dashboardData.notificado}</strong>
+            <small>{`Moradores avisados ${periodLabel}`}</small>
+          </article>
+        ) : null}
         <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-aguardando dashboard-kpi-stock">
           <span>Aguardando retirada</span>
           <div className="dashboard-kpi-value-row">

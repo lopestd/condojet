@@ -123,6 +123,20 @@
     grid-column: span 3;
   }
 
+  .dashboard-kpi-grid.dashboard-kpi-grid-morador {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .dashboard-kpi-grid.dashboard-kpi-grid-morador > .dashboard-kpi:nth-child(1),
+  .dashboard-kpi-grid.dashboard-kpi-grid-morador > .dashboard-kpi:nth-child(2) {
+    grid-column: span 2;
+  }
+
+  .dashboard-kpi-grid.dashboard-kpi-grid-morador > .dashboard-kpi:nth-child(3),
+  .dashboard-kpi-grid.dashboard-kpi-grid-morador > .dashboard-kpi:nth-child(4) {
+    grid-column: span 2;
+  }
+
   .content-two {
     grid-template-columns: 1fr;
   }
@@ -362,6 +376,53 @@
   }
 
   .encomenda-detalhe-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .resident-encomendas-page .resident-encomendas-controls {
+    grid-template-columns: 1fr;
+    gap: 0.34rem;
+    padding: 0.48rem;
+  }
+
+  .resident-encomendas-page .resident-status-filters {
+    gap: 0.32rem;
+  }
+
+  .resident-encomendas-page .resident-status-filters .chip-filter {
+    min-height: 30px;
+    font-size: 0.74rem;
+    padding: 0.2rem 0.46rem;
+  }
+
+  .resident-encomendas-page .resident-date-filters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.32rem;
+  }
+
+  .resident-encomendas-page .resident-date-filter {
+    font-size: 0.74rem;
+  }
+
+  .resident-encomendas-page .resident-date-filter input,
+  .resident-encomendas-page .resident-search-filter input {
+    min-height: 32px;
+    padding: 0.28rem 0.46rem;
+  }
+
+  .resident-encomendas-page .resident-filter-actions .button-soft {
+    width: 100%;
+    min-height: 32px;
+    font-size: 0.76rem;
+  }
+
+  .resident-encomendas-page .resident-encomendas-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 540px) {
+  .resident-encomendas-page .resident-date-filters-grid {
     grid-template-columns: 1fr;
   }
 }
