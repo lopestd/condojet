@@ -222,7 +222,7 @@ export function AppLayout(): JSX.Element {
   const showTopbarInfo = location.pathname !== '/dashboard' || isMobileViewport;
   const profileLabel = getRoleLabel(user?.role);
   const usuarioLabel = user ? `${user.nomeUsuario} (${profileLabel})` : 'Usuário';
-  const condominioLabel = user?.nomeCondominio ?? 'CondoJET Global';
+  const emailLabel = user?.email?.trim() ? user.email : 'Carregando e-mail...';
 
   return (
     <main className={mobileMenuOpen ? 'layout-root menu-open' : 'layout-root'}>
@@ -393,13 +393,15 @@ export function AppLayout(): JSX.Element {
         <footer className="sidebar-footer">
           {user ? (
             <div className="user-card">
-              <p>{usuarioLabel}</p>
-              <small>{condominioLabel}</small>
+              <div className="user-card-main">
+                <p>{usuarioLabel}</p>
+                <small>{emailLabel}</small>
+              </div>
+              <button className="user-card-logout" type="button" onClick={logout}>
+                Sair
+              </button>
             </div>
           ) : null}
-          <button className="button-soft" type="button" onClick={logout}>
-            Sair
-          </button>
         </footer>
       </aside>
 

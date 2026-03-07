@@ -5,6 +5,5 @@ COPY package.json tsconfig.json vite.config.ts postcss.config.cjs tailwind.confi
 RUN npm install
 COPY index.html ./
 COPY src ./src
-COPY .env ./.env
 EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

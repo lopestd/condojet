@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { backendApi, setAuthToken } from '../services/httpClient';
 import { DEFAULT_TIMEZONE, setAppTimezone } from '../utils/dateTime';
@@ -20,6 +20,7 @@ type SessionProfileResponse = {
   role: UserRole;
   condominio_id: number | null;
   nome_usuario: string;
+  email: string;
   nome_condominio: string;
   timezone: string;
 };
@@ -47,6 +48,7 @@ function parseStoredSession(): SessionUser | null {
       role: parsed.role,
       condominioId: parsed.condominioId ?? null,
       nomeUsuario: parsed.nomeUsuario ?? 'Usuário',
+      email: parsed.email ?? '',
       nomeCondominio: parsed.nomeCondominio ?? (parsed.condominioId ? `Condomínio ${parsed.condominioId}` : 'CondoJET Global'),
       timezone: parsed.timezone ?? DEFAULT_TIMEZONE
     };
@@ -77,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
       role: profile.role,
       condominioId: profile.condominio_id,
       nomeUsuario: profile.nome_usuario,
+      email: profile.email,
       nomeCondominio: profile.nome_condominio,
       timezone: profile.timezone ?? DEFAULT_TIMEZONE
     };
@@ -103,6 +106,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }): JSX.E
     });
     setAppTimezone(normalizedTimezone);
   }, []);
+
+  useEffect(() => {
+    if (!user?.accessToken || user.email.trim()) return;
+    let active = true;
+    backendApi
+      .get<SessionProfileResponse>('/auth/me')
+      .then(({ data }) => {
+        if (!active) return;
+        const nextTimezone = data.timezone ?? DEFAULT_TIMEZONE;
+        setUser((current) => {
+          if (!current) return current;
+          const next: SessionUser = {
+            ...current,
+            role: data.role,
+            condominioId: data.condominio_id,
+            nomeUsuario: data.nome_usuario,
+            email: data.email,
+            nomeCondominio: data.nome_condominio,
+            timezone: nextTimezone
+          };
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+          return next;
+        });
+        setAppTimezone(nextTimezone);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [user?.accessToken, user?.email]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

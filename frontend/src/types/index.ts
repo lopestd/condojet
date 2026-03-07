@@ -7,6 +7,7 @@ export type SessionUser = {
   role: UserRole;
   condominioId: number | null;
   nomeUsuario: string;
+  email: string;
   nomeCondominio: string;
   timezone: string;
 };

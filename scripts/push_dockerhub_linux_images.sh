@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-DEFAULT_PLATFORM="linux/amd64"
+DEFAULT_PLATFORM="linux/amd64,linux/arm64"
 PLATFORM="${DEFAULT_PLATFORM}"
 ALSO_LATEST="false"
 
@@ -25,10 +25,12 @@ Uso:
 Exemplos:
   scripts/push_dockerhub_linux_images.sh meuusuario v1.0.0
   scripts/push_dockerhub_linux_images.sh minhaorg latest linux/amd64
+  scripts/push_dockerhub_linux_images.sh minhaorg latest linux/amd64,linux/arm64
   scripts/push_dockerhub_linux_images.sh --namespace minhaorg --tag v1.4.0 --also-latest
 
 Descrição:
-  Faz build e push das imagens Linux do CondoJET no Docker Hub:
+  Faz build e push das imagens Linux do CondoJET no Docker Hub
+  (por padrão em multi-arquitetura: linux/amd64 e linux/arm64):
     - <namespace>/condojet-api-python:<tag>
     - <namespace>/condojet-backend:<tag>
     - <namespace>/condojet-frontend:<tag>

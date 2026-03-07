@@ -45,23 +45,25 @@ class AuthRepository:
 
         return None
 
-    def find_session_profile(self, user_id: int, role: str, condominio_id: int | None) -> tuple[str, str]:
+    def find_session_profile(self, user_id: int, role: str, condominio_id: int | None) -> tuple[str, str, str]:
         if role == "ADMIN_GLOBAL":
             global_user = self.db.get(UsuarioGlobalModel, user_id)
             if global_user is None:
-                return "Usuario", "CondoJET Global"
-            return global_user.nome, "CondoJET Global"
+                return "Usuario", "", "CondoJET Global"
+            return global_user.nome, global_user.email, "CondoJET Global"
 
         if role == "MORADOR":
             morador = self.db.get(MoradorModel, user_id)
             nome_usuario = morador.nome if morador is not None else "Morador"
+            email = morador.email if morador is not None else ""
         else:
             usuario = self.db.get(UsuarioModel, user_id)
             nome_usuario = usuario.nome if usuario is not None else "Usuario"
+            email = usuario.email if usuario is not None else ""
 
         if condominio_id is None:
-            return nome_usuario, "CondoJET Global"
+            return nome_usuario, email, "CondoJET Global"
 
         condominio = self.db.get(CondominioModel, condominio_id)
         nome_condominio = condominio.nome if condominio is not None else f"Condominio {condominio_id}"
-        return nome_usuario, nome_condominio
+        return nome_usuario, email, nome_condominio

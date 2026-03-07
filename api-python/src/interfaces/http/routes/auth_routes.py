@@ -53,7 +53,7 @@ def me(
     db: Session = Depends(get_db),
 ) -> SessionProfileResponseDTO:
     repository = AuthRepository(db)
-    nome_usuario, nome_condominio = repository.find_session_profile(
+    nome_usuario, email, nome_condominio = repository.find_session_profile(
         user_id=principal.user_id,
         role=principal.role,
         condominio_id=principal.condominio_id,
@@ -71,6 +71,7 @@ def me(
         role=principal.role,
         condominio_id=principal.condominio_id,
         nome_usuario=nome_usuario,
+        email=email,
         nome_condominio=nome_condominio,
         timezone=timezone,
     )

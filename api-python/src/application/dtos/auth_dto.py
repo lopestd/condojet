@@ -19,5 +19,6 @@ class SessionProfileResponseDTO(BaseModel):
     role: str
     condominio_id: int | None = None
     nome_usuario: str
+    email: EmailStr
     nome_condominio: str
     timezone: str

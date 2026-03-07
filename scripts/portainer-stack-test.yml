@@ -1,69 +1,27 @@
-version: "3.9"
-
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: condojet-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: condojethmg
-      POSTGRES_USER: condojethmg
-      POSTGRES_PASSWORD: condoJetNovo2026
-      TZ: America/Sao_Paulo
-    ports:
-      - "5832:5432"
-    volumes:
-      - condojet_pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U condojethmg -d condojethmg"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-
-  db-init:
-    image: postgres:16-alpine
-    container_name: condojet-db-init
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: "no"
-    environment:
-      PGPASSWORD: condoJetNovo2026
-    volumes:
-      - ../database/ddl/001_init_condojet.sql:/sql/001_init_condojet.sql:ro
-    command:
-      - sh
-      - -c
-      - |
-        psql -h postgres -U condojethmg -d condojethmg -v ON_ERROR_STOP=1 -f /sql/001_init_condojet.sql
-
   api-python:
     image: brdocker2020/condojet-api-python:latest
     container_name: condojet-api-python
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      db-init:
-        condition: service_completed_successfully
     environment:
-      API_APP_NAME: CondoJET API
-      API_APP_ENV: development
-      API_APP_PORT: 8000
-      API_DATABASE_URL: postgresql+psycopg://condojethmg:condoJetNovo2026@postgres:5432/condojethmg
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: condojethmg
-      DB_PASSWORD: condoJetNovo2026
-      DB_NAME: condojethmg
-      DB_SCHEMA: admcondojet
-      API_JWT_SECRET: change-me
-      API_JWT_EXPIRES_MINUTES: 60
-      API_CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
-      API_GLOBAL_API_KEY: condojet-global-dsv-2026
-      API_GLOBAL_ADMIN_NAME: Admin Global CondoJET
-      API_GLOBAL_ADMIN_EMAIL: admin.global@condojet.app
-      API_GLOBAL_ADMIN_PASSWORD: condojetGlobal#2026
+      API_APP_NAME: ${API_APP_NAME}
+      API_APP_ENV: ${API_APP_ENV}
+      API_APP_PORT: ${API_APP_PORT}
+      API_DATABASE_URL: ${API_DATABASE_URL}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_SCHEMA: ${DB_SCHEMA}
+      API_JWT_SECRET: ${API_JWT_SECRET}
+      API_JWT_EXPIRES_MINUTES: ${API_JWT_EXPIRES_MINUTES}
+      API_CORS_ORIGINS: ${API_CORS_ORIGINS}
+      API_GLOBAL_API_KEY: ${API_GLOBAL_API_KEY}
+      API_GLOBAL_ADMIN_NAME: ${API_GLOBAL_ADMIN_NAME}
+      API_GLOBAL_ADMIN_EMAIL: ${API_GLOBAL_ADMIN_EMAIL}
+      API_GLOBAL_ADMIN_PASSWORD: ${API_GLOBAL_ADMIN_PASSWORD}
     expose:
       - "8000"
     healthcheck:
@@ -73,6 +31,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
+    networks:
+      - portainer_default
 
   backend:
     image: brdocker2020/condojet-backend:latest
@@ -82,15 +42,15 @@ services:
       api-python:
         condition: service_healthy
     environment:
-      BFF_NODE_ENV: development
-      BFF_PORT: 3000
-      BFF_API_PYTHON_BASE_URL: http://api-python:8000/api/v1
-      BFF_CORS_ORIGIN: https://condojet.esteiraweb.com.br
-      BFF_GLOBAL_API_KEY: condojet-global-dsv-2026
-      API_GLOBAL_API_KEY: condojet-global-dsv-2026
-      API_GLOBAL_ADMIN_EMAIL: admin.global@condojet.app
-      API_GLOBAL_ADMIN_NAME: Admin Global CondoJET
-      API_GLOBAL_ADMIN_PASSWORD: condojetGlobal#2026
+      BFF_NODE_ENV: ${BFF_NODE_ENV}
+      BFF_PORT: ${BFF_PORT}
+      BFF_API_PYTHON_BASE_URL: ${BFF_API_PYTHON_BASE_URL}
+      BFF_CORS_ORIGIN: ${BFF_CORS_ORIGIN}
+      BFF_GLOBAL_API_KEY: ${BFF_GLOBAL_API_KEY}
+      API_GLOBAL_API_KEY: ${API_GLOBAL_API_KEY}
+      API_GLOBAL_ADMIN_EMAIL: ${API_GLOBAL_ADMIN_EMAIL}
+      API_GLOBAL_ADMIN_NAME: ${API_GLOBAL_ADMIN_NAME}
+      API_GLOBAL_ADMIN_PASSWORD: ${API_GLOBAL_ADMIN_PASSWORD}
     expose:
       - "3000"
     healthcheck:
@@ -100,15 +60,14 @@ services:
       retries: 12
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.condojet-api.rule=Host(`condojet.esteiraweb.com.br`) && PathPrefix(`/api/v1`)"
+      - "traefik.http.routers.condojet-api.rule=Host(`${WEB_HOST}`) && PathPrefix(`/api/v1`)"
       - "traefik.http.services.condojet-api.loadbalancer.server.port=3000"
       - "traefik.http.routers.condojet-api.service=condojet-api"
-      - "traefik.http.routers.condojet-api.entrypoints=websecure"
-      - "traefik.http.routers.condojet-api.tls.certresolver=leresolver"
+      - "traefik.http.routers.condojet-api.entrypoints=${TRAEFIK_ENTRYPOINT}"
+      - "traefik.http.routers.condojet-api.tls.certresolver=${TRAEFIK_CERTRESOLVER}"
       - "traefik.http.routers.condojet-api.priority=100"
-      - "traefik.docker.network=traefik-public"
+      - "traefik.docker.network=portainer_default"
     networks:
-      - default
       - portainer_default
 
   frontend:
@@ -119,21 +78,19 @@ services:
       backend:
         condition: service_healthy
     environment:
-      VITE_BACKEND_URL: /api/v1
+      VITE_BACKEND_URL: ${VITE_BACKEND_URL}
+      VITE_ALLOWED_HOSTS: ${VITE_ALLOWED_HOSTS}
+      VITE_DEV_PORT: ${VITE_DEV_PORT}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.condojet-frontend.rule=Host(`condojet.esteiraweb.com.br`)"
+      - "traefik.http.routers.condojet-frontend.rule=Host(`${WEB_HOST}`)"
       - "traefik.http.services.condojet-frontend.loadbalancer.server.port=5173"
       - "traefik.http.routers.condojet-frontend.service=condojet-frontend"
-      - "traefik.http.routers.condojet-frontend.entrypoints=websecure"
-      - "traefik.http.routers.condojet-frontend.tls.certresolver=leresolver"
-      - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.condojet-frontend.entrypoints=${TRAEFIK_ENTRYPOINT}"
+      - "traefik.http.routers.condojet-frontend.tls.certresolver=${TRAEFIK_CERTRESOLVER}"
+      - "traefik.docker.network=portainer_default"
     networks:
-      - default
       - portainer_default
-volumes:
-  condojet_pgdata:
-
 networks:
   portainer_default:
     external: true
