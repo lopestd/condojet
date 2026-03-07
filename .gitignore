@@ -32,6 +32,10 @@ coverage/
 
 # Planning docs
 plans/
+scripts/
+config/
+
+
 
 # API test env at project root (DSV local)
 tests_env/
