@@ -31,7 +31,7 @@ const CONFIG_NAV_ITEM: NavItem = {
   label: 'Configurações',
   shortLabel: 'Config',
   icon: 'settings',
-  roles: ['ADMIN']
+  roles: ['ADMIN', 'PORTEIRO']
 };
 
 const GLOBAL_CONFIG_NAV_ITEM: NavItem = {

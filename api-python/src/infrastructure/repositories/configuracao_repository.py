@@ -37,3 +37,34 @@ class ConfiguracaoRepository:
         self.db.commit()
         self.db.refresh(model)
         return model
+
+    def upsert_parametros_enderecamento(
+        self,
+        condominio_id: int,
+        *,
+        predio_rotulo_bloco: str,
+        predio_rotulo_andar: str,
+        predio_rotulo_apartamento: str,
+        horizontal_rotulo_tipo: str,
+        horizontal_rotulo_subtipo: str,
+        horizontal_rotulo_numero: str,
+        horizontal_hint_tipo: str,
+        horizontal_hint_subtipo: str,
+        horizontal_tipos_permitidos_ids: list[int],
+        horizontal_subtipos_permitidos_ids: list[int],
+    ) -> ConfiguracaoModel:
+        model = self.get_or_create(condominio_id)
+        model.endereco_predio_rotulo_bloco = predio_rotulo_bloco
+        model.endereco_predio_rotulo_andar = predio_rotulo_andar
+        model.endereco_predio_rotulo_apartamento = predio_rotulo_apartamento
+        model.endereco_horizontal_rotulo_tipo = horizontal_rotulo_tipo
+        model.endereco_horizontal_rotulo_subtipo = horizontal_rotulo_subtipo
+        model.endereco_horizontal_rotulo_numero = horizontal_rotulo_numero
+        model.endereco_horizontal_hint_tipo = horizontal_hint_tipo
+        model.endereco_horizontal_hint_subtipo = horizontal_hint_subtipo
+        model.endereco_horizontal_tipos_permitidos_ids = horizontal_tipos_permitidos_ids
+        model.endereco_horizontal_subtipos_permitidos_ids = horizontal_subtipos_permitidos_ids
+        self.db.add(model)
+        self.db.commit()
+        self.db.refresh(model)
+        return model

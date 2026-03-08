@@ -796,6 +796,61 @@ th {
   min-width: 60px;
 }
 
+.chips-block {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: -0.2rem;
+}
+
+.chips-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #395376;
+}
+
+.chips-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.value-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  border-radius: 999px;
+  border: 1px solid #c7d8eb;
+  background: #eef5ff;
+  color: #19314f;
+  font-weight: 600;
+  font-size: 0.84rem;
+  padding: 0.32rem 0.6rem;
+  cursor: pointer;
+}
+
+.value-chip:hover:not(:disabled) {
+  border-color: #9fbce0;
+  background: #e4efff;
+}
+
+.value-chip:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.chip-remove {
+  width: 1.15rem;
+  height: 1.15rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #d7e7ff;
+  color: #1d3d66;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
 .scanner-open-action {
   min-width: 68px;
   font-weight: 700;
@@ -1300,6 +1355,14 @@ th {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.72rem;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.74rem;
+  color: var(--text-2);
+  font-weight: 500;
 }
 
 .reports-page {

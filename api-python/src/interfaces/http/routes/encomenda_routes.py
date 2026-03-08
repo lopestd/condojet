@@ -7,6 +7,7 @@ from src.application.dtos.encomenda_dto import (
     ReabrirEncomendaDTO,
     UpdateEncomendaDTO,
 )
+from src.application.services.endereco_v2_service import build_endereco_v2_label
 from src.application.services.encomenda_service import (
     build_encomenda_payload,
     ensure_delete_allowed,
@@ -14,7 +15,6 @@ from src.application.services.encomenda_service import (
     ensure_morador_endereco_consistency,
     ensure_reabertura_allowed,
     ensure_update_allowed,
-    format_endereco_label,
 )
 from src.application.services.encomenda_notification_service import notify_encomenda_whatsapp
 from src.application.services.exceptions import AppError
@@ -71,20 +71,21 @@ def list_encomendas(
             "notificado_por": item.notificado_por,
             "notificacao_status": item.notificacao_status,
             "notificacao_erro": item.notificacao_erro,
-            "endereco_label": format_endereco_label(
+            "endereco_label": build_endereco_v2_label(
                 {
-                    "tipo_endereco": endereco.tipo_endereco if endereco else None,
-                    "quadra": endereco.quadra if endereco else None,
-                    "conjunto": endereco.conjunto if endereco else None,
-                    "lote": endereco.lote if endereco else None,
-                    "setor_chacara": endereco.setor_chacara if endereco else None,
-                    "numero_chacara": endereco.numero_chacara if endereco else None,
+                    "tipo_condominio_slug": tipo_condominio.slug if tipo_condominio is not None else None,
+                    "bloco": endereco.bloco if endereco is not None else None,
+                    "andar": endereco.andar if endereco is not None else None,
+                    "apartamento": endereco.apartamento if endereco is not None else None,
+                    "tipo_logradouro_nome": tipo_logradouro.nome if tipo_logradouro is not None else None,
+                    "subtipo_logradouro_nome": subtipo_logradouro.nome if subtipo_logradouro is not None else None,
+                    "numero": endereco.numero if endereco is not None else None,
                 }
                 if endereco is not None
                 else None
             ),
         }
-        for item, morador_nome, endereco in items
+        for item, morador_nome, endereco, tipo_condominio, tipo_logradouro, subtipo_logradouro in items
     ]
 
 
@@ -100,7 +101,7 @@ def get_encomenda(
     if details is None:
         raise AppError("encomenda_not_found", status_code=404, code="encomenda_not_found")
 
-    item, morador_nome, endereco = details
+    item, morador_nome, endereco, tipo_condominio, tipo_logradouro, subtipo_logradouro = details
 
     return {
         "id": item.id,
@@ -111,14 +112,15 @@ def get_encomenda(
         "morador_id": item.morador_id,
         "morador_nome": morador_nome,
         "endereco_id": item.endereco_id,
-        "endereco_label": format_endereco_label(
+        "endereco_label": build_endereco_v2_label(
             {
-                "tipo_endereco": endereco.tipo_endereco if endereco else None,
-                "quadra": endereco.quadra if endereco else None,
-                "conjunto": endereco.conjunto if endereco else None,
-                "lote": endereco.lote if endereco else None,
-                "setor_chacara": endereco.setor_chacara if endereco else None,
-                "numero_chacara": endereco.numero_chacara if endereco else None,
+                "tipo_condominio_slug": tipo_condominio.slug if tipo_condominio is not None else None,
+                "bloco": endereco.bloco if endereco is not None else None,
+                "andar": endereco.andar if endereco is not None else None,
+                "apartamento": endereco.apartamento if endereco is not None else None,
+                "tipo_logradouro_nome": tipo_logradouro.nome if tipo_logradouro is not None else None,
+                "subtipo_logradouro_nome": subtipo_logradouro.nome if subtipo_logradouro is not None else None,
+                "numero": endereco.numero if endereco is not None else None,
             }
             if endereco is not None
             else None
@@ -246,7 +248,7 @@ def get_minha_encomenda(
     if details is None:
         raise AppError("encomenda_not_found", status_code=404, code="encomenda_not_found")
 
-    item, morador_nome, endereco = details
+    item, morador_nome, endereco, tipo_condominio, tipo_logradouro, subtipo_logradouro = details
     if item.morador_id != principal.user_id:
         raise AppError("encomenda_not_found", status_code=404, code="encomenda_not_found")
 
@@ -259,14 +261,15 @@ def get_minha_encomenda(
         "morador_id": item.morador_id,
         "morador_nome": morador_nome,
         "endereco_id": item.endereco_id,
-        "endereco_label": format_endereco_label(
+        "endereco_label": build_endereco_v2_label(
             {
-                "tipo_endereco": endereco.tipo_endereco if endereco else None,
-                "quadra": endereco.quadra if endereco else None,
-                "conjunto": endereco.conjunto if endereco else None,
-                "lote": endereco.lote if endereco else None,
-                "setor_chacara": endereco.setor_chacara if endereco else None,
-                "numero_chacara": endereco.numero_chacara if endereco else None,
+                "tipo_condominio_slug": tipo_condominio.slug if tipo_condominio is not None else None,
+                "bloco": endereco.bloco if endereco is not None else None,
+                "andar": endereco.andar if endereco is not None else None,
+                "apartamento": endereco.apartamento if endereco is not None else None,
+                "tipo_logradouro_nome": tipo_logradouro.nome if tipo_logradouro is not None else None,
+                "subtipo_logradouro_nome": subtipo_logradouro.nome if subtipo_logradouro is not None else None,
+                "numero": endereco.numero if endereco is not None else None,
             }
             if endereco is not None
             else None

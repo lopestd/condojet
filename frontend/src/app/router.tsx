@@ -98,7 +98,7 @@ export const appRouter = createBrowserRouter([
         children: [{ path: '/condo/relatorios', element: <ReportsPageRoute /> }]
       },
       {
-        element: <ProtectedRoute allowedRoles={['ADMIN']} />,
+        element: <ProtectedRoute allowedRoles={['ADMIN', 'PORTEIRO']} />,
         children: [
           { path: '/condo/config', element: <Navigate to="/condo/config/gerais" replace /> },
           { path: '/condo/config/gerais', element: <SettingsPage /> }

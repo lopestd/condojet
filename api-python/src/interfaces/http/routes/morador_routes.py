@@ -5,7 +5,7 @@ from src.application.dtos.morador_dto import CreateMoradorDTO, UpdateMoradorDTO
 from src.application.services.exceptions import AppError
 from src.infrastructure.database.session import get_db
 from src.infrastructure.repositories.email_registry_repository import EmailRegistryRepository
-from src.infrastructure.repositories.endereco_repository import EnderecoRepository
+from src.infrastructure.repositories.endereco_morador_repository import EnderecoMoradorRepository
 from src.infrastructure.repositories.morador_repository import MoradorRepository
 from src.infrastructure.security.password import hash_password
 from src.interfaces.http.dependencies.auth import Principal, require_roles
@@ -43,7 +43,7 @@ def create_morador(
 ) -> dict:
     condominio_id = principal.condominio_id
 
-    endereco_repository = EnderecoRepository(db)
+    endereco_repository = EnderecoMoradorRepository(db)
     if endereco_repository.find_by_id(payload.endereco_id, condominio_id=condominio_id) is None:
         raise AppError("endereco_not_found", status_code=404, code="endereco_not_found")
 
@@ -82,7 +82,7 @@ def update_morador(
     update_data = payload.model_dump(exclude_none=True)
 
     if "endereco_id" in update_data:
-        endereco_repository = EnderecoRepository(db)
+        endereco_repository = EnderecoMoradorRepository(db)
         if endereco_repository.find_by_id(int(update_data["endereco_id"]), condominio_id=condominio_id) is None:
             raise AppError("endereco_not_found", status_code=404, code="endereco_not_found")
 

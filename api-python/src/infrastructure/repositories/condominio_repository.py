@@ -41,3 +41,20 @@ class CondominioRepository:
         self.db.commit()
         self.db.refresh(model)
         return model
+
+    def update_configuracao_basica(
+        self,
+        condominio_id: int,
+        *,
+        nome: str,
+        tipo_condominio_id: int,
+    ) -> CondominioModel | None:
+        model = self.find_by_id(condominio_id)
+        if model is None:
+            return None
+        model.nome = nome
+        model.tipo_condominio_id = tipo_condominio_id
+        self.db.add(model)
+        self.db.commit()
+        self.db.refresh(model)
+        return model

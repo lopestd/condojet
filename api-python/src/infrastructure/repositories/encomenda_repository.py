@@ -1,7 +1,14 @@
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
-from src.infrastructure.database.models import EncomendaModel, EnderecoModel, MoradorModel
+from src.infrastructure.database.models import (
+    EncomendaModel,
+    EnderecoMoradorModel,
+    MoradorModel,
+    SubtipoLogradouroHorizontalModel,
+    TipoCondominioModel,
+    TipoLogradouroHorizontalModel,
+)
 from src.infrastructure.timezone import app_now
 
 
@@ -28,9 +35,27 @@ class EncomendaRepository:
             stmt = stmt.where(EncomendaModel.condominio_id == condominio_id)
         return list(self.db.execute(stmt).scalars().all())
 
-    def list_all_with_details(self, condominio_id: int) -> list[tuple[EncomendaModel, str | None, EnderecoModel | None]]:
+    def list_all_with_details(
+        self, condominio_id: int
+    ) -> list[
+        tuple[
+            EncomendaModel,
+            str | None,
+            EnderecoMoradorModel | None,
+            TipoCondominioModel | None,
+            TipoLogradouroHorizontalModel | None,
+            SubtipoLogradouroHorizontalModel | None,
+        ]
+    ]:
         stmt = (
-            select(EncomendaModel, MoradorModel.nome, EnderecoModel)
+            select(
+                EncomendaModel,
+                MoradorModel.nome,
+                EnderecoMoradorModel,
+                TipoCondominioModel,
+                TipoLogradouroHorizontalModel,
+                SubtipoLogradouroHorizontalModel,
+            )
             .outerjoin(
                 MoradorModel,
                 and_(
@@ -39,11 +64,20 @@ class EncomendaRepository:
                 ),
             )
             .outerjoin(
-                EnderecoModel,
+                EnderecoMoradorModel,
                 and_(
-                    EnderecoModel.id == EncomendaModel.endereco_id,
-                    EnderecoModel.condominio_id == EncomendaModel.condominio_id,
+                    EnderecoMoradorModel.id == EncomendaModel.endereco_id,
+                    EnderecoMoradorModel.condominio_id == EncomendaModel.condominio_id,
                 ),
+            )
+            .outerjoin(TipoCondominioModel, TipoCondominioModel.id == EnderecoMoradorModel.tipo_condominio_id)
+            .outerjoin(
+                TipoLogradouroHorizontalModel,
+                TipoLogradouroHorizontalModel.id == EnderecoMoradorModel.tipo_logradouro_horizontal_id,
+            )
+            .outerjoin(
+                SubtipoLogradouroHorizontalModel,
+                SubtipoLogradouroHorizontalModel.id == EnderecoMoradorModel.subtipo_logradouro_horizontal_id,
             )
             .where(EncomendaModel.condominio_id == condominio_id)
             .order_by(EncomendaModel.id.desc())
@@ -59,9 +93,23 @@ class EncomendaRepository:
 
     def find_by_id_with_details(
         self, encomenda_id: int, condominio_id: int
-    ) -> tuple[EncomendaModel, str | None, EnderecoModel | None] | None:
+    ) -> tuple[
+        EncomendaModel,
+        str | None,
+        EnderecoMoradorModel | None,
+        TipoCondominioModel | None,
+        TipoLogradouroHorizontalModel | None,
+        SubtipoLogradouroHorizontalModel | None,
+    ] | None:
         stmt = (
-            select(EncomendaModel, MoradorModel.nome, EnderecoModel)
+            select(
+                EncomendaModel,
+                MoradorModel.nome,
+                EnderecoMoradorModel,
+                TipoCondominioModel,
+                TipoLogradouroHorizontalModel,
+                SubtipoLogradouroHorizontalModel,
+            )
             .outerjoin(
                 MoradorModel,
                 and_(
@@ -70,11 +118,20 @@ class EncomendaRepository:
                 ),
             )
             .outerjoin(
-                EnderecoModel,
+                EnderecoMoradorModel,
                 and_(
-                    EnderecoModel.id == EncomendaModel.endereco_id,
-                    EnderecoModel.condominio_id == EncomendaModel.condominio_id,
+                    EnderecoMoradorModel.id == EncomendaModel.endereco_id,
+                    EnderecoMoradorModel.condominio_id == EncomendaModel.condominio_id,
                 ),
+            )
+            .outerjoin(TipoCondominioModel, TipoCondominioModel.id == EnderecoMoradorModel.tipo_condominio_id)
+            .outerjoin(
+                TipoLogradouroHorizontalModel,
+                TipoLogradouroHorizontalModel.id == EnderecoMoradorModel.tipo_logradouro_horizontal_id,
+            )
+            .outerjoin(
+                SubtipoLogradouroHorizontalModel,
+                SubtipoLogradouroHorizontalModel.id == EnderecoMoradorModel.subtipo_logradouro_horizontal_id,
             )
             .where(EncomendaModel.id == encomenda_id, EncomendaModel.condominio_id == condominio_id)
         )
