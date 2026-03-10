@@ -44,12 +44,24 @@ export type Morador = {
 
 export type Endereco = {
   id: number
-  tipo_endereco: string
-  quadra: string
+  tipo_endereco?: string | null
+  tipo_condominio_slug?: 'HORIZONTAL' | 'PREDIO_CONJUNTO' | null
+  quadra?: string | null
   conjunto?: string | null
   lote?: string | null
   setor_chacara?: string | null
   numero_chacara?: string | null
+  bloco?: string | null
+  andar?: string | null
+  apartamento?: string | null
+  tipo_logradouro_horizontal_id?: number | null
+  tipo_logradouro_nome?: string | null
+  tipo_logradouro_campo_nome?: string | null
+  subtipo_logradouro_horizontal_id?: number | null
+  subtipo_logradouro_nome?: string | null
+  subtipo_logradouro_campo_nome?: string | null
+  numero?: string | null
+  endereco_label?: string | null
 }
 
 export type EncomendaFormState = {

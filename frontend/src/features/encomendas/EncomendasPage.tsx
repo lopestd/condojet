@@ -48,32 +48,64 @@ function buildInitialFormState(): EncomendaFormState {
 }
 
 function getEnderecoParts(endereco: Endereco | undefined): {
-  quadra: string
+  firstLabel: string
+  firstValue: string
   secondLabel: string
   secondValue: string
   thirdLabel: string
   thirdValue: string
 } {
+  function formatValue(value: string | null | undefined): string {
+    return value && value.trim().length > 0 ? value : '-'
+  }
+
   if (!endereco) {
     return {
-      quadra: '-',
-      secondLabel: 'Conjunto',
+      firstLabel: 'Campo 1',
+      firstValue: '-',
+      secondLabel: 'Campo 2',
       secondValue: '-',
-      thirdLabel: 'Lote',
+      thirdLabel: 'Campo 3',
       thirdValue: '-'
     }
   }
+
+  if (endereco.tipo_condominio_slug === 'PREDIO_CONJUNTO') {
+    return {
+      firstLabel: 'Bloco',
+      firstValue: formatValue(endereco.bloco),
+      secondLabel: 'Andar',
+      secondValue: formatValue(endereco.andar),
+      thirdLabel: 'Apartamento',
+      thirdValue: formatValue(endereco.apartamento)
+    }
+  }
+
+  if (endereco.tipo_condominio_slug === 'HORIZONTAL') {
+    return {
+      firstLabel: endereco.tipo_logradouro_campo_nome || 'Tipo',
+      firstValue: formatValue(endereco.tipo_logradouro_nome),
+      secondLabel: endereco.subtipo_logradouro_campo_nome || 'Subtipo',
+      secondValue: formatValue(endereco.subtipo_logradouro_nome),
+      thirdLabel: 'Número',
+      thirdValue: formatValue(endereco.numero)
+    }
+  }
+
   if (endereco.tipo_endereco === 'QUADRA_SETOR_CHACARA') {
     return {
-      quadra: endereco.quadra || '-',
+      firstLabel: 'Quadra',
+      firstValue: endereco.quadra || '-',
       secondLabel: 'Setor/Chácara',
       secondValue: endereco.setor_chacara || '-',
       thirdLabel: 'Número Chácara',
       thirdValue: endereco.numero_chacara || '-'
     }
   }
+
   return {
-    quadra: endereco.quadra || '-',
+    firstLabel: 'Quadra',
+    firstValue: endereco.quadra || '-',
     secondLabel: 'Conjunto',
     secondValue: endereco.conjunto || '-',
     thirdLabel: 'Lote',
@@ -161,7 +193,7 @@ export function EncomendasPage(): JSX.Element {
       const [encomendasResponse, moradoresResponse, enderecosResponse, empresasResponse] = await Promise.all([
         backendApi.get<EncomendaListItem[]>('/encomendas'),
         backendApi.get<Morador[]>('/moradores'),
-        backendApi.get<Endereco[]>('/enderecos'),
+        backendApi.get<Endereco[]>('/enderecos/v2'),
         backendApi.get<EmpresaResponsavelGlobal[]>('/empresas-responsaveis-globais')
       ])
       setItems(encomendasResponse.data)
@@ -334,6 +366,20 @@ export function EncomendasPage(): JSX.Element {
     }
   }
 
+  async function onMoradorCreated(moradorId: number): Promise<void> {
+    void moradorId
+    try {
+      const [moradoresResponse, enderecosResponse] = await Promise.all([
+        backendApi.get<Morador[]>('/moradores'),
+        backendApi.get<Endereco[]>('/enderecos/v2')
+      ])
+      setMoradores(moradoresResponse.data)
+      setEnderecos(enderecosResponse.data)
+    } catch (err) {
+      setError(readApiError(err))
+    }
+  }
+
   async function openViewModal(item: EncomendaListItem): Promise<void> {
     setError(null)
     setFeedback(null)
@@ -501,7 +547,7 @@ export function EncomendasPage(): JSX.Element {
                         const parts = getEnderecoParts(endereco)
                         return (
                           <div className="address-stack">
-                            <p><strong>Quadra:</strong> {parts.quadra}</p>
+                            <p><strong>{parts.firstLabel}:</strong> {parts.firstValue}</p>
                             <p><strong>{parts.secondLabel}:</strong> {parts.secondValue}</p>
                             <p><strong>{parts.thirdLabel}:</strong> {parts.thirdValue}</p>
                           </div>
@@ -649,6 +695,7 @@ export function EncomendasPage(): JSX.Element {
           loading={savingForm}
           onClose={closeFormModal}
           onSubmit={onSaveForm}
+          onMoradorCreated={onMoradorCreated}
         />
       ) : null}
 

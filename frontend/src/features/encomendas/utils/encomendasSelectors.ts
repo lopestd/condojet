@@ -3,14 +3,32 @@ import { isForgotten } from './statusMapping'
 import { parseApiDate } from '../../../utils/dateTime'
 
 export function formatEnderecoLabel(endereco: Endereco): string {
+  if (endereco.endereco_label && endereco.endereco_label.trim()) {
+    return endereco.endereco_label
+  }
+
+  if (endereco.tipo_condominio_slug === 'PREDIO_CONJUNTO') {
+    const bloco = endereco.bloco ?? '-'
+    const andar = endereco.andar ?? '-'
+    const apartamento = endereco.apartamento ?? '-'
+    return `${bloco} / ${andar} / ${apartamento}`
+  }
+
+  if (endereco.tipo_condominio_slug === 'HORIZONTAL') {
+    const tipoValor = endereco.tipo_logradouro_nome ?? '-'
+    const subtipoValor = endereco.subtipo_logradouro_nome ?? '-'
+    const numeroValor = endereco.numero ?? '-'
+    return `${tipoValor} / ${subtipoValor} / ${numeroValor}`
+  }
+
   if (endereco.tipo_endereco === 'QUADRA_SETOR_CHACARA') {
     const comp = endereco.numero_chacara
       ? `${endereco.setor_chacara ?? '-'} / ${endereco.numero_chacara}`
       : (endereco.setor_chacara ?? '-')
-    return `${endereco.quadra} - ${comp}`
+    return `${endereco.quadra ?? '-'} - ${comp}`
   }
   const comp = endereco.lote ? `${endereco.conjunto ?? '-'} / ${endereco.lote}` : (endereco.conjunto ?? '-')
-  return `${endereco.quadra} - ${comp}`
+  return `${endereco.quadra ?? '-'} - ${comp}`
 }
 
 function searchKey(item: EncomendaListItem): string {
