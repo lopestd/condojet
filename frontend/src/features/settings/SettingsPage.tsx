@@ -29,6 +29,8 @@ type EnderecamentoParametros = {
   horizontal_hint_subtipo: string;
   horizontal_tipos_permitidos_ids: number[];
   horizontal_subtipos_permitidos_ids: number[];
+  horizontal_tipos_permitidos_nomes: string[];
+  horizontal_subtipos_permitidos_nomes: string[];
 };
 
 type CondominioConfiguracaoResponse = {
@@ -65,7 +67,9 @@ const DEFAULT_PARAMETROS: EnderecamentoParametros = {
   horizontal_hint_tipo: 'Trecho, Quadra, Etapa ou Area',
   horizontal_hint_subtipo: 'Conjunto, Chacara, Quadra ou Area Especial',
   horizontal_tipos_permitidos_ids: [],
-  horizontal_subtipos_permitidos_ids: []
+  horizontal_subtipos_permitidos_ids: [],
+  horizontal_tipos_permitidos_nomes: [],
+  horizontal_subtipos_permitidos_nomes: []
 };
 
 function enderecoPadraoLabel(
@@ -111,6 +115,12 @@ function toPayloadParametros(parametros: EnderecamentoParametros): Enderecamento
     ],
     horizontal_subtipos_permitidos_ids: [
       ...new Set((parametros.horizontal_subtipos_permitidos_ids ?? []).map((item) => Number(item)).filter((item) => item > 0))
+    ],
+    horizontal_tipos_permitidos_nomes: [
+      ...new Set((parametros.horizontal_tipos_permitidos_nomes ?? []).map((item) => String(item).trim()).filter(Boolean))
+    ],
+    horizontal_subtipos_permitidos_nomes: [
+      ...new Set((parametros.horizontal_subtipos_permitidos_nomes ?? []).map((item) => String(item).trim()).filter(Boolean))
     ]
   };
 }
@@ -365,23 +375,12 @@ export function SettingsPage(): JSX.Element {
         return;
       }
 
-      const tiposPermitidosIds = tiposCustomizados
-        .map((nome) => tiposLogradouroHorizontal.find((item) => normalizeText(item.nome) === normalizeText(nome))?.id)
-        .filter((id): id is number => Boolean(id));
-      const subtiposPermitidosIds = subtiposCustomizados
-        .map((nome) => subtiposLogradouroHorizontal.find((item) => normalizeText(item.nome) === normalizeText(nome))?.id)
-        .filter((id): id is number => Boolean(id));
-
-      if (modalTipoCondominioSlug === 'HORIZONTAL' && tiposCustomizados.length > 0 && tiposPermitidosIds.length !== tiposCustomizados.length) {
-        setErro('Existe Tipo inválido. Use valores reconhecidos pelo sistema.');
+      if (tiposCustomizados.length === 0) {
+        setErro('Cadastre ao menos um Tipo válido para o condomínio.');
         return;
       }
-      if (
-        modalTipoCondominioSlug === 'HORIZONTAL' &&
-        subtiposCustomizados.length > 0 &&
-        subtiposPermitidosIds.length !== subtiposCustomizados.length
-      ) {
-        setErro('Existe Subtipo inválido. Use valores reconhecidos pelo sistema.');
+      if (subtiposCustomizados.length === 0) {
+        setErro('Cadastre ao menos um Subtipo válido para o condomínio.');
         return;
       }
 
@@ -390,12 +389,15 @@ export function SettingsPage(): JSX.Element {
         tipo_condominio_id: modalTipoCondominioId,
         parametros_enderecamento: toPayloadParametros({
           ...modalParametros,
-          horizontal_tipos_permitidos_ids: tiposPermitidosIds,
-          horizontal_subtipos_permitidos_ids: subtiposPermitidosIds
+          horizontal_tipos_permitidos_ids: [],
+          horizontal_subtipos_permitidos_ids: [],
+          horizontal_tipos_permitidos_nomes: tiposCustomizados,
+          horizontal_subtipos_permitidos_nomes: subtiposCustomizados
         })
       };
 
       const { data } = await backendApi.put<CondominioConfiguracaoResponse>('/configuracoes/condominio', payload);
+      const referenciasAtualizadas = await backendApi.get<EnderecosReferenciasResponse>('/configuracoes/enderecos/referencias');
       setNomeCondominio(data.nome_condominio);
       setTipoCondominioId(data.tipo_condominio_id);
       setTipoCondominioNome(data.tipo_condominio_nome);
@@ -404,6 +406,8 @@ export function SettingsPage(): JSX.Element {
       setModalTipoCondominioId(data.tipo_condominio_id);
       setParametrosEnderecamento(data.parametros_enderecamento ?? DEFAULT_PARAMETROS);
       setModalParametros(toModalParametros(data.parametros_enderecamento ?? DEFAULT_PARAMETROS));
+      setTiposLogradouroHorizontal(referenciasAtualizadas.data.tipos_logradouro_horizontal ?? []);
+      setSubtiposLogradouroHorizontal(referenciasAtualizadas.data.subtipos_logradouro_horizontal ?? []);
       setFeedback('Definição de endereçamento salva com sucesso.');
       setFeedbackModule('definicao_enderecamento');
       setActiveModal(null);

@@ -52,6 +52,8 @@ class ConfiguracaoRepository:
         horizontal_hint_subtipo: str,
         horizontal_tipos_permitidos_ids: list[int],
         horizontal_subtipos_permitidos_ids: list[int],
+        horizontal_tipos_permitidos_nomes: list[str],
+        horizontal_subtipos_permitidos_nomes: list[str],
     ) -> ConfiguracaoModel:
         model = self.get_or_create(condominio_id)
         model.endereco_predio_rotulo_bloco = predio_rotulo_bloco
@@ -64,6 +66,8 @@ class ConfiguracaoRepository:
         model.endereco_horizontal_hint_subtipo = horizontal_hint_subtipo
         model.endereco_horizontal_tipos_permitidos_ids = horizontal_tipos_permitidos_ids
         model.endereco_horizontal_subtipos_permitidos_ids = horizontal_subtipos_permitidos_ids
+        model.endereco_horizontal_tipos_permitidos_nomes = horizontal_tipos_permitidos_nomes
+        model.endereco_horizontal_subtipos_permitidos_nomes = horizontal_subtipos_permitidos_nomes
         self.db.add(model)
         self.db.commit()
         self.db.refresh(model)

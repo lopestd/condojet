@@ -85,9 +85,27 @@ def list_enderecos_v2(
                 "andar": endereco.andar,
                 "apartamento": endereco.apartamento,
                 "tipo_logradouro_horizontal_id": endereco.tipo_logradouro_horizontal_id,
-                "tipo_logradouro_nome": tipo_logradouro.nome if tipo_logradouro is not None else None,
+                "tipo_logradouro_nome": (
+                    endereco.tipo_logradouro_horizontal_nome_livre
+                    if endereco.tipo_logradouro_horizontal_nome_livre
+                    else (tipo_logradouro.nome if tipo_logradouro is not None else None)
+                ),
+                "tipo_logradouro_campo_nome": (
+                    endereco.tipo_logradouro_horizontal_campo_nome
+                    if endereco.tipo_logradouro_horizontal_campo_nome
+                    else (tipo_logradouro.nome if tipo_logradouro is not None else None)
+                ),
                 "subtipo_logradouro_horizontal_id": endereco.subtipo_logradouro_horizontal_id,
-                "subtipo_logradouro_nome": subtipo_logradouro.nome if subtipo_logradouro is not None else None,
+                "subtipo_logradouro_nome": (
+                    endereco.subtipo_logradouro_horizontal_nome_livre
+                    if endereco.subtipo_logradouro_horizontal_nome_livre
+                    else (subtipo_logradouro.nome if subtipo_logradouro is not None else None)
+                ),
+                "subtipo_logradouro_campo_nome": (
+                    endereco.subtipo_logradouro_horizontal_campo_nome
+                    if endereco.subtipo_logradouro_horizontal_campo_nome
+                    else (subtipo_logradouro.nome if subtipo_logradouro is not None else None)
+                ),
                 "numero": endereco.numero,
                 "endereco_label": build_endereco_v2_label(
                     {
@@ -95,8 +113,16 @@ def list_enderecos_v2(
                         "bloco": endereco.bloco,
                         "andar": endereco.andar,
                         "apartamento": endereco.apartamento,
-                        "tipo_logradouro_nome": tipo_logradouro.nome if tipo_logradouro is not None else None,
-                        "subtipo_logradouro_nome": subtipo_logradouro.nome if subtipo_logradouro is not None else None,
+                        "tipo_logradouro_nome": (
+                            tipo_logradouro.nome
+                            if tipo_logradouro is not None
+                            else endereco.tipo_logradouro_horizontal_nome_livre
+                        ),
+                        "subtipo_logradouro_nome": (
+                            subtipo_logradouro.nome
+                            if subtipo_logradouro is not None
+                            else endereco.subtipo_logradouro_horizontal_nome_livre
+                        ),
                         "numero": endereco.numero,
                     }
                 ),
@@ -132,7 +158,9 @@ def create_endereco_v2(
         andar=payload.andar,
         apartamento=payload.apartamento,
         tipo_logradouro_horizontal_id=payload.tipo_logradouro_horizontal_id,
+        tipo_logradouro_horizontal_nome=payload.tipo_logradouro_horizontal_nome,
         subtipo_logradouro_horizontal_id=payload.subtipo_logradouro_horizontal_id,
+        subtipo_logradouro_horizontal_nome=payload.subtipo_logradouro_horizontal_nome,
         numero=payload.numero,
     )
 
@@ -149,8 +177,14 @@ def create_endereco_v2(
     else:
         configuracao_repository = ConfiguracaoRepository(db)
         configuracao = configuracao_repository.get_or_create(principal.condominio_id)
-        tipo_logradouro = repository.find_tipo_logradouro_by_id(int(payload.tipo_logradouro_horizontal_id))
-        subtipo_logradouro = repository.find_subtipo_logradouro_by_id(int(payload.subtipo_logradouro_horizontal_id))
+        tipo_logradouro = repository.find_tipo_logradouro_by_id(
+            principal.condominio_id,
+            int(payload.tipo_logradouro_horizontal_id),
+        )
+        subtipo_logradouro = repository.find_subtipo_logradouro_by_id(
+            principal.condominio_id,
+            int(payload.subtipo_logradouro_horizontal_id),
+        )
         if tipo_logradouro is None or subtipo_logradouro is None:
             raise AppError("logradouro_referencia_not_found", status_code=404, code="logradouro_referencia_not_found")
         if subtipo_logradouro.tipo_logradouro_horizontal_id != tipo_logradouro.id:
@@ -161,7 +195,6 @@ def create_endereco_v2(
             raise AppError("tipo_logradouro_not_allowed", status_code=422, code="validation_error")
         if subtipos_permitidos and subtipo_logradouro.id not in subtipos_permitidos:
             raise AppError("subtipo_logradouro_not_allowed", status_code=422, code="validation_error")
-
         duplicated = repository.find_by_horizontal_fields(
             principal.condominio_id,
             tipo_logradouro_horizontal_id=tipo_logradouro.id,
@@ -179,7 +212,25 @@ def create_endereco_v2(
             "andar": payload.andar,
             "apartamento": payload.apartamento,
             "tipo_logradouro_horizontal_id": payload.tipo_logradouro_horizontal_id,
+            "tipo_logradouro_horizontal_nome_livre": (
+                str(payload.tipo_logradouro_horizontal_nome).strip() if payload.tipo_logradouro_horizontal_nome else None
+            ),
+            "tipo_logradouro_horizontal_campo_nome": (
+                str(payload.tipo_logradouro_horizontal_campo_nome).strip()
+                if payload.tipo_logradouro_horizontal_campo_nome
+                else None
+            ),
             "subtipo_logradouro_horizontal_id": payload.subtipo_logradouro_horizontal_id,
+            "subtipo_logradouro_horizontal_nome_livre": (
+                str(payload.subtipo_logradouro_horizontal_nome).strip()
+                if payload.subtipo_logradouro_horizontal_nome
+                else None
+            ),
+            "subtipo_logradouro_horizontal_campo_nome": (
+                str(payload.subtipo_logradouro_horizontal_campo_nome).strip()
+                if payload.subtipo_logradouro_horizontal_campo_nome
+                else None
+            ),
             "numero": payload.numero,
             "ativo": True,
         }

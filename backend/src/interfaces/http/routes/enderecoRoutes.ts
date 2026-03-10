@@ -46,13 +46,23 @@ const createEnderecoV2Schema = z
     andar: z.string().min(1).optional(),
     apartamento: z.string().min(1).optional(),
     tipo_logradouro_horizontal_id: z.number().int().min(1).optional(),
+    tipo_logradouro_horizontal_nome: z.string().min(1).optional(),
+    tipo_logradouro_horizontal_campo_nome: z.string().min(1).max(80).optional(),
     subtipo_logradouro_horizontal_id: z.number().int().min(1).optional(),
+    subtipo_logradouro_horizontal_nome: z.string().min(1).optional(),
+    subtipo_logradouro_horizontal_campo_nome: z.string().min(1).max(80).optional(),
     numero: z.string().min(1).optional()
   })
   .refine(
     (value) =>
       (value.bloco && value.andar && value.apartamento) ||
-      (value.tipo_logradouro_horizontal_id && value.subtipo_logradouro_horizontal_id && value.numero),
+      (
+        value.tipo_logradouro_horizontal_id &&
+        value.subtipo_logradouro_horizontal_id &&
+        value.tipo_logradouro_horizontal_nome &&
+        value.subtipo_logradouro_horizontal_nome &&
+        value.numero
+      ),
     { message: 'payload_endereco_v2_incompleto' }
   );
 

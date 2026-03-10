@@ -14,6 +14,18 @@ from src.interfaces.http.dependencies.auth import Principal, require_roles
 router = APIRouter(tags=["configuracoes"])
 
 
+def _uniq_preserve_order(values: list[str]) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for item in values:
+        normalized = item.strip().lower()
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        result.append(item.strip())
+    return result
+
+
 def _build_parametros_enderecamento(config) -> dict:
     return {
         "predio_rotulo_bloco": config.endereco_predio_rotulo_bloco,
@@ -26,6 +38,8 @@ def _build_parametros_enderecamento(config) -> dict:
         "horizontal_hint_subtipo": config.endereco_horizontal_hint_subtipo,
         "horizontal_tipos_permitidos_ids": config.endereco_horizontal_tipos_permitidos_ids or [],
         "horizontal_subtipos_permitidos_ids": config.endereco_horizontal_subtipos_permitidos_ids or [],
+        "horizontal_tipos_permitidos_nomes": config.endereco_horizontal_tipos_permitidos_nomes or [],
+        "horizontal_subtipos_permitidos_nomes": config.endereco_horizontal_subtipos_permitidos_nomes or [],
     }
 
 
@@ -121,6 +135,53 @@ def update_configuracao_condominio(
         raise AppError("condominio_not_found", status_code=404, code="condominio_not_found")
 
     if payload.parametros_enderecamento is not None:
+        tipos_ids = payload.parametros_enderecamento.horizontal_tipos_permitidos_ids
+        subtipos_ids = payload.parametros_enderecamento.horizontal_subtipos_permitidos_ids
+        tipos_nomes = _uniq_preserve_order(payload.parametros_enderecamento.horizontal_tipos_permitidos_nomes)
+        subtipos_nomes = _uniq_preserve_order(payload.parametros_enderecamento.horizontal_subtipos_permitidos_nomes)
+
+        if tipo_condominio.slug == "HORIZONTAL":
+            if len(tipos_nomes) == 0:
+                raise AppError("tipo_logradouro_obrigatorio", status_code=422, code="validation_error")
+            if len(subtipos_nomes) == 0:
+                raise AppError("subtipo_logradouro_obrigatorio", status_code=422, code="validation_error")
+
+            tipos_ids = []
+            for index, tipo_nome in enumerate(tipos_nomes, start=1):
+                tipo_ref = referencia_repository.find_tipo_logradouro_by_nome(principal.condominio_id, tipo_nome)
+                if tipo_ref is None:
+                    tipo_ref = referencia_repository.create_tipo_logradouro(
+                        principal.condominio_id,
+                        nome=tipo_nome,
+                        ordem_exibicao=index * 10,
+                    )
+                tipos_ids.append(tipo_ref.id)
+
+            subtipos_ids = []
+            for tipo_id in tipos_ids:
+                for index, subtipo_nome in enumerate(subtipos_nomes, start=1):
+                    subtipo_ref = referencia_repository.find_subtipo_logradouro_by_nome(
+                        principal.condominio_id,
+                        tipo_logradouro_horizontal_id=tipo_id,
+                        nome=subtipo_nome,
+                    )
+                    if subtipo_ref is None:
+                        subtipo_ref = referencia_repository.create_subtipo_logradouro(
+                            principal.condominio_id,
+                            tipo_logradouro_horizontal_id=tipo_id,
+                            nome=subtipo_nome,
+                            ordem_exibicao=index * 10,
+                        )
+                    subtipos_ids.append(subtipo_ref.id)
+            db.commit()
+            tipos_nomes = []
+            subtipos_nomes = []
+        else:
+            tipos_ids = []
+            subtipos_ids = []
+            tipos_nomes = []
+            subtipos_nomes = []
+
         configuracao = configuracao_repository.upsert_parametros_enderecamento(
             principal.condominio_id,
             predio_rotulo_bloco=payload.parametros_enderecamento.predio_rotulo_bloco,
@@ -131,8 +192,10 @@ def update_configuracao_condominio(
             horizontal_rotulo_numero=payload.parametros_enderecamento.horizontal_rotulo_numero,
             horizontal_hint_tipo=payload.parametros_enderecamento.horizontal_hint_tipo,
             horizontal_hint_subtipo=payload.parametros_enderecamento.horizontal_hint_subtipo,
-            horizontal_tipos_permitidos_ids=payload.parametros_enderecamento.horizontal_tipos_permitidos_ids,
-            horizontal_subtipos_permitidos_ids=payload.parametros_enderecamento.horizontal_subtipos_permitidos_ids,
+            horizontal_tipos_permitidos_ids=tipos_ids,
+            horizontal_subtipos_permitidos_ids=subtipos_ids,
+            horizontal_tipos_permitidos_nomes=tipos_nomes,
+            horizontal_subtipos_permitidos_nomes=subtipos_nomes,
         )
     else:
         configuracao = configuracao_repository.get_or_create(principal.condominio_id)
@@ -157,8 +220,8 @@ def get_enderecos_referencias(
 
     repository = EnderecamentoReferenciaRepository(db)
     tipos_condominio = repository.list_tipos_condominio()
-    tipos_horizontal = repository.list_tipos_logradouro_horizontal()
-    subtipos_horizontal = repository.list_subtipos_logradouro_horizontal()
+    tipos_horizontal = repository.list_tipos_logradouro_horizontal(principal.condominio_id)
+    subtipos_horizontal = repository.list_subtipos_logradouro_horizontal(principal.condominio_id)
 
     return {
         "tipos_condominio": [

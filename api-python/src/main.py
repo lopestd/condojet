@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from src.application.services.system_bootstrap_service import sync_global_defaults
+from src.application.services.system_bootstrap_service import sync_global_defaults, sync_tipos_condominio_defaults
 from src.infrastructure.config.settings import settings
 from src.infrastructure.database.session import SessionLocal
 from src.interfaces.http.middlewares.error_handler import configure_error_handler
@@ -43,6 +43,7 @@ def sync_global_defaults_on_startup() -> None:
     try:
         db.execute(text(f"SET search_path TO {settings.db_schema}, public"))
         result = sync_global_defaults(db)
+        sync_tipos_condominio_defaults(db)
         logger.info(
             "Global defaults synchronized on startup: api_key_created=%s global_admin_created=%s global_admin_email=%s",
             result["api_key"]["created"],

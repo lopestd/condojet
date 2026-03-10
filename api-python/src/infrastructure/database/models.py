@@ -45,6 +45,11 @@ class TipoLogradouroHorizontalModel(Base):
     __table_args__ = {"schema": settings.db_schema}
 
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    condominio_id: Mapped[int | None] = mapped_column(
+        BIGINT,
+        ForeignKey(f"{settings.db_schema}.condominios.id"),
+        nullable=True,
+    )
     nome: Mapped[str] = mapped_column(String(80), nullable=False)
     slug: Mapped[str] = mapped_column(String(40), nullable=False)
     ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
@@ -58,6 +63,11 @@ class SubtipoLogradouroHorizontalModel(Base):
     __table_args__ = {"schema": settings.db_schema}
 
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    condominio_id: Mapped[int | None] = mapped_column(
+        BIGINT,
+        ForeignKey(f"{settings.db_schema}.condominios.id"),
+        nullable=True,
+    )
     tipo_logradouro_horizontal_id: Mapped[int] = mapped_column(
         BIGINT,
         ForeignKey(f"{settings.db_schema}.tipos_logradouro_horizontal.id"),
@@ -119,11 +129,15 @@ class EnderecoMoradorModel(Base):
         ForeignKey(f"{settings.db_schema}.tipos_logradouro_horizontal.id"),
         nullable=True,
     )
+    tipo_logradouro_horizontal_nome_livre: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    tipo_logradouro_horizontal_campo_nome: Mapped[str | None] = mapped_column(String(80), nullable=True)
     subtipo_logradouro_horizontal_id: Mapped[int | None] = mapped_column(
         BIGINT,
         ForeignKey(f"{settings.db_schema}.subtipos_logradouro_horizontal.id"),
         nullable=True,
     )
+    subtipo_logradouro_horizontal_nome_livre: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    subtipo_logradouro_horizontal_campo_nome: Mapped[str | None] = mapped_column(String(80), nullable=True)
     numero: Mapped[str | None] = mapped_column(String(30), nullable=True)
     ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
@@ -251,6 +265,12 @@ class ConfiguracaoModel(Base):
         JSONB, nullable=False, server_default=text("'[]'::jsonb")
     )
     endereco_horizontal_subtipos_permitidos_ids: Mapped[list[int]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
+    endereco_horizontal_tipos_permitidos_nomes: Mapped[list[str]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
+    endereco_horizontal_subtipos_permitidos_nomes: Mapped[list[str]] = mapped_column(
         JSONB, nullable=False, server_default=text("'[]'::jsonb")
     )
     status_conexao: Mapped[str] = mapped_column(

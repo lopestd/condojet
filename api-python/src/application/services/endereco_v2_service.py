@@ -25,7 +25,9 @@ def validate_endereco_v2_payload_by_tipo_condominio(
     andar: str | None,
     apartamento: str | None,
     tipo_logradouro_horizontal_id: int | None,
+    tipo_logradouro_horizontal_nome: str | None,
     subtipo_logradouro_horizontal_id: int | None,
+    subtipo_logradouro_horizontal_nome: str | None,
     numero: str | None,
 ) -> None:
     if tipo_condominio_slug == "PREDIO_CONJUNTO":
@@ -36,7 +38,14 @@ def validate_endereco_v2_payload_by_tipo_condominio(
         return
 
     if tipo_condominio_slug == "HORIZONTAL":
-        if not tipo_logradouro_horizontal_id or not subtipo_logradouro_horizontal_id or not numero:
+        horizontal = bool(
+            tipo_logradouro_horizontal_id
+            and subtipo_logradouro_horizontal_id
+            and str(tipo_logradouro_horizontal_nome or "").strip()
+            and str(subtipo_logradouro_horizontal_nome or "").strip()
+            and str(numero or "").strip()
+        )
+        if not horizontal:
             raise AppError("endereco_horizontal_campos_obrigatorios", status_code=422, code="validation_error")
         if bloco or andar or apartamento:
             raise AppError("endereco_horizontal_campos_invalidos", status_code=422, code="validation_error")

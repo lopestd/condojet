@@ -14,6 +14,8 @@ class EnderecamentoParametrosDTO(BaseModel):
     )
     horizontal_tipos_permitidos_ids: list[int] = Field(default_factory=list)
     horizontal_subtipos_permitidos_ids: list[int] = Field(default_factory=list)
+    horizontal_tipos_permitidos_nomes: list[str] = Field(default_factory=list)
+    horizontal_subtipos_permitidos_nomes: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def normalize(self) -> "EnderecamentoParametrosDTO":
@@ -28,6 +30,12 @@ class EnderecamentoParametrosDTO(BaseModel):
         self.horizontal_tipos_permitidos_ids = sorted({int(item) for item in self.horizontal_tipos_permitidos_ids if int(item) > 0})
         self.horizontal_subtipos_permitidos_ids = sorted(
             {int(item) for item in self.horizontal_subtipos_permitidos_ids if int(item) > 0}
+        )
+        self.horizontal_tipos_permitidos_nomes = sorted(
+            {str(item).strip() for item in self.horizontal_tipos_permitidos_nomes if str(item).strip()}
+        )
+        self.horizontal_subtipos_permitidos_nomes = sorted(
+            {str(item).strip() for item in self.horizontal_subtipos_permitidos_nomes if str(item).strip()}
         )
         return self
 

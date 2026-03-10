@@ -27,7 +27,9 @@ const updateCondominioConfiguracaoSchema = z.object({
       horizontal_hint_tipo: z.string().min(1).max(255),
       horizontal_hint_subtipo: z.string().min(1).max(255),
       horizontal_tipos_permitidos_ids: z.array(z.number().int().min(1)).optional(),
-      horizontal_subtipos_permitidos_ids: z.array(z.number().int().min(1)).optional()
+      horizontal_subtipos_permitidos_ids: z.array(z.number().int().min(1)).optional(),
+      horizontal_tipos_permitidos_nomes: z.array(z.string().min(1).max(80)).optional(),
+      horizontal_subtipos_permitidos_nomes: z.array(z.string().min(1).max(80)).optional()
     })
     .optional()
 });

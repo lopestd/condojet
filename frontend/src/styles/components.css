@@ -796,6 +796,17 @@ th {
   min-width: 60px;
 }
 
+.address-field-title {
+  margin-bottom: 0.28rem;
+  font-weight: 700;
+  color: #1f2b3b;
+}
+
+.field-title-select {
+  max-width: 100%;
+  min-width: 180px;
+}
+
 .chips-block {
   display: grid;
   gap: 0.45rem;

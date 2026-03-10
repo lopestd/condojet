@@ -1,3 +1,4 @@
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from src.application.services.exceptions import AppError
@@ -37,3 +38,21 @@ def sync_global_defaults(db: Session) -> dict:
             'perfil': user_model.perfil,
         },
     }
+
+
+def sync_tipos_condominio_defaults(db: Session) -> None:
+    db.execute(
+        text(
+            """
+            INSERT INTO tipos_condominio (id, nome, slug, ativo)
+            VALUES
+              (1, 'Condominio Horizontal', 'HORIZONTAL', TRUE),
+              (2, 'Predio/Conjunto Residencial', 'PREDIO_CONJUNTO', TRUE)
+            ON CONFLICT (id) DO UPDATE
+              SET nome = EXCLUDED.nome,
+                  slug = EXCLUDED.slug,
+                  ativo = EXCLUDED.ativo;
+            """
+        )
+    )
+    db.commit()

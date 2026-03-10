@@ -44,16 +44,22 @@ class EnderecoMoradorRepository:
         )
         return self.db.execute(stmt).scalar_one_or_none()
 
-    def find_tipo_logradouro_by_id(self, tipo_logradouro_id: int) -> TipoLogradouroHorizontalModel | None:
+    def find_tipo_logradouro_by_id(self, condominio_id: int, tipo_logradouro_id: int) -> TipoLogradouroHorizontalModel | None:
         stmt = select(TipoLogradouroHorizontalModel).where(
             TipoLogradouroHorizontalModel.id == tipo_logradouro_id,
+            TipoLogradouroHorizontalModel.condominio_id == condominio_id,
             TipoLogradouroHorizontalModel.ativo.is_(True),
         )
         return self.db.execute(stmt).scalar_one_or_none()
 
-    def find_subtipo_logradouro_by_id(self, subtipo_logradouro_id: int) -> SubtipoLogradouroHorizontalModel | None:
+    def find_subtipo_logradouro_by_id(
+        self,
+        condominio_id: int,
+        subtipo_logradouro_id: int,
+    ) -> SubtipoLogradouroHorizontalModel | None:
         stmt = select(SubtipoLogradouroHorizontalModel).where(
             SubtipoLogradouroHorizontalModel.id == subtipo_logradouro_id,
+            SubtipoLogradouroHorizontalModel.condominio_id == condominio_id,
             SubtipoLogradouroHorizontalModel.ativo.is_(True),
         )
         return self.db.execute(stmt).scalar_one_or_none()

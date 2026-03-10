@@ -11,8 +11,10 @@ type Endereco = {
   apartamento?: string | null;
   tipo_logradouro_horizontal_id?: number | null;
   tipo_logradouro_nome?: string | null;
+  tipo_logradouro_campo_nome?: string | null;
   subtipo_logradouro_horizontal_id?: number | null;
   subtipo_logradouro_nome?: string | null;
+  subtipo_logradouro_campo_nome?: string | null;
   numero?: string | null;
   endereco_label: string;
 };
@@ -49,6 +51,8 @@ type CondominioConfiguracaoResponse = {
     horizontal_hint_subtipo: string;
     horizontal_tipos_permitidos_ids: number[];
     horizontal_subtipos_permitidos_ids: number[];
+    horizontal_tipos_permitidos_nomes: string[];
+    horizontal_subtipos_permitidos_nomes: string[];
   };
 };
 
@@ -79,7 +83,9 @@ const DEFAULT_PARAMETROS_ENDERECAMENTO = {
   horizontal_hint_tipo: 'Trecho, Quadra, Etapa ou Area',
   horizontal_hint_subtipo: 'Conjunto, Chacara, Quadra ou Area Especial',
   horizontal_tipos_permitidos_ids: [] as number[],
-  horizontal_subtipos_permitidos_ids: [] as number[]
+  horizontal_subtipos_permitidos_ids: [] as number[],
+  horizontal_tipos_permitidos_nomes: [] as string[],
+  horizontal_subtipos_permitidos_nomes: [] as string[]
 };
 
 function parsePhoneList(raw: string): string[] {
@@ -110,7 +116,9 @@ function formatEnderecoField(value: string | null | undefined): string {
 
 function buildEnderecoRows(
   endereco: Endereco,
-  parametros: typeof DEFAULT_PARAMETROS_ENDERECAMENTO
+  parametros: typeof DEFAULT_PARAMETROS_ENDERECAMENTO,
+  tiposReferencia: TipoLogradouroHorizontal[],
+  subtiposReferencia: SubtipoLogradouroHorizontal[]
 ): Array<{ label: string; value: string }> {
   if (endereco.tipo_condominio_slug === 'PREDIO_CONJUNTO') {
     const rows: Array<{ label: string; value: string }> = [
@@ -121,9 +129,27 @@ function buildEnderecoRows(
     return rows;
   }
 
+  const tiposConfigurados = (parametros.horizontal_tipos_permitidos_ids ?? [])
+    .map((id) => tiposReferencia.find((item) => item.id === id)?.nome)
+    .filter((item): item is string => Boolean(item));
+  const subtiposConfigurados = (parametros.horizontal_subtipos_permitidos_ids ?? [])
+    .map((id) => subtiposReferencia.find((item) => item.id === id)?.nome)
+    .filter((item): item is string => Boolean(item));
+  const tipoById =
+    endereco.tipo_logradouro_horizontal_id != null
+      ? tiposReferencia.find((item) => item.id === endereco.tipo_logradouro_horizontal_id)?.nome
+      : null;
+  const subtipoById =
+    endereco.subtipo_logradouro_horizontal_id != null
+      ? subtiposReferencia.find((item) => item.id === endereco.subtipo_logradouro_horizontal_id)?.nome
+      : null;
+  const tipoLabel = tiposConfigurados.length === 1 ? tiposConfigurados[0] : tipoById || parametros.horizontal_rotulo_tipo;
+  const subtipoLabel =
+    subtiposConfigurados.length === 1 ? subtiposConfigurados[0] : subtipoById || parametros.horizontal_rotulo_subtipo;
+
   const rows: Array<{ label: string; value: string }> = [
-    { label: parametros.horizontal_rotulo_tipo, value: formatEnderecoField(endereco.tipo_logradouro_nome) },
-    { label: parametros.horizontal_rotulo_subtipo, value: formatEnderecoField(endereco.subtipo_logradouro_nome) },
+    { label: tipoLabel, value: formatEnderecoField(endereco.tipo_logradouro_nome) },
+    { label: subtipoLabel, value: formatEnderecoField(endereco.subtipo_logradouro_nome) },
     { label: parametros.horizontal_rotulo_numero, value: formatEnderecoField(endereco.numero) }
   ];
   return rows;
@@ -139,6 +165,14 @@ function buildInitialForm(): MoradorFormState {
     senha: '',
     ativo: true
   };
+}
+
+function normalizeText(value: string): string {
+  return value
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase();
 }
 
 export function AdminResidentsPage(): JSX.Element {
@@ -174,8 +208,10 @@ export function AdminResidentsPage(): JSX.Element {
   const [bloco, setBloco] = useState('');
   const [andar, setAndar] = useState('');
   const [apartamento, setApartamento] = useState('');
-  const [tipoLogradouroHorizontalId, setTipoLogradouroHorizontalId] = useState('');
-  const [subtipoLogradouroHorizontalId, setSubtipoLogradouroHorizontalId] = useState('');
+  const [tipoCampoSelecionado, setTipoCampoSelecionado] = useState('');
+  const [subtipoCampoSelecionado, setSubtipoCampoSelecionado] = useState('');
+  const [tipoLogradouroInput, setTipoLogradouroInput] = useState('');
+  const [subtipoLogradouroInput, setSubtipoLogradouroInput] = useState('');
   const [numero, setNumero] = useState('');
 
   const pageSizeStorageKey = useMemo(() => {
@@ -264,27 +300,45 @@ export function AdminResidentsPage(): JSX.Element {
     () => enderecos.find((item) => item.id === Number(moradorForm.enderecoId)) ?? null,
     [enderecos, moradorForm.enderecoId]
   );
-  const subtiposDisponiveis = useMemo(
-    () =>
-      subtiposLogradouroHorizontal.filter(
-        (item) =>
-          item.tipo_logradouro_horizontal_id === Number(tipoLogradouroHorizontalId || '0') &&
-          (
-            (parametrosEnderecamento.horizontal_subtipos_permitidos_ids ?? []).length === 0 ||
-            (parametrosEnderecamento.horizontal_subtipos_permitidos_ids ?? []).includes(item.id)
-          )
-      ),
-    [subtiposLogradouroHorizontal, tipoLogradouroHorizontalId, parametrosEnderecamento.horizontal_subtipos_permitidos_ids]
-  );
-  const tiposDisponiveis = useMemo(
-    () =>
-      tiposLogradouroHorizontal.filter(
+  const tiposDisponiveis = useMemo(() => {
+    const filtered = tiposLogradouroHorizontal
+      .filter(
         (item) =>
           (parametrosEnderecamento.horizontal_tipos_permitidos_ids ?? []).length === 0 ||
           (parametrosEnderecamento.horizontal_tipos_permitidos_ids ?? []).includes(item.id)
-      ),
-    [tiposLogradouroHorizontal, parametrosEnderecamento.horizontal_tipos_permitidos_ids]
-  );
+      )
+      .map((item) => item.nome);
+    return [...new Set(filtered)];
+  }, [
+    tiposLogradouroHorizontal,
+    parametrosEnderecamento.horizontal_tipos_permitidos_ids
+  ]);
+  const tipoSelecionadoRefId = useMemo(() => {
+    if (!tipoCampoSelecionado) return null;
+    return (
+      tiposLogradouroHorizontal.find((item) => normalizeText(item.nome) === normalizeText(tipoCampoSelecionado))?.id ?? null
+    );
+  }, [tipoCampoSelecionado, tiposLogradouroHorizontal]);
+  const subtiposDisponiveis = useMemo(() => {
+    const filtered = subtiposLogradouroHorizontal
+      .filter(
+        (item) =>
+          ((parametrosEnderecamento.horizontal_subtipos_permitidos_ids ?? []).length === 0 ||
+            (parametrosEnderecamento.horizontal_subtipos_permitidos_ids ?? []).includes(item.id)) &&
+          (tipoSelecionadoRefId == null || item.tipo_logradouro_horizontal_id === tipoSelecionadoRefId)
+      )
+      .map((item) => item.nome);
+    return [...new Set(filtered)];
+  }, [
+    subtiposLogradouroHorizontal,
+    parametrosEnderecamento.horizontal_subtipos_permitidos_ids,
+    tipoSelecionadoRefId
+  ]);
+  const hasMultipleSubtiposConfigured = useMemo(() => {
+    return subtiposDisponiveis.length > 1;
+  }, [
+    subtiposDisponiveis.length
+  ]);
 
   function handlePhoneInputChange(field: 'telefone1' | 'telefone2', event: ChangeEvent<HTMLInputElement>): void {
     const masked = formatPhoneInput(event.target.value);
@@ -304,11 +358,33 @@ export function AdminResidentsPage(): JSX.Element {
     setBloco('');
     setAndar('');
     setApartamento('');
-    setTipoLogradouroHorizontalId('');
-    setSubtipoLogradouroHorizontalId('');
+    setTipoCampoSelecionado('');
+    setSubtipoCampoSelecionado('');
+    setTipoLogradouroInput('');
+    setSubtipoLogradouroInput('');
     setNumero('');
     setShowAddressCreate(false);
   }
+
+  useEffect(() => {
+    if (tipoCondominioSlug !== 'HORIZONTAL' || !showAddressCreate) return;
+    if (tiposDisponiveis.length === 1) {
+      const unico = tiposDisponiveis[0];
+      if (unico && tipoCampoSelecionado !== unico) {
+        setTipoCampoSelecionado(unico);
+      }
+    }
+  }, [tipoCondominioSlug, showAddressCreate, tiposDisponiveis, tipoCampoSelecionado]);
+
+  useEffect(() => {
+    if (tipoCondominioSlug !== 'HORIZONTAL' || !showAddressCreate) return;
+    if (subtiposDisponiveis.length === 1) {
+      const unico = subtiposDisponiveis[0];
+      if (unico && subtipoCampoSelecionado !== unico) {
+        setSubtipoCampoSelecionado(unico);
+      }
+    }
+  }, [tipoCondominioSlug, showAddressCreate, subtiposDisponiveis, subtipoCampoSelecionado]);
 
   function openCreateModal(): void {
     setFormMode('create');
@@ -361,9 +437,42 @@ export function AdminResidentsPage(): JSX.Element {
       payload.andar = andar;
       payload.apartamento = apartamento;
     } else {
-      payload.tipo_logradouro_horizontal_id = Number(tipoLogradouroHorizontalId);
-      payload.subtipo_logradouro_horizontal_id = Number(subtipoLogradouroHorizontalId);
-      payload.numero = numero;
+      const resolvedTipoTitulo = tipoCampoSelecionado || (tiposDisponiveis.length === 1 ? tiposDisponiveis[0] : '');
+      const resolvedSubtipoTitulo = subtipoCampoSelecionado || (subtiposDisponiveis.length === 1 ? subtiposDisponiveis[0] : '');
+      const tipoValor = tipoLogradouroInput.trim();
+      const subtipoValor = subtipoLogradouroInput.trim();
+      const numeroValor = numero.trim();
+
+      if (!tipoValor || !subtipoValor || !numeroValor) {
+        throw new Error('endereco_horizontal_campos_obrigatorios');
+      }
+      if (tiposDisponiveis.length > 1 && !resolvedTipoTitulo) {
+        throw new Error('endereco_horizontal_titulo_tipo_obrigatorio');
+      }
+      if (subtiposDisponiveis.length > 1 && !resolvedSubtipoTitulo) {
+        throw new Error('endereco_horizontal_titulo_subtipo_obrigatorio');
+      }
+
+      payload.tipo_logradouro_horizontal_nome = tipoValor;
+      payload.subtipo_logradouro_horizontal_nome = subtipoValor;
+      payload.numero = numeroValor;
+
+      const tipoRef = resolvedTipoTitulo
+        ? tiposLogradouroHorizontal.find((item) => normalizeText(item.nome) === normalizeText(resolvedTipoTitulo))
+        : null;
+      if (!tipoRef) {
+        throw new Error('tipo_logradouro_not_found');
+      }
+      const subtipoRef = subtiposLogradouroHorizontal.find(
+        (item) =>
+          item.tipo_logradouro_horizontal_id === tipoRef.id &&
+          normalizeText(item.nome) === normalizeText(resolvedSubtipoTitulo)
+      );
+      if (!subtipoRef) {
+        throw new Error('subtipo_not_belongs_to_tipo');
+      }
+      payload.tipo_logradouro_horizontal_id = tipoRef.id;
+      payload.subtipo_logradouro_horizontal_id = subtipoRef.id;
     }
 
     setCreatingAddress(true);
@@ -431,7 +540,19 @@ export function AdminResidentsPage(): JSX.Element {
       await loadAll();
       closeFormModal();
     } catch (err) {
-      setError(readApiError(err));
+      if (err instanceof Error && err.message === 'endereco_horizontal_campos_obrigatorios') {
+        setError('Preencha Tipo, Subtipo e Número para incluir o endereço.');
+      } else if (err instanceof Error && err.message === 'endereco_horizontal_titulo_tipo_obrigatorio') {
+        setError('Selecione o campo de TIPO antes de salvar o endereço.');
+      } else if (err instanceof Error && err.message === 'endereco_horizontal_titulo_subtipo_obrigatorio') {
+        setError('Selecione o campo de SUBTIPO antes de salvar o endereço.');
+      } else if (err instanceof Error && err.message === 'tipo_logradouro_not_found') {
+        setError('Tipo configurado não encontrado na tabela de referências.');
+      } else if (err instanceof Error && err.message === 'subtipo_not_belongs_to_tipo') {
+        setError('Subtipo incompatível com o tipo selecionado.');
+      } else {
+        setError(readApiError(err));
+      }
     } finally {
       setSavingMorador(false);
     }
@@ -661,7 +782,12 @@ export function AdminResidentsPage(): JSX.Element {
               <span>Endereço</span>
               {selectedMoradorEndereco ? (
                 <div className="summary-grid">
-                  {buildEnderecoRows(selectedMoradorEndereco, parametrosEnderecamento).map((row) => (
+                  {buildEnderecoRows(
+                    selectedMoradorEndereco,
+                    parametrosEnderecamento,
+                    tiposLogradouroHorizontal,
+                    subtiposLogradouroHorizontal
+                  ).map((row) => (
                     <div key={`view-${row.label}`} className="summary-card">
                       <span>{row.label}</span>
                       <strong>{row.value}</strong>
@@ -809,7 +935,12 @@ export function AdminResidentsPage(): JSX.Element {
                     </label>
                   ) : null}
                   <div className="summary-grid">
-                    {buildEnderecoRows(selectedFormEndereco, parametrosEnderecamento).map((row) => (
+                    {buildEnderecoRows(
+                      selectedFormEndereco,
+                      parametrosEnderecamento,
+                      tiposLogradouroHorizontal,
+                      subtiposLogradouroHorizontal
+                    ).map((row) => (
                       <div key={`edit-${row.label}`} className="summary-card">
                         <span>{row.label}</span>
                         <strong>{row.value}</strong>
@@ -824,7 +955,16 @@ export function AdminResidentsPage(): JSX.Element {
                   <button
                     type="button"
                     className="button-soft address-action-button"
-                    onClick={() => setShowAddressCreate(true)}
+                    onClick={() => {
+                      setShowAddressCreate(true);
+                      if (tipoCondominioSlug !== 'HORIZONTAL') return;
+                      if (tiposDisponiveis.length === 1) {
+                        setTipoCampoSelecionado(tiposDisponiveis[0]);
+                      }
+                      if (subtiposDisponiveis.length === 1) {
+                        setSubtipoCampoSelecionado(subtiposDisponiveis[0]);
+                      }
+                    }}
                   >
                     Incluir endereço
                   </button>
@@ -853,39 +993,63 @@ export function AdminResidentsPage(): JSX.Element {
                     <>
                       <div className="address-inline-3">
                         <label>
-                          {parametrosEnderecamento.horizontal_rotulo_tipo}
-                          <small className="field-hint">{parametrosEnderecamento.horizontal_hint_tipo}</small>
-                          <select
-                            value={tipoLogradouroHorizontalId}
-                            onChange={(e) => {
-                              setTipoLogradouroHorizontalId(e.target.value);
-                              setSubtipoLogradouroHorizontalId('');
-                            }}
+                          <div className="address-field-title">
+                            {tiposDisponiveis.length <= 1 ? (
+                              tiposDisponiveis[0] || parametrosEnderecamento.horizontal_rotulo_tipo || 'Campo de endereço 1'
+                            ) : (
+                              <select
+                                className="field-title-select"
+                                value={tipoCampoSelecionado}
+                                onChange={(e) => {
+                                  setTipoCampoSelecionado(e.target.value);
+                                  setSubtipoCampoSelecionado('');
+                                }}
+                                required={showAddressCreate}
+                              >
+                                <option value="">Selecione o campo...</option>
+                                {tiposDisponiveis.map((item) => (
+                                  <option key={item} value={item}>
+                                    {item}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
+                          <input
+                            value={tipoLogradouroInput}
+                            onChange={(e) => setTipoLogradouroInput(e.target.value)}
+                            placeholder="Digite o valor"
                             required={showAddressCreate}
-                          >
-                            <option value="">Selecione...</option>
-                            {tiposDisponiveis.map((item) => (
-                              <option key={item.id} value={item.id}>
-                                {item.nome}
-                              </option>
-                            ))}
-                          </select>
+                          />
                         </label>
                         <label>
-                          {parametrosEnderecamento.horizontal_rotulo_subtipo}
-                          <small className="field-hint">{parametrosEnderecamento.horizontal_hint_subtipo}</small>
-                          <select
-                            value={subtipoLogradouroHorizontalId}
-                            onChange={(e) => setSubtipoLogradouroHorizontalId(e.target.value)}
+                          <div className="address-field-title">
+                            {!hasMultipleSubtiposConfigured && subtiposDisponiveis.length <= 1 ? (
+                              subtiposDisponiveis[0] ||
+                              parametrosEnderecamento.horizontal_rotulo_subtipo ||
+                              'Campo de endereço 2'
+                            ) : (
+                              <select
+                                className="field-title-select"
+                                value={subtipoCampoSelecionado}
+                                onChange={(e) => setSubtipoCampoSelecionado(e.target.value)}
+                                required={showAddressCreate}
+                              >
+                                <option value="">Selecione o campo...</option>
+                                {subtiposDisponiveis.map((item) => (
+                                  <option key={item} value={item}>
+                                    {item}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
+                          <input
+                            value={subtipoLogradouroInput}
+                            onChange={(e) => setSubtipoLogradouroInput(e.target.value)}
+                            placeholder="Digite o valor"
                             required={showAddressCreate}
-                          >
-                            <option value="">Selecione...</option>
-                            {subtiposDisponiveis.map((item) => (
-                              <option key={item.id} value={item.id}>
-                                {item.nome}
-                              </option>
-                            ))}
-                          </select>
+                          />
                         </label>
                         <label>
                           {parametrosEnderecamento.horizontal_rotulo_numero}
