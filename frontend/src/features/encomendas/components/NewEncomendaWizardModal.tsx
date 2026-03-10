@@ -287,6 +287,13 @@ export function NewEncomendaWizardModal({
   ])
 
   const hasMultipleSubtiposConfigured = useMemo(() => subtiposDisponiveis.length > 1, [subtiposDisponiveis.length])
+  const empresaAtualTrimmed = (form.empresa_entregadora ?? '').trim()
+  const empresaAtualEhCatalogo = useMemo(
+    () => empresasResponsaveis.some((empresa) => normalizeText(empresa) === normalizeText(empresaAtualTrimmed)),
+    [empresasResponsaveis, empresaAtualTrimmed]
+  )
+  const deveExibirOpcaoEmpresaRegistrada =
+    Boolean(empresaAtualTrimmed) && !empresaAtualEhCatalogo && empresaMode !== 'manual'
 
   function resetAddressForm(): void {
     setBloco('')
@@ -572,6 +579,35 @@ export function NewEncomendaWizardModal({
   }, [mode])
 
   useEffect(() => {
+    if (!empresaAtualTrimmed) {
+      if (empresaMode === 'manual') {
+        return
+      }
+      if (empresaMode !== 'catalogo') {
+        setEmpresaMode('catalogo')
+      }
+      if (empresaManual) {
+        setEmpresaManual('')
+      }
+      return
+    }
+
+    if (empresaAtualEhCatalogo) {
+      if (empresaMode !== 'catalogo') {
+        setEmpresaMode('catalogo')
+      }
+      if (empresaManual) {
+        setEmpresaManual('')
+      }
+      return
+    }
+
+    if (empresaMode === 'manual' && !empresaManual) {
+      setEmpresaManual(empresaAtualTrimmed)
+    }
+  }, [empresaAtualEhCatalogo, empresaAtualTrimmed, empresaManual, empresaMode])
+
+  useEffect(() => {
     const selected = allMoradores.find((item) => item.id === Number(form.morador_id))
     if (!selected) return
     if (moradorDropdownOpen) return
@@ -621,6 +657,9 @@ export function NewEncomendaWizardModal({
       return
     }
     setEmpresaMode('catalogo')
+    if (empresaManual) {
+      setEmpresaManual('')
+    }
     setForm({ ...form, empresa_entregadora: value })
   }
 
@@ -711,6 +750,9 @@ export function NewEncomendaWizardModal({
                   required
                 >
                   <option value="">Selecione</option>
+                  {deveExibirOpcaoEmpresaRegistrada ? (
+                    <option value={empresaAtualTrimmed}>{empresaAtualTrimmed}</option>
+                  ) : null}
                   <option value="__manual__">Informar manualmente</option>
                   {empresasResponsaveis.map((empresa) => (
                     <option key={empresa} value={empresa}>
