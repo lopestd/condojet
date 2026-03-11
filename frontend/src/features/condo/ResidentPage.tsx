@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { backendApi, readApiError } from '../../services/httpClient';
-import { parseApiDate } from '../../utils/dateTime';
+import { getAppTimezone, parseApiDate } from '../../utils/dateTime';
 import { EncomendaDetailsTimeline } from '../encomendas/components/EncomendaDetailsTimeline';
 import { statusLabel } from '../encomendas/utils/statusMapping';
 import type { EncomendaDetail } from '../encomendas/types';
@@ -11,6 +11,8 @@ type MinhaEncomenda = {
   codigo_interno: string;
   status: string;
   tipo: string;
+  morador_id?: number;
+  morador_nome?: string | null;
   codigo_externo?: string | null;
   empresa_entregadora?: string | null;
   empresa_responsavel?: string | null;
@@ -50,6 +52,50 @@ function formatDateTimeBR(value?: string | null): string {
   return `${dd}/${mm}/${yyyy} - ${hh}:${min}`;
 }
 
+function normalizeTime(value?: string | null): string | null {
+  if (!value) return null;
+  const raw = value.trim();
+  if (!raw) return null;
+  const match = /^(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(raw);
+  if (!match) return null;
+  return `${match[1]}:${match[2]}:${match[3] ?? '00'}`;
+}
+
+function formatDateTimeBRSeconds(value?: string | null, fallbackTime?: string | null): string {
+  if (!value) return '-';
+  const raw = value.trim();
+  if (!raw) return '-';
+
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  if (dateOnly) {
+    const time = normalizeTime(fallbackTime) ?? '00:00:00';
+    return `${dateOnly[3]}/${dateOnly[2]}/${dateOnly[1]} ${time}`;
+  }
+
+  const parsed = parseApiDate(raw);
+  if (!parsed) return '-';
+
+  const formatter = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: getAppTimezone(),
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(parsed);
+  const map = new Map(parts.map((part) => [part.type, part.value]));
+  const day = map.get('day') ?? '00';
+  const month = map.get('month') ?? '00';
+  const year = map.get('year') ?? '0000';
+  const hour = map.get('hour') ?? '00';
+  const minute = map.get('minute') ?? '00';
+  const second = map.get('second') ?? '00';
+  return `${day}/${month}/${year} ${hour}:${minute}:${second}`;
+}
+
 function resolveEntrada(item: MinhaEncomenda): string | null {
   return item.data_recebimento ?? item.data_entrada ?? null;
 }
@@ -68,6 +114,13 @@ function resolveCodigoRastreio(item: MinhaEncomenda): string {
 
 function resolveRetiradoPor(item: MinhaEncomenda): string {
   return (item.retirado_por_nome ?? item.retirado_por ?? '').trim() || '-';
+}
+
+function resolveDestinatario(item: MinhaEncomenda): string {
+  const nome = (item.morador_nome ?? '').trim();
+  if (nome) return nome;
+  if (item.morador_id) return `Morador #${item.morador_id}`;
+  return '-';
 }
 
 export function ResidentPage(): JSX.Element {
@@ -148,7 +201,7 @@ export function ResidentPage(): JSX.Element {
         if (statusFilter !== 'ALL' && residentStatus !== statusFilter) return false;
 
         if (searchTerm) {
-          const haystack = `${item.tipo} ${resolveCodigoRastreio(item)} ${resolveEmpresa(item)}`.toLowerCase();
+          const haystack = `${item.tipo} ${resolveCodigoRastreio(item)} ${resolveEmpresa(item)} ${resolveDestinatario(item)}`.toLowerCase();
           if (!haystack.includes(searchTerm)) return false;
         }
 
@@ -208,35 +261,39 @@ export function ResidentPage(): JSX.Element {
           <input
             value={rawSearchTerm}
             onChange={(event) => setRawSearchTerm(event.target.value)}
-            placeholder="Código de rastreio ou empresa"
+            placeholder="Código de rastreio, empresa ou morador"
           />
         </label>
 
-        <div className="resident-date-filters-grid">
-          <label className="resident-date-filter">
-            Entrada inicial
-            <input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
-          </label>
-          <label className="resident-date-filter">
-            Entrada final
-            <input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
-          </label>
-        </div>
+        {!isMobileView ? (
+          <>
+            <div className="resident-date-filters-grid">
+              <label className="resident-date-filter">
+                Entrada inicial
+                <input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} />
+              </label>
+              <label className="resident-date-filter">
+                Entrada final
+                <input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
+              </label>
+            </div>
 
-        <div className="resident-filter-actions">
-          <button
-            type="button"
-            className="button-soft"
-            onClick={() => {
-              setRawSearchTerm('');
-              setStatusFilter('ALL');
-              setStartDate('');
-              setEndDate('');
-            }}
-          >
-            Limpar filtros
-          </button>
-        </div>
+            <div className="resident-filter-actions">
+              <button
+                type="button"
+                className="button-soft"
+                onClick={() => {
+                  setRawSearchTerm('');
+                  setStatusFilter('ALL');
+                  setStartDate('');
+                  setEndDate('');
+                }}
+              >
+                Limpar filtros
+              </button>
+            </div>
+          </>
+        ) : null}
       </article>
 
       <article className="card section-card">
@@ -261,11 +318,12 @@ export function ResidentPage(): JSX.Element {
               <thead>
                 <tr>
                   <th>Tipo</th>
-                  <th>Código de Rastreio</th>
+                  <th>RASTREIO</th>
                   <th>Empresa Responsável</th>
-                  <th>Data de Entrada</th>
+                  <th>MORADOR</th>
+                  <th>Data_Entrada</th>
                   <th>Status</th>
-                  <th>Data de Retirada</th>
+                  <th>Data_Retirada</th>
                   <th>Retirado por</th>
                 </tr>
               </thead>
@@ -277,9 +335,10 @@ export function ResidentPage(): JSX.Element {
                       <span className="rastreio-pill">{resolveCodigoRastreio(item)}</span>
                     </td>
                     <td>{resolveEmpresa(item)}</td>
+                    <td>{resolveDestinatario(item)}</td>
                     <td>{formatDateTimeBR(resolveEntrada(item))}</td>
                     <td>
-                      <span className={`status-badge ${statusClassName(item.status)}`}>{normalizeResidentStatus(item.status)}</span>
+                      <span className={`status-badge status-badge-wrap ${statusClassName(item.status)}`}>{normalizeResidentStatus(item.status)}</span>
                     </td>
                     <td>{formatDateTimeBR(resolveRetirada(item))}</td>
                     <td>{resolveRetiradoPor(item)}</td>
@@ -294,32 +353,19 @@ export function ResidentPage(): JSX.Element {
           <section className="encomendas-cards-grid resident-encomendas-cards">
             {filteredItems.map((item) => (
               <article key={item.id} className="encomenda-card resident-encomenda-card row-openable" onClick={() => void openViewModal(item.id)}>
-                <div className="encomenda-card-head">
-                  <p className="encomenda-code">{item.tipo}</p>
+                <div className="encomenda-card-line resident-encomenda-line-top">
+                  <p className="resident-encomenda-empresa">{resolveEmpresa(item)}</p>
                   <span className={`status-badge ${statusClassName(item.status)}`}>{normalizeResidentStatus(item.status)}</span>
                 </div>
-                <dl className="encomenda-card-data">
-                  <div>
-                    <dt>Código de Rastreio</dt>
-                    <dd>{resolveCodigoRastreio(item)}</dd>
-                  </div>
-                  <div>
-                    <dt>Empresa Responsável</dt>
-                    <dd>{resolveEmpresa(item)}</dd>
-                  </div>
-                  <div>
-                    <dt>Data de Entrada</dt>
-                    <dd>{formatDateTimeBR(resolveEntrada(item))}</dd>
-                  </div>
-                  <div>
-                    <dt>Data de Retirada</dt>
-                    <dd>{formatDateTimeBR(resolveRetirada(item))}</dd>
-                  </div>
-                  <div>
-                    <dt>Retirado por</dt>
-                    <dd>{resolveRetiradoPor(item)}</dd>
-                  </div>
-                </dl>
+
+                <div className="encomenda-card-line resident-encomenda-line-middle">
+                  <p className="resident-encomenda-tipo">{item.tipo}</p>
+                  <p className="encomenda-code encomenda-code-highlight">{resolveCodigoRastreio(item)}</p>
+                </div>
+
+                <div className="resident-encomenda-destinatario-wrap">
+                  <p className="resident-encomenda-destinatario">{resolveDestinatario(item)}</p>
+                </div>
               </article>
             ))}
           </section>
@@ -356,10 +402,10 @@ export function ResidentPage(): JSX.Element {
                   <div className="modal-data operation-modal-data">
                     <p><strong>Empresa responsável:</strong> {detail.empresa_entregadora || '-'}</p>
                     <p><strong>Descrição:</strong> {detail.descricao || '-'}</p>
-                    <p><strong>Data de entrada:</strong> {detail.data_recebimento || '-'} {detail.hora_recebimento || ''}</p>
-                    <p><strong>Data de entrega:</strong> {detail.data_entrega || '-'}</p>
+                    <p><strong>Data_Entrada:</strong> {formatDateTimeBRSeconds(detail.data_recebimento, detail.hora_recebimento)}</p>
+                    <p><strong>Data_Retirada:</strong> {formatDateTimeBRSeconds(detail.data_entrega)}</p>
                     <p><strong>Retirado por:</strong> {detail.retirado_por_nome || '-'}</p>
-                    <p><strong>Motivo de reabertura:</strong> {detail.motivo_reabertura || '-'}</p>
+                    <p><strong>Motivo de revisão da entrega:</strong> {detail.motivo_reabertura || '-'}</p>
                   </div>
                   <section className="encomenda-timeline-panel">
                     <h4>Linha do tempo</h4>

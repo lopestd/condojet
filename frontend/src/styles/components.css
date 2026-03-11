@@ -1133,6 +1133,15 @@ th {
     0 8px 20px rgba(7, 29, 22, 0.26);
 }
 
+.dashboard-hero-datetime-short {
+  display: none;
+}
+
+.dashboard-hero-kicker-datetime {
+  display: inline-flex;
+  align-items: center;
+}
+
 .dashboard-kpi-grid .dashboard-kpi {
   border-left: 4px solid transparent;
   background: linear-gradient(180deg, #ffffff, #f9fbff);

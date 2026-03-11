@@ -454,23 +454,30 @@
 
 .resident-encomendas-page .resident-encomendas-controls {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 170px 170px auto;
+  grid-template-columns: minmax(280px, 1fr) minmax(340px, 0.95fr) auto;
+  grid-template-areas:
+    "status status status"
+    "search dates actions";
   align-items: end;
   gap: 0.45rem;
 }
 
 .resident-encomendas-page .resident-status-filters {
-  grid-column: 1 / -1;
+  grid-area: status;
 }
 
 .resident-encomendas-page .resident-search-filter {
+  grid-area: search;
   min-width: 0;
+  max-width: none;
 }
 
 .resident-encomendas-page .resident-date-filters-grid {
+  grid-area: dates;
   display: grid;
-  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.42rem;
+  min-width: 0;
 }
 
 .resident-encomendas-page .resident-date-filter {
@@ -487,12 +494,36 @@
 }
 
 .resident-encomendas-page .resident-filter-actions {
+  grid-area: actions;
   display: flex;
   justify-content: flex-end;
 }
 
+@media (max-width: 1280px) {
+  .resident-encomendas-page .resident-encomendas-controls {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "status status"
+      "search search"
+      "dates actions";
+    gap: 0.4rem;
+  }
+
+  .resident-encomendas-page .resident-date-filters-grid {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+}
+
 .resident-encomendas-page .resident-encomendas-table {
   min-width: 980px;
+}
+
+.resident-encomendas-page .resident-encomendas-table .status-badge-wrap {
+  white-space: normal;
+  text-align: center;
+  line-height: 1.15;
+  min-width: 98px;
+  justify-content: center;
 }
 
 .resident-encomendas-page .resident-encomendas-cards {

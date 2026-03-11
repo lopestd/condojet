@@ -21,6 +21,7 @@ import type {
 import { filterEncomendas, paginateEncomendas, sortEncomendas } from './utils/encomendasSelectors'
 import { statusChipLabel, statusClass, statusLabel } from './utils/statusMapping'
 import { formatDateBR } from '../../utils/dateTime'
+import { getAppTimezone, parseApiDate } from '../../utils/dateTime'
 
 const DEFAULT_PAGE_SIZE = 10
 const MOBILE_BREAKPOINT = 900
@@ -66,6 +67,50 @@ function findMatchingEncomenda(items: EncomendaListItem[], codigo: string): Enco
 
   const pending = exactMatches.find((item) => item.status !== 'ENTREGUE')
   return pending ?? exactMatches[0] ?? null
+}
+
+function normalizeTime(value?: string | null): string | null {
+  if (!value) return null
+  const raw = value.trim()
+  if (!raw) return null
+  const match = /^(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(raw)
+  if (!match) return null
+  return `${match[1]}:${match[2]}:${match[3] ?? '00'}`
+}
+
+function formatDateTimeBR(value?: string | null, fallbackTime?: string | null): string {
+  if (!value) return '-'
+  const raw = value.trim()
+  if (!raw) return '-'
+
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw)
+  if (dateOnly) {
+    const time = normalizeTime(fallbackTime) ?? '00:00:00'
+    return `${dateOnly[3]}/${dateOnly[2]}/${dateOnly[1]} ${time}`
+  }
+
+  const parsed = parseApiDate(raw)
+  if (!parsed) return '-'
+
+  const formatter = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: getAppTimezone(),
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  })
+  const parts = formatter.formatToParts(parsed)
+  const map = new Map(parts.map((part) => [part.type, part.value]))
+  const day = map.get('day') ?? '00'
+  const month = map.get('month') ?? '00'
+  const year = map.get('year') ?? '0000'
+  const hour = map.get('hour') ?? '00'
+  const minute = map.get('minute') ?? '00'
+  const second = map.get('second') ?? '00'
+  return `${day}/${month}/${year} ${hour}:${minute}:${second}`
 }
 
 function getEnderecoParts(endereco: Endereco | undefined): {
@@ -868,10 +913,10 @@ export function EncomendasPage(): JSX.Element {
                   <div className="modal-data operation-modal-data">
                     <p><strong>Empresa responsável:</strong> {detail.empresa_entregadora || '-'}</p>
                     <p><strong>Descrição:</strong> {detail.descricao || '-'}</p>
-                    <p><strong>Recebimento:</strong> {detail.data_recebimento || '-'} {detail.hora_recebimento || ''}</p>
-                    <p><strong>Data de entrega:</strong> {detail.data_entrega || '-'}</p>
+                    <p><strong>Data_Entrada:</strong> {formatDateTimeBR(detail.data_recebimento, detail.hora_recebimento)}</p>
+                    <p><strong>Data_Retirada:</strong> {formatDateTimeBR(detail.data_entrega)}</p>
                     <p><strong>Retirado por:</strong> {detail.retirado_por_nome || '-'}</p>
-                    <p><strong>Motivo de reabertura:</strong> {detail.motivo_reabertura || '-'}</p>
+                    <p><strong>Motivo de revisão da entrega:</strong> {detail.motivo_reabertura || '-'}</p>
                   </div>
                   <section className="encomenda-timeline-panel">
                     <h4>Linha do tempo</h4>

@@ -218,9 +218,14 @@ def minhas_encomendas(
     principal: Principal = Depends(require_roles("MORADOR")),
     db: Session = Depends(get_db),
 ) -> list[dict]:
+    morador_repository = MoradorRepository(db)
     repository = EncomendaRepository(db)
     condominio_id = principal.condominio_id
-    items = repository.list_by_morador(principal.user_id, condominio_id=condominio_id)
+    morador = morador_repository.find_by_id(principal.user_id, condominio_id=condominio_id)
+    if morador is None:
+        raise AppError("morador_not_found", status_code=404, code="morador_not_found")
+
+    items = repository.list_by_endereco_with_morador(morador.endereco_id, condominio_id=condominio_id)
     return [
         {
             "id": item.id,
@@ -228,12 +233,14 @@ def minhas_encomendas(
             "codigo_externo": item.codigo_externo,
             "status": item.status,
             "tipo": item.tipo,
+            "morador_id": morador_id,
+            "morador_nome": morador_nome,
             "empresa_entregadora": item.empresa_entregadora,
             "data_recebimento": item.data_recebimento.isoformat() if item.data_recebimento else None,
             "data_entrega": item.data_entrega.isoformat() if item.data_entrega else None,
             "retirado_por_nome": item.retirado_por_nome,
         }
-        for item in items
+        for item, morador_id, morador_nome in items
     ]
 
 
@@ -243,14 +250,19 @@ def get_minha_encomenda(
     principal: Principal = Depends(require_roles("MORADOR")),
     db: Session = Depends(get_db),
 ) -> dict:
+    morador_repository = MoradorRepository(db)
     repository = EncomendaRepository(db)
     condominio_id = principal.condominio_id
+    morador = morador_repository.find_by_id(principal.user_id, condominio_id=condominio_id)
+    if morador is None:
+        raise AppError("morador_not_found", status_code=404, code="morador_not_found")
+
     details = repository.find_by_id_with_details(encomenda_id, condominio_id=condominio_id)
     if details is None:
         raise AppError("encomenda_not_found", status_code=404, code="encomenda_not_found")
 
     item, morador_nome, endereco, tipo_condominio, tipo_logradouro, subtipo_logradouro = details
-    if item.morador_id != principal.user_id:
+    if item.endereco_id != morador.endereco_id:
         raise AppError("encomenda_not_found", status_code=404, code="encomenda_not_found")
 
     return {

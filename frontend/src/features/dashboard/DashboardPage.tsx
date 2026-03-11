@@ -42,7 +42,6 @@ type DateRange = {
 
 const PERIOD_OPTIONS: Array<{ value: ViewPeriod; label: string }> = [
   { value: 'DAY', label: 'Hoje' },
-  { value: 'WEEK', label: 'Últimos 7 dias' },
   { value: 'MONTH', label: 'Últimos 30 dias' },
   { value: 'YEAR', label: 'Anual' }
 ];
@@ -285,6 +284,12 @@ export function DashboardPage(): JSX.Element {
     year: 'numeric'
   });
   const horaLabel = now.toLocaleTimeString('pt-BR', { timeZone: appTimezone, hour: '2-digit', minute: '2-digit' });
+  const dataHoraCompacta = `${now.toLocaleDateString('pt-BR', {
+    timeZone: appTimezone,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })} ${horaLabel}`;
   const periodLabel = resolveDateRange(now, viewPeriod, dataAnchor).label;
   const yearPeriodText = String(dataAnchor.getFullYear());
   const periodOptions = PERIOD_OPTIONS.map((option) => {
@@ -300,12 +305,15 @@ export function DashboardPage(): JSX.Element {
   const canCreateEncomenda = user?.role === 'ADMIN' || user?.role === 'PORTEIRO';
 
   return (
-    <section className="page-grid dashboard-page">
+    <section className={`page-grid dashboard-page${isMoradorView ? ' dashboard-page-morador' : ''}`}>
       <header className="panel dashboard-hero">
         <div className="dashboard-hero-main">
           <p className="dashboard-hero-kicker">
             <span className="dashboard-condo-badge">{condominio}</span>
-            <span>{`(${dataLabel} • ${horaLabel})`}</span>
+            <span className="dashboard-hero-kicker-datetime">
+              <span className="dashboard-hero-datetime dashboard-hero-datetime-long">{`(${dataLabel} • ${horaLabel})`}</span>
+              <span className="dashboard-hero-datetime dashboard-hero-datetime-short">{dataHoraCompacta}</span>
+            </span>
           </p>
           <h1>CondoJET - Dashboard Encomendas</h1>
           <p>Acompanhamento das situações das encomendas recebidas na portaria do Condomínio.</p>
@@ -385,7 +393,7 @@ export function DashboardPage(): JSX.Element {
         {loading ? <p className="info-box">Carregando painel...</p> : null}
         {error ? <p className="error-box">{error}</p> : null}
         {!loading && !error && dashboardData.alertPackages.length === 0 ? (
-          <p className="dashboard-empty-alerts">Fluxo normalizado: nenhuma encomenda esquecida no momento.</p>
+          <p className="dashboard-empty-alerts">Nenhuma encomenda esquecida no momento.</p>
         ) : !loading && !error ? (
           <ul className="dashboard-alerts-list">
             {dashboardData.alertPackages.map((alert) => (

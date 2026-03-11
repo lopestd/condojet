@@ -91,6 +91,30 @@ class EncomendaRepository:
         stmt = stmt.order_by(EncomendaModel.id.desc())
         return list(self.db.execute(stmt).scalars().all())
 
+    def list_by_endereco_with_morador(
+        self, endereco_id: int, condominio_id: int
+    ) -> list[tuple[EncomendaModel, int | None, str | None]]:
+        stmt = (
+            select(
+                EncomendaModel,
+                MoradorModel.id,
+                MoradorModel.nome,
+            )
+            .outerjoin(
+                MoradorModel,
+                and_(
+                    MoradorModel.id == EncomendaModel.morador_id,
+                    MoradorModel.condominio_id == EncomendaModel.condominio_id,
+                ),
+            )
+            .where(
+                EncomendaModel.condominio_id == condominio_id,
+                EncomendaModel.endereco_id == endereco_id,
+            )
+            .order_by(EncomendaModel.id.desc())
+        )
+        return list(self.db.execute(stmt).all())
+
     def find_by_id_with_details(
         self, encomenda_id: int, condominio_id: int
     ) -> tuple[
