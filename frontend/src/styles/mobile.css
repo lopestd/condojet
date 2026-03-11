@@ -368,6 +368,148 @@
   .encomendas-skeleton-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .encomendas-page .encomenda-card {
+    gap: 0.62rem;
+    padding: 0.76rem;
+    border-width: 2px;
+    border-color: #b8d8c9;
+    box-shadow: 0 4px 12px rgba(20, 70, 52, 0.08);
+  }
+
+  .encomendas-page .encomenda-card-line {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 0.52rem;
+  }
+
+  .encomendas-page .encomenda-card-line-top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .encomendas-page .encomenda-empresa {
+    margin: 0;
+    font-size: 1.02rem;
+    line-height: 1.25;
+    font-weight: 800;
+    color: #1c2c44;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .encomendas-page .encomenda-code {
+    font-size: 1.02rem;
+    line-height: 1.25;
+  }
+
+  .encomendas-page .encomenda-code-highlight {
+    display: inline-flex;
+    align-items: center;
+    background: #fff3c9;
+    border: 1px solid #f0ddb0;
+    border-radius: 7px;
+    padding: 0.18rem 0.42rem;
+    color: #233247;
+  }
+
+  .encomendas-page .encomenda-tipo {
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #58708d;
+    text-align: right;
+  }
+
+  .encomendas-page .encomenda-morador,
+  .encomendas-page .encomenda-endereco-resumo {
+    margin: 0;
+    font-size: 1.06rem;
+    line-height: 1.2;
+    font-weight: 700;
+    color: #213446;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .encomendas-page .encomenda-endereco-resumo {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #4e657f;
+    text-align: right;
+  }
+
+  .encomendas-page .encomenda-card-line-dates {
+    align-items: end;
+  }
+
+  .encomendas-page .encomenda-data-block {
+    display: grid;
+    gap: 0.12rem;
+    min-width: 0;
+  }
+
+  .encomendas-page .encomenda-data-block-right {
+    text-align: right;
+  }
+
+  .encomendas-page .encomenda-data-label {
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: #4f6781;
+    line-height: 1.15;
+  }
+
+  .encomendas-page .encomenda-data-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #274867;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .encomendas-page .encomenda-card-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.32rem;
+  }
+
+  .encomendas-page .encomenda-card-actions .icon-action-button {
+    width: 100%;
+    min-height: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border-color: #cfdde7;
+    background: #f1f5f8;
+    color: #4e667f;
+  }
+
+  .encomendas-page .encomenda-card-actions .icon-action-button-primary {
+    background: linear-gradient(130deg, #22835f, #166245);
+    border-color: #0f4a34;
+    color: #ffffff;
+    box-shadow: 0 3px 8px rgba(15, 74, 52, 0.24);
+  }
+
+  .encomendas-page .encomenda-card-actions .icon-action-button-primary:not(:disabled):hover {
+    background: linear-gradient(130deg, #1b704f, #12533a);
+  }
+
+  .encomendas-page .encomenda-card-actions .icon-action-button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .encomendas-page .encomenda-card-line-top .status-badge {
+    font-size: 0.82rem;
+    padding: 0.28rem 0.64rem;
+  }
 }
 
 @media (max-width: 768px) {
@@ -469,6 +611,19 @@
   .encomendas-skeleton-grid,
   .wizard-steps {
     grid-template-columns: 1fr;
+  }
+
+  .encomendas-page .encomenda-card-line {
+    gap: 0.34rem;
+  }
+
+  .encomendas-page .encomenda-empresa {
+    font-size: 0.96rem;
+  }
+
+  .encomendas-page .encomenda-morador,
+  .encomendas-page .encomenda-endereco-resumo {
+    font-size: 0.98rem;
   }
 
   .encomendas-stats {

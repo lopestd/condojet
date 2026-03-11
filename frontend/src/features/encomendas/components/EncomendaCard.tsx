@@ -1,6 +1,7 @@
 import type { EncomendaListItem, Endereco } from '../types'
 import { formatEnderecoLabel } from '../utils/encomendasSelectors'
 import { statusChipLabel, statusClass } from '../utils/statusMapping'
+import { formatDateBR } from '../../../utils/dateTime'
 
 type Props = {
   item: EncomendaListItem
@@ -35,6 +36,25 @@ export function EncomendaCard({
 }: Props): JSX.Element {
   const endereco = item.endereco_label ?? (enderecosById.get(item.endereco_id) ? formatEnderecoLabel(enderecosById.get(item.endereco_id) as Endereco) : `Endereço #${item.endereco_id}`)
   const codigoRastreio = item.codigo_externo?.trim() ? item.codigo_externo : '-'
+  const empresa = item.empresa_entregadora?.trim() ? item.empresa_entregadora : '-'
+  const enderecoData = enderecosById.get(item.endereco_id)
+
+  function buildMobileEnderecoResumo(value: Endereco | undefined, fallback: string): string {
+    if (!value) return fallback
+
+    if (value.tipo_condominio_slug === 'HORIZONTAL') {
+      const qd = value.tipo_logradouro_nome?.trim() || '-'
+      const conj = value.subtipo_logradouro_nome?.trim() || '-'
+      const numero = value.numero?.trim() || '-'
+      return `Qd. ${qd} | Conj. ${conj} | ${numero}`
+    }
+
+    return fallback
+  }
+
+  const enderecoResumoMobile = buildMobileEnderecoResumo(enderecoData, endereco)
+  const dataEntrada = formatDateBR(item.data_recebimento)
+  const dataRetirada = item.data_entrega ? formatDateBR(item.data_entrega) : '-'
 
   return (
     <article
@@ -44,28 +64,31 @@ export function EncomendaCard({
         if (canVisualizar) onView()
       }}
     >
-      <div className="encomenda-card-head">
-        <div>
-          <p className="encomenda-code">{codigoRastreio}</p>
-          <small>{item.tipo}</small>
-        </div>
+      <div className="encomenda-card-line encomenda-card-line-top">
+        <p className="encomenda-empresa">{empresa}</p>
         <span className={`status-badge ${statusClass(item.status)}`}>{statusChipLabel(item, forgottenDaysThreshold)}</span>
       </div>
 
-      <dl className="encomenda-card-data">
-        <div>
-          <dt>Morador</dt>
-          <dd>{item.morador_nome ?? `Morador #${item.morador_id}`}</dd>
+      <div className="encomenda-card-line">
+        <p className="encomenda-code encomenda-code-highlight">{codigoRastreio}</p>
+        <p className="encomenda-tipo">{item.tipo}</p>
+      </div>
+
+      <div className="encomenda-card-line">
+        <p className="encomenda-morador">{item.morador_nome ?? `Morador #${item.morador_id}`}</p>
+        <p className="encomenda-endereco-resumo">{enderecoResumoMobile}</p>
+      </div>
+
+      <div className="encomenda-card-line encomenda-card-line-dates">
+        <div className="encomenda-data-block">
+          <span className="encomenda-data-label">Data_Entrada</span>
+          <span className="encomenda-data-value">{dataEntrada}</span>
         </div>
-        <div>
-          <dt>Endereço</dt>
-          <dd>{endereco}</dd>
+        <div className="encomenda-data-block encomenda-data-block-right">
+          <span className="encomenda-data-label">Data_Retirada</span>
+          <span className="encomenda-data-value">{dataRetirada}</span>
         </div>
-        <div>
-          <dt>Recebimento</dt>
-          <dd>{item.data_recebimento || '-'}</dd>
-        </div>
-      </dl>
+      </div>
 
       <div className="action-group encomenda-card-actions">
         <button
