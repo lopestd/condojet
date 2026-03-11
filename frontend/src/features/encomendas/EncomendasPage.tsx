@@ -8,6 +8,7 @@ import { EncomendaDetailsTimeline } from './components/EncomendaDetailsTimeline'
 import { EncomendasEmptyState } from './components/EncomendasEmptyState'
 import { EncomendasFiltersBar } from './components/EncomendasFiltersBar'
 import { NewEncomendaWizardModal } from './components/NewEncomendaWizardModal'
+import { VerificarEncomendaModal } from './components/VerificarEncomendaModal'
 import type {
   EncomendaDetail,
   EncomendaFilter,
@@ -36,15 +37,35 @@ type EmpresaResponsavelGlobal = {
   ativo: boolean
 }
 
-function buildInitialFormState(): EncomendaFormState {
+function buildInitialFormState(codigoExterno = ''): EncomendaFormState {
   return {
     tipo: 'PACOTE',
     morador_id: '',
     endereco_id: '',
-    codigo_externo: '',
+    codigo_externo: codigoExterno,
     descricao: '',
     empresa_entregadora: ''
   }
+}
+
+function normalizeCodigo(value: string | null | undefined): string {
+  return (value ?? '').trim().toUpperCase()
+}
+
+function findMatchingEncomenda(items: EncomendaListItem[], codigo: string): EncomendaListItem | null {
+  const normalized = normalizeCodigo(codigo)
+  if (!normalized) return null
+
+  const exactMatches = items.filter((item) => {
+    return (
+      normalizeCodigo(item.codigo_externo) === normalized ||
+      normalizeCodigo(item.codigo_interno) === normalized
+    )
+  })
+  if (exactMatches.length === 0) return null
+
+  const pending = exactMatches.find((item) => item.status !== 'ENTREGUE')
+  return pending ?? exactMatches[0] ?? null
 }
 
 function getEnderecoParts(endereco: Endereco | undefined): {
@@ -144,6 +165,11 @@ export function EncomendasPage(): JSX.Element {
   const [savingForm, setSavingForm] = useState(false)
   const [form, setForm] = useState<EncomendaFormState>(buildInitialFormState)
   const [selectedEncomendaId, setSelectedEncomendaId] = useState<number | null>(null)
+  const [showVerificarModal, setShowVerificarModal] = useState(false)
+  const [verificarLoading, setVerificarLoading] = useState(false)
+  const [verificarError, setVerificarError] = useState<string | null>(null)
+  const [showResumoVerificacaoModal, setShowResumoVerificacaoModal] = useState(false)
+  const [encomendaVerificada, setEncomendaVerificada] = useState<EncomendaListItem | null>(null)
 
   const [showViewModal, setShowViewModal] = useState(false)
   const [detailLoading, setDetailLoading] = useState(false)
@@ -293,13 +319,41 @@ export function EncomendasPage(): JSX.Element {
     }
   }
 
-  function openCreateModal(): void {
+  function openCreateModal(codigoExterno = ''): void {
     setError(null)
     setFeedback(null)
     setFormMode('create')
     setSelectedEncomendaId(null)
-    setForm(buildInitialFormState())
+    setForm(buildInitialFormState(codigoExterno))
     setShowFormModal(true)
+  }
+
+  function openVerificarModal(): void {
+    setVerificarError(null)
+    setShowVerificarModal(true)
+  }
+
+  async function onConfirmVerificar(codigo: string): Promise<void> {
+    setVerificarLoading(true)
+    setVerificarError(null)
+    try {
+      const { data } = await backendApi.get<EncomendaListItem[]>('/encomendas')
+      setItems(data)
+      const match = findMatchingEncomenda(data, codigo)
+      if (!match) {
+        setShowVerificarModal(false)
+        openCreateModal(codigo)
+        return
+      }
+
+      setEncomendaVerificada(match)
+      setShowVerificarModal(false)
+      setShowResumoVerificacaoModal(true)
+    } catch (err) {
+      setVerificarError(readApiError(err))
+    } finally {
+      setVerificarLoading(false)
+    }
   }
 
   async function openEditModal(item: EncomendaListItem): Promise<void> {
@@ -480,6 +534,7 @@ export function EncomendasPage(): JSX.Element {
         sortBy={sortBy}
         onSortByChange={setSortBy}
         onCreate={openCreateModal}
+        onVerify={openVerificarModal}
       />
 
       <article className="card section-card">
@@ -699,6 +754,84 @@ export function EncomendasPage(): JSX.Element {
           onSubmit={onSaveForm}
           onMoradorCreated={onMoradorCreated}
         />
+      ) : null}
+
+      {showVerificarModal ? (
+        <VerificarEncomendaModal
+          loading={verificarLoading}
+          error={verificarError}
+          onClose={() => {
+            setShowVerificarModal(false)
+            setVerificarError(null)
+          }}
+          onConfirm={onConfirmVerificar}
+        />
+      ) : null}
+
+      {showResumoVerificacaoModal && encomendaVerificada ? (
+        <div className="modal-overlay" role="dialog" aria-modal="true">
+          <div className="modal-card morador-modal encomenda-verificacao-modal">
+            <h3>Encomenda localizada</h3>
+            <div className="summary-grid">
+              <div className="summary-card">
+                <span>Código de Rastreio</span>
+                <strong>{encomendaVerificada.codigo_externo || '-'}</strong>
+              </div>
+              <div className="summary-card">
+                <span>Status</span>
+                <strong>{statusLabel(encomendaVerificada.status)}</strong>
+              </div>
+              <div className="summary-card">
+                <span>Tipo</span>
+                <strong>{encomendaVerificada.tipo}</strong>
+              </div>
+              <div className="summary-card">
+                <span>Morador</span>
+                <strong>{encomendaVerificada.morador_nome ?? `Morador #${encomendaVerificada.morador_id}`}</strong>
+              </div>
+            </div>
+            <div className="modal-data operation-modal-data">
+              <p><strong>Empresa responsável:</strong> {encomendaVerificada.empresa_entregadora || '-'}</p>
+              <p><strong>Recebimento:</strong> {encomendaVerificada.data_recebimento || '-'}</p>
+              <p><strong>Data de entrega:</strong> {encomendaVerificada.data_entrega || '-'}</p>
+              {(() => {
+                const endereco = enderecosById.get(encomendaVerificada.endereco_id)
+                const parts = getEnderecoParts(endereco)
+                return (
+                  <div className="address-stack">
+                    <p><strong>{parts.firstLabel}:</strong> {parts.firstValue}</p>
+                    <p><strong>{parts.secondLabel}:</strong> {parts.secondValue}</p>
+                    <p><strong>{parts.thirdLabel}:</strong> {parts.thirdValue}</p>
+                  </div>
+                )
+              })()}
+            </div>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="button-soft"
+                onClick={() => {
+                  setShowResumoVerificacaoModal(false)
+                  setEncomendaVerificada(null)
+                }}
+              >
+                Fechar
+              </button>
+              {canEntregar(encomendaVerificada) ? (
+                <button
+                  type="button"
+                  className="cta"
+                  onClick={() => {
+                    setShowResumoVerificacaoModal(false)
+                    openEntregarModal(encomendaVerificada)
+                  }}
+                >
+                  Entregar encomenda
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
       ) : null}
 
       {showViewModal ? (

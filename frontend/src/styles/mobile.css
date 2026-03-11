@@ -610,3 +610,20 @@
     padding: 0 0.7rem;
   }
 }
+
+@media (max-width: 900px) {
+  .scanner-field {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.42rem;
+  }
+
+  .scanner-field input {
+    min-width: 0;
+  }
+
+  .scanner-field .scanner-open-action {
+    white-space: nowrap;
+  }
+}

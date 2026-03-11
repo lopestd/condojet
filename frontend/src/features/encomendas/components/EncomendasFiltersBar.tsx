@@ -8,6 +8,7 @@ type Props = {
   sortBy: EncomendaSort
   onSortByChange: (value: EncomendaSort) => void
   onCreate: () => void
+  onVerify: () => void
 }
 
 const FILTERS: Array<{ value: EncomendaFilter; label: string }> = [
@@ -24,13 +25,18 @@ export function EncomendasFiltersBar({
   onStatusFilterChange,
   sortBy,
   onSortByChange,
-  onCreate
+  onCreate,
+  onVerify
 }: Props): JSX.Element {
   return (
     <section className="encomendas-controls card" aria-label="Filtros de encomendas">
       <div className="encomendas-controls-head">
-        <button type="button" className="cta" onClick={onCreate}>
-          Nova encomenda
+        <button type="button" className="cta encomendas-primary-action" onClick={onCreate}>
+          <span aria-hidden="true" className="action-icon-plus">+</span>
+          <span>Nova encomenda</span>
+        </button>
+        <button type="button" className="cta encomendas-verify-action" onClick={onVerify}>
+          Verificar encomenda
         </button>
       </div>
 

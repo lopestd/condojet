@@ -197,6 +197,35 @@
   margin-bottom: -0.08rem;
 }
 
+.encomendas-primary-action,
+.encomendas-verify-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.action-icon-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 0.96rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.encomendas-verify-action {
+  background: linear-gradient(130deg, #1f7a5b, #16573f);
+  border-color: #0f4a34;
+}
+
+.encomendas-verify-action:hover {
+  background: linear-gradient(130deg, #196449, #104632);
+}
+
 .encomendas-controls-head h2 {
   margin: 0;
   font-size: 1rem;
@@ -369,6 +398,10 @@
 
 .encomendas-page .operation-table tbody tr.row-openable {
   cursor: pointer;
+}
+
+.encomenda-verificacao-modal {
+  width: min(760px, 100%);
 }
 
 .encomendas-page .actions-cell {
