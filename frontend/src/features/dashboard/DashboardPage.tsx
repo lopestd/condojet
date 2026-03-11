@@ -347,12 +347,12 @@ export function DashboardPage(): JSX.Element {
 
       <section className={`kpi-grid dashboard-kpi-grid${isMoradorView ? ' dashboard-kpi-grid-morador' : ''}`}>
         <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-recebidas">
-          <span>Recebidas</span>
+          <span>{isMoradorView ? 'Recebidas na portaria' : 'Recebidas'}</span>
           <strong>{dashboardData.todayReceived}</strong>
           <small>{`Entradas registradas ${periodLabel}`}</small>
         </article>
         <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-entregue">
-          <span>Entregues</span>
+          <span>{isMoradorView ? 'Retiradas' : 'Entregues'}</span>
           <strong>{dashboardData.entregue}</strong>
           <small>{`Concluídas ${periodLabel}`}</small>
         </article>
@@ -369,7 +369,7 @@ export function DashboardPage(): JSX.Element {
             <strong>{dashboardData.aguardando}</strong>
             <em className="dashboard-kpi-stock-tag">ESTOQUE ATUAL</em>
           </div>
-          <small>Todas as encomendas ainda não entregues (independente do período).</small>
+          <small>Todas as encomendas pendentes de retirada</small>
         </article>
         <article className="panel kpi-highlight dashboard-kpi dashboard-kpi-atrasado dashboard-kpi-stock">
           <span>Esquecidas</span>
@@ -380,7 +380,6 @@ export function DashboardPage(): JSX.Element {
           <small>
             Encomendas aguardando retirada{' '}
             <strong>{`há mais de ${forgottenDaysThreshold} dias`}</strong>
-            {' '} (independente do período).
           </small>
         </article>
       </section>

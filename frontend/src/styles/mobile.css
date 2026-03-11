@@ -137,6 +137,26 @@
     grid-column: span 2;
   }
 
+  .dashboard-page-morador .dashboard-kpi {
+    container-type: inline-size;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .dashboard-page-morador .dashboard-kpi span {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    font-size: clamp(0.68rem, 8cqi, 0.96rem);
+    line-height: 1.2;
+    letter-spacing: 0.005em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+  }
+
   .content-two {
     grid-template-columns: 1fr;
   }

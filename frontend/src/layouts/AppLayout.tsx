@@ -20,7 +20,7 @@ const NAV_ITEMS: NavItem[] = [
   {
     path: '/condo/minhas-encomendas',
     label: 'Minhas Encomendas',
-    shortLabel: 'Minhas',
+    shortLabel: 'Encomendas',
     icon: 'my-packages',
     roles: ['MORADOR']
   }
