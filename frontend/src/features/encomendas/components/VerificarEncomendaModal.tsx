@@ -11,6 +11,29 @@ type Props = {
   onConfirm: (codigo: string) => Promise<void> | void
 }
 
+function extractBestAlnumToken(raw: string): string {
+  const text = raw.trim()
+  if (!text) return ''
+
+  const quotedMatches = Array.from(text.matchAll(/"([^"]+)"/g)).map((match) => match[1] ?? '')
+  const candidates = quotedMatches.length > 0 ? quotedMatches : [text]
+
+  let best = ''
+  for (const candidate of candidates) {
+    const alnumRuns = candidate.match(/[A-Za-z0-9]+/g) ?? []
+    for (const run of alnumRuns) {
+      if (run.length > best.length) {
+        best = run
+      }
+    }
+  }
+
+  if (best) return best
+
+  const fallbackRuns = text.match(/[A-Za-z0-9]+/g) ?? []
+  return fallbackRuns.sort((a, b) => b.length - a.length)[0] ?? ''
+}
+
 export function VerificarEncomendaModal({
   initialCode = '',
   loading,
@@ -58,11 +81,16 @@ export function VerificarEncomendaModal({
 
   async function submitCodigo(raw: string): Promise<void> {
     if (loading) return
-    const codigoNormalizado = raw.trim()
+    const codigoNormalizado = extractBestAlnumToken(raw)
     if (!codigoNormalizado) {
       setLocalError('Informe o QRCode/Código de Barras.')
       return
     }
+    if (codigoNormalizado.length > 20) {
+      setLocalError('Código inválido: máximo de 20 caracteres alfanuméricos.')
+      return
+    }
+    setCodigo(codigoNormalizado)
     setLocalError(null)
     await onConfirm(codigoNormalizado)
   }
@@ -77,7 +105,9 @@ export function VerificarEncomendaModal({
   }
 
   function onCodigoChange(event: ChangeEvent<HTMLInputElement>): void {
-    const next = event.target.value
+    const nextRaw = event.target.value
+    const extractedPreferred = extractBestAlnumToken(nextRaw)
+    const next = extractedPreferred || nextRaw.replace(/[^A-Za-z0-9]/g, '')
     setCodigo(next)
     setLocalError(null)
 
@@ -89,6 +119,11 @@ export function VerificarEncomendaModal({
     if (autoSubmitTimerRef.current !== null) {
       window.clearTimeout(autoSubmitTimerRef.current)
       autoSubmitTimerRef.current = null
+    }
+
+    if (next.length > 20) {
+      setLocalError('Código inválido: máximo de 20 caracteres alfanuméricos.')
+      return
     }
 
     const nextTrimmed = next.trim()
@@ -111,9 +146,18 @@ export function VerificarEncomendaModal({
 
   function onScannerDetected(value: string): void {
     setScannerOpen(false)
-    setCodigo(value)
+    const extracted = extractBestAlnumToken(value)
+    if (!extracted) {
+      setLocalError('Não foi possível identificar um código alfanumérico válido.')
+      return
+    }
+    if (extracted.length > 20) {
+      setLocalError('Código inválido: máximo de 20 caracteres alfanuméricos.')
+      return
+    }
+    setCodigo(extracted)
     setCameraError(null)
-    void submitCodigo(value)
+    void submitCodigo(extracted)
   }
 
   return (
@@ -136,6 +180,7 @@ export function VerificarEncomendaModal({
                   onChange={onCodigoChange}
                   onKeyDown={onCodigoKeyDown}
                   placeholder="Digite ou leia o código"
+                  maxLength={20}
                   autoFocus
                   required
                 />

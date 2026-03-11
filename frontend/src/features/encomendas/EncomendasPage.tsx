@@ -319,7 +319,11 @@ export function EncomendasPage(): JSX.Element {
     }
   }
 
-  function openCreateModal(codigoExterno = ''): void {
+  function openCreateModal(): void {
+    openCreateModalWithCode('')
+  }
+
+  function openCreateModalWithCode(codigoExterno: string): void {
     setError(null)
     setFeedback(null)
     setFormMode('create')
@@ -342,7 +346,7 @@ export function EncomendasPage(): JSX.Element {
       const match = findMatchingEncomenda(data, codigo)
       if (!match) {
         setShowVerificarModal(false)
-        openCreateModal(codigo)
+        openCreateModalWithCode(codigo)
         return
       }
 
