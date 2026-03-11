@@ -67,6 +67,7 @@ def list_encomendas(
             "morador_id": item.morador_id,
             "morador_nome": morador_nome,
             "endereco_id": item.endereco_id,
+            "empresa_entregadora": item.empresa_entregadora,
             "notificado_em": item.notificado_em,
             "notificado_por": item.notificado_por,
             "notificacao_status": item.notificacao_status,

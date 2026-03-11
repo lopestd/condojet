@@ -12,6 +12,7 @@ export type EncomendaListItem = {
   morador_nome?: string | null
   endereco_id: number
   endereco_label?: string | null
+  empresa_entregadora?: string | null
   data_recebimento?: string | null
   hora_recebimento?: string | null
   data_entrega?: string | null

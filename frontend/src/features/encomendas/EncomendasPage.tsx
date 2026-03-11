@@ -521,11 +521,12 @@ export function EncomendasPage(): JSX.Element {
             <table className="operation-table">
               <thead>
                 <tr>
-                  <th>Data Rec</th>
+                  <th>DATA_ENTRADA</th>
+                  <th>TIPO</th>
+                  <th>EMPRESA</th>
                   <th>Morador</th>
                   <th>Endereço</th>
-                  <th>Tipo</th>
-                  <th>Data Entrega</th>
+                  <th>DATA_RETIRADA</th>
                   <th>Status</th>
                   <th className="actions-col">Ações</th>
                 </tr>
@@ -540,6 +541,13 @@ export function EncomendasPage(): JSX.Element {
                     }}
                   >
                     <td>{formatDateBR(item.data_recebimento)}</td>
+                    <td>
+                      <div className="morador-stack">
+                        <span>{item.tipo}</span>
+                        <span className="rastreio-pill">{item.codigo_externo || '-'}</span>
+                      </div>
+                    </td>
+                    <td>{item.empresa_entregadora || '-'}</td>
                     <td>{item.morador_nome ?? `Morador #${item.morador_id}`}</td>
                     <td>
                       {(() => {
@@ -553,12 +561,6 @@ export function EncomendasPage(): JSX.Element {
                           </div>
                         )
                       })()}
-                    </td>
-                    <td>
-                      <div className="morador-stack">
-                        <span>{item.tipo}</span>
-                        <span className="rastreio-pill">{item.codigo_externo || '-'}</span>
-                      </div>
                     </td>
                     <td>{item.data_entrega ? formatDateBR(item.data_entrega) : '-'}</td>
                     <td>

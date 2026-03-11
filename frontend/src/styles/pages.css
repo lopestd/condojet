@@ -371,6 +371,33 @@
   cursor: pointer;
 }
 
+.encomendas-page .actions-cell {
+  min-width: 84px;
+}
+
+.encomendas-page .operation-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+@media (max-width: 1280px) {
+  .encomendas-page .operation-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 34px);
+  }
+}
+
+.encomendas-page .operation-table td:nth-child(4) {
+  min-width: 210px;
+}
+
+.encomendas-page .operation-table td:nth-child(5) .address-stack {
+  min-width: 120px;
+  max-width: 160px;
+}
+
 .resident-encomendas-page .operation-table tbody tr.row-openable,
 .resident-encomendas-page .resident-encomenda-card.row-openable {
   cursor: pointer;
