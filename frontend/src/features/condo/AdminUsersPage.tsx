@@ -70,6 +70,11 @@ export function AdminUsersPage(): JSX.Element {
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
   const [savingUsuario, setSavingUsuario] = useState(false);
   const [usuarioForm, setUsuarioForm] = useState<UsuarioFormState>(buildInitialForm);
+  const isResponsavelAdminAtivoEmEdicao =
+    formMode === 'edit' &&
+    selectedUsuario?.perfil === 'ADMIN' &&
+    Boolean(selectedUsuario?.responsavel_sistema) &&
+    Boolean(selectedUsuario?.ativo);
 
   const pageSizeStorageKey = useMemo(() => {
     const identity = `${user?.role ?? 'anon'}:${user?.condominioId ?? 'global'}:${user?.nomeUsuario ?? 'anon'}`;
@@ -192,6 +197,18 @@ export function AdminUsersPage(): JSX.Element {
     event.preventDefault();
     setError(null);
     setFeedback(null);
+
+    if (
+      formMode === 'edit' &&
+      selectedUsuario &&
+      selectedUsuario.perfil === 'ADMIN' &&
+      selectedUsuario.responsavel_sistema &&
+      selectedUsuario.ativo &&
+      usuarioForm.ativo === false
+    ) {
+      setError('O usuário ADMIN responsável não pode ser inativado.');
+      return;
+    }
 
     setSavingUsuario(true);
     try {
@@ -521,9 +538,13 @@ export function AdminUsersPage(): JSX.Element {
                     type="checkbox"
                     checked={usuarioForm.ativo}
                     onChange={(e) => setUsuarioForm((v) => ({ ...v, ativo: e.target.checked }))}
+                    disabled={isResponsavelAdminAtivoEmEdicao}
                   />
                   Usuário ativo
                 </label>
+              ) : null}
+              {formMode === 'edit' && isResponsavelAdminAtivoEmEdicao ? (
+                <p className="table-meta">ADMIN responsável não pode ser inativado.</p>
               ) : null}
 
               <div className="modal-actions">

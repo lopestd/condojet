@@ -363,6 +363,37 @@
     margin-left: 0;
     padding-left: 0;
     border-left: 0;
+    justify-items: end;
+    gap: 0.22rem;
+  }
+
+  .layout-root.desktop-sidebar-collapsed .sidebar-subnav .sidebar-sublink {
+    width: 46px;
+    min-height: 36px;
+    padding: 0;
+    margin-left: auto;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+  }
+
+  .layout-root.desktop-sidebar-collapsed .sidebar-subnav .sidebar-sublink .sidebar-link-content {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+  }
+
+  .layout-root.desktop-sidebar-collapsed .sidebar-subnav .sidebar-sublink .sidebar-link-icon {
+    width: 24px;
+    height: 24px;
+    margin: 0;
+  }
+
+  .layout-root.desktop-sidebar-collapsed .sidebar-subnav .sidebar-sublink .sidebar-link-icon svg {
+    display: block;
+    margin: auto;
   }
 
   .layout-root.desktop-sidebar-collapsed .user-card {
