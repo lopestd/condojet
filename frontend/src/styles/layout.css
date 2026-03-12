@@ -19,7 +19,8 @@
 }
 
 .brand-block {
-  padding: 0.48rem 0.5rem 0.82rem;
+  position: relative;
+  padding: 0.48rem 2.6rem 0.82rem 0.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
@@ -40,6 +41,10 @@
   display: block;
   margin-top: 0.4rem;
   color: rgba(232, 246, 241, 0.82);
+}
+
+.sidebar-collapse-toggle {
+  display: none;
 }
 
 .sidebar-nav {
@@ -264,6 +269,38 @@
     max-height: 100vh;
   }
 
+  .sidebar-collapse-toggle {
+    display: inline-flex;
+    position: absolute;
+    top: 0.04rem;
+    right: 0.3rem;
+    z-index: 2;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .sidebar-collapse-toggle svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .sidebar-collapse-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.45);
+  }
+
   .sidebar-footer {
     flex-shrink: 0;
   }
@@ -280,5 +317,72 @@
   .sidebar-sublink .sidebar-link-icon {
     width: 24px;
     height: 24px;
+  }
+
+  .layout-root.desktop-sidebar-collapsed .app-sidebar {
+    width: var(--sidebar-collapsed-width);
+    padding-left: 0.56rem;
+    padding-right: 0.56rem;
+  }
+
+  .layout-root.desktop-sidebar-collapsed .app-main {
+    margin-left: var(--sidebar-collapsed-width);
+    width: calc(100% - var(--sidebar-collapsed-width));
+  }
+
+  .layout-root.desktop-sidebar-collapsed .brand-block {
+    padding-left: 0.24rem;
+    padding-right: 0.24rem;
+    padding-top: 0.18rem;
+    padding-bottom: 0.58rem;
+    min-height: 44px;
+  }
+
+  .layout-root.desktop-sidebar-collapsed .brand-block h1,
+  .layout-root.desktop-sidebar-collapsed .brand-block small,
+  .layout-root.desktop-sidebar-collapsed .brand-block .brand-eyebrow {
+    display: none;
+  }
+
+  .layout-root.desktop-sidebar-collapsed .sidebar-link,
+  .layout-root.desktop-sidebar-collapsed .sidebar-sublink {
+    padding-left: 0.42rem;
+    padding-right: 0.42rem;
+  }
+
+  .layout-root.desktop-sidebar-collapsed .sidebar-link-content {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .layout-root.desktop-sidebar-collapsed .sidebar-link-content > span:last-child {
+    display: none;
+  }
+
+  .layout-root.desktop-sidebar-collapsed .sidebar-subnav {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .layout-root.desktop-sidebar-collapsed .user-card {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+  }
+
+  .layout-root.desktop-sidebar-collapsed .user-card-main {
+    display: none;
+  }
+
+  .layout-root.desktop-sidebar-collapsed .user-card-logout {
+    width: 100%;
+    min-width: 0;
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }

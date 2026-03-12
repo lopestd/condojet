@@ -67,6 +67,8 @@ const TITLES: Record<string, string> = {
   '/condo/config/gerais': 'Configurações - Gerais'
 };
 
+const DESKTOP_SIDEBAR_COLLAPSED_KEY = 'condojet:layout:desktop_sidebar_collapsed';
+
 function getRoleLabel(role?: UserRole): string {
   if (!role) return '';
   return role === 'PORTEIRO' ? 'ATENDENTE' : role;
@@ -197,6 +199,10 @@ export function AppLayout(): JSX.Element {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(DESKTOP_SIDEBAR_COLLAPSED_KEY) === '1';
+  });
   const [isMobileViewport, setIsMobileViewport] = useState<boolean>(() =>
     typeof window !== 'undefined' ? window.innerWidth <= 900 : false
   );
@@ -223,9 +229,18 @@ export function AppLayout(): JSX.Element {
   const profileLabel = getRoleLabel(user?.role);
   const usuarioLabel = user ? `${user.nomeUsuario} (${profileLabel})` : 'Usuário';
   const emailLabel = user?.email?.trim() ? user.email : 'Carregando e-mail...';
+  const desktopCollapsedClass = !isMobileViewport && desktopSidebarCollapsed ? ' desktop-sidebar-collapsed' : '';
+
+  function toggleDesktopSidebar(): void {
+    setDesktopSidebarCollapsed((previous) => {
+      const next = !previous;
+      window.localStorage.setItem(DESKTOP_SIDEBAR_COLLAPSED_KEY, next ? '1' : '0');
+      return next;
+    });
+  }
 
   return (
-    <main className={mobileMenuOpen ? 'layout-root menu-open' : 'layout-root'}>
+    <main className={mobileMenuOpen ? `layout-root menu-open${desktopCollapsedClass}` : `layout-root${desktopCollapsedClass}`}>
       <button
         type="button"
         className="mobile-menu-toggle"
@@ -239,6 +254,31 @@ export function AppLayout(): JSX.Element {
 
       <aside className={mobileMenuOpen ? 'app-sidebar open' : 'app-sidebar'}>
         <div className="brand-block">
+          {!isMobileViewport ? (
+            <button
+              type="button"
+              className="sidebar-collapse-toggle"
+              onClick={toggleDesktopSidebar}
+              aria-label={desktopSidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+            title={desktopSidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              {desktopSidebarCollapsed ? (
+                <>
+                  <path d="m2.5 6 4 6-4 6" />
+                  <path d="m10 6 4 6-4 6" />
+                  <path d="m17.5 6 4 6-4 6" />
+                </>
+              ) : (
+                <>
+                  <path d="m21.5 6-4 6 4 6" />
+                  <path d="m14 6-4 6 4 6" />
+                  <path d="m6.5 6-4 6 4 6" />
+                </>
+              )}
+            </svg>
+          </button>
+        ) : null}
           <p className="brand-eyebrow">Plataforma</p>
           <h1>CondoJET</h1>
           <small>Gestão de encomendas em condomínios</small>
