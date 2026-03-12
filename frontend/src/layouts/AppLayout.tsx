@@ -412,7 +412,7 @@ export function AppLayout(): JSX.Element {
           <header className="app-topbar">
             <div>
               <h2>{pageTitle}</h2>
-              <p>CondoJET em operação segura e orientada por perfil.</p>
+              <p>[CondoJET] Gestão eficiente de encomendas em condomínios</p>
             </div>
           </header>
         ) : null}

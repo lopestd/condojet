@@ -170,6 +170,7 @@
   }
 
   .dashboard-page-morador .dashboard-hero {
+    position: relative;
     padding: 0.7rem 0.76rem;
     gap: 0.34rem;
   }
@@ -192,6 +193,8 @@
     display: flex;
     align-items: center;
     gap: 0.36rem;
+    min-height: 2rem;
+    padding-right: 9.2rem;
     font-size: 0.72rem;
     letter-spacing: 0.06em;
   }
@@ -208,16 +211,24 @@
     white-space: nowrap;
     text-transform: none;
     letter-spacing: 0.01em;
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     font-weight: 700;
     color: rgba(226, 238, 252, 0.96);
   }
 
   .dashboard-page-morador .dashboard-hero-kicker-datetime {
-    display: block;
-    margin-left: auto;
+    display: grid;
+    align-items: center;
+    margin-left: 0;
     flex: 0 0 auto;
+    position: absolute;
+    top: 0.68rem;
+    right: 0.76rem;
     text-align: right;
+    padding: 0.2rem 0.45rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
   }
 }
 
@@ -310,6 +321,7 @@
   }
 
   .dashboard-page-morador .dashboard-hero {
+    position: relative;
     padding: 0.7rem 0.76rem;
     gap: 0.34rem;
   }
@@ -332,6 +344,8 @@
     display: flex;
     align-items: center;
     gap: 0.36rem;
+    min-height: 2rem;
+    padding-right: 9.2rem;
     font-size: 0.72rem;
     letter-spacing: 0.06em;
   }
@@ -348,16 +362,24 @@
     white-space: nowrap;
     text-transform: none;
     letter-spacing: 0.01em;
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     font-weight: 700;
     color: rgba(226, 238, 252, 0.96);
   }
 
   .dashboard-page-morador .dashboard-hero-kicker-datetime {
-    display: block;
-    margin-left: auto;
+    display: grid;
+    align-items: center;
+    margin-left: 0;
     flex: 0 0 auto;
+    position: absolute;
+    top: 0.68rem;
+    right: 0.76rem;
     text-align: right;
+    padding: 0.2rem 0.45rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
   }
 
   .dashboard-alert-item {
@@ -513,10 +535,11 @@
 
   .encomendas-page .encomenda-empresa {
     margin: 0;
-    font-size: 1.02rem;
+    font-size: 1.08rem;
     line-height: 1.25;
-    font-weight: 800;
-    color: #1c2c44;
+    font-weight: 900;
+    color: #162b43;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.24);
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -531,11 +554,12 @@
   .encomendas-page .encomenda-code-highlight {
     display: inline-flex;
     align-items: center;
-    background: #fff3c9;
-    border: 1px solid #f0ddb0;
+    background: #eef2f6;
+    border: 0;
     border-radius: 7px;
     padding: 0.18rem 0.42rem;
-    color: #233247;
+    color: #1a2f46;
+    font-weight: 900;
   }
 
   .encomendas-page .encomenda-tipo {
@@ -657,10 +681,11 @@
 
   .resident-encomendas-page .resident-encomenda-empresa {
     margin: 0;
-    font-size: 0.96rem;
+    font-size: 1.02rem;
     line-height: 1.24;
-    font-weight: 800;
-    color: #1c2c44;
+    font-weight: 900;
+    color: #162b43;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.24);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -676,11 +701,12 @@
   .resident-encomendas-page .encomenda-code-highlight {
     display: inline-flex;
     align-items: center;
-    background: #fff3c9;
-    border: 1px solid #f0ddb0;
+    background: #eef2f6;
+    border: 0;
     border-radius: 7px;
     padding: 0.18rem 0.42rem;
-    color: #233247;
+    color: #1a2f46;
+    font-weight: 900;
   }
 
   .resident-encomendas-page .resident-encomenda-tipo {
@@ -729,6 +755,18 @@
     grid-template-columns: 1fr;
   }
 
+  .encomenda-verificacao-endereco-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .encomenda-detalhe-modal .summary-grid {
+    gap: 0.36rem;
+  }
+
+  .encomenda-detalhe-modal .summary-card {
+    padding: 0.42rem 0.48rem;
+  }
+
   .resident-encomendas-page .resident-encomendas-controls {
     grid-template-columns: 1fr;
     gap: 0.34rem;
@@ -736,13 +774,23 @@
   }
 
   .resident-encomendas-page .resident-status-filters {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.32rem;
+    width: 100%;
+    overflow: visible;
+    padding-bottom: 0;
   }
 
   .resident-encomendas-page .resident-status-filters .chip-filter {
-    min-height: 30px;
+    min-height: 34px;
+    width: 100%;
+    flex: 1 1 auto;
     font-size: 0.74rem;
-    padding: 0.2rem 0.46rem;
+    padding: 0.2rem 0.3rem;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
   }
 
   .resident-encomendas-page .resident-date-filters-grid {
@@ -815,6 +863,26 @@
     white-space: nowrap;
   }
 
+  .resident-encomendas-page .resident-status-filters {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    overflow: visible;
+    gap: 0.3rem;
+    padding-bottom: 0;
+  }
+
+  .resident-encomendas-page .resident-status-filters .chip-filter {
+    width: 100%;
+    min-height: 34px;
+    flex: 1 1 auto;
+    padding: 0.24rem 0.26rem;
+    font-size: 0.72rem;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+  }
+
   .encomendas-cards-grid,
   .encomendas-skeleton-grid,
   .wizard-steps {
@@ -826,7 +894,7 @@
   }
 
   .encomendas-page .encomenda-empresa {
-    font-size: 0.96rem;
+    font-size: 1rem;
   }
 
   .encomendas-page .encomenda-morador,
@@ -835,7 +903,7 @@
   }
 
   .resident-encomendas-page .resident-encomenda-empresa {
-    font-size: 0.9rem;
+    font-size: 0.96rem;
   }
 
   .resident-encomendas-page .resident-encomenda-destinatario {
@@ -931,6 +999,28 @@
     height: 2.5rem;
     border-width: 2px;
     box-shadow: 0 3px 10px rgba(17, 51, 85, 0.18);
+  }
+
+  .encomenda-detalhe-top-close-icon.reports-mgr-modal-close {
+    width: 2.78rem;
+    height: 1.76rem;
+    top: -0.08rem;
+    right: -0.08rem;
+    border-width: 1px;
+    border-radius: 8px;
+    background: var(--brand-soft);
+    border-color: #d8e2ef;
+    color: #1f3552;
+    box-shadow: 0 2px 6px rgba(31, 53, 82, 0.18);
+  }
+
+  .encomenda-detalhe-top-close-icon.reports-mgr-modal-close svg {
+    width: 1.16rem;
+    height: 1.16rem;
+  }
+
+  .encomenda-detalhe-top-close-icon.reports-mgr-modal-close path {
+    stroke-width: 2.8;
   }
 
   .reports-mgr-detail-filters {

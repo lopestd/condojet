@@ -27,7 +27,6 @@ type DetailStatus = 'ENTREGUES' | 'AGUARDANDO_RETIRADA' | 'ESQUECIDAS';
 type AnalyticsItem = EncomendaListItem & {
   receivedAt: Date | null;
   deliveredAt: Date | null;
-  enderecoNome: string;
   endereco?: Endereco;
 };
 
@@ -57,7 +56,8 @@ type ReportDetailRow = {
   moradorNome: string;
   contatoMorador: string;
   endereco: {
-    quadra: string;
+    firstLabel: string;
+    firstValue: string;
     secondLabel: string;
     secondValue: string;
     thirdLabel: string;
@@ -151,23 +151,22 @@ function fromIsoDate(value: string): string {
   return parsed ? formatBrDate(parsed) : '';
 }
 
-function buildEnderecoLabel(endereco?: Endereco): string {
-  if (!endereco) return 'Não informado';
-  const parts = [endereco.quadra, endereco.conjunto, endereco.lote].filter(Boolean);
-  if (parts.length > 0) return parts.join(' - ');
-  return endereco.tipo_endereco || `Endereço ${endereco.id}`;
-}
-
 function getEnderecoParts(endereco: Endereco | undefined): {
-  quadra: string;
+  firstLabel: string;
+  firstValue: string;
   secondLabel: string;
   secondValue: string;
   thirdLabel: string;
   thirdValue: string;
 } {
+  function formatValue(value: string | null | undefined): string {
+    return value && value.trim().length > 0 ? value : '-';
+  }
+
   if (!endereco) {
     return {
-      quadra: '-',
+      firstLabel: 'Quadra',
+      firstValue: '-',
       secondLabel: 'Conjunto',
       secondValue: '-',
       thirdLabel: 'Lote',
@@ -175,22 +174,46 @@ function getEnderecoParts(endereco: Endereco | undefined): {
     };
   }
 
+  if (endereco.tipo_condominio_slug === 'PREDIO_CONJUNTO') {
+    return {
+      firstLabel: 'Bloco',
+      firstValue: formatValue(endereco.bloco),
+      secondLabel: 'Andar',
+      secondValue: formatValue(endereco.andar),
+      thirdLabel: 'Apartamento',
+      thirdValue: formatValue(endereco.apartamento)
+    };
+  }
+
+  if (endereco.tipo_condominio_slug === 'HORIZONTAL') {
+    return {
+      firstLabel: endereco.tipo_logradouro_campo_nome || 'Tipo',
+      firstValue: formatValue(endereco.tipo_logradouro_nome),
+      secondLabel: endereco.subtipo_logradouro_campo_nome || 'Subtipo',
+      secondValue: formatValue(endereco.subtipo_logradouro_nome),
+      thirdLabel: 'Número',
+      thirdValue: formatValue(endereco.numero)
+    };
+  }
+
   if (endereco.tipo_endereco === 'QUADRA_SETOR_CHACARA') {
     return {
-      quadra: endereco.quadra || '-',
+      firstLabel: 'Quadra',
+      firstValue: formatValue(endereco.quadra),
       secondLabel: 'Setor/Chácara',
-      secondValue: endereco.setor_chacara || '-',
+      secondValue: formatValue(endereco.setor_chacara),
       thirdLabel: 'Número Chácara',
-      thirdValue: endereco.numero_chacara || '-'
+      thirdValue: formatValue(endereco.numero_chacara)
     };
   }
 
   return {
-    quadra: endereco.quadra || '-',
+    firstLabel: 'Quadra',
+    firstValue: formatValue(endereco.quadra),
     secondLabel: 'Conjunto',
-    secondValue: endereco.conjunto || '-',
+    secondValue: formatValue(endereco.conjunto),
     thirdLabel: 'Lote',
-    thirdValue: endereco.lote || '-'
+    thirdValue: formatValue(endereco.lote)
   };
 }
 
@@ -248,7 +271,7 @@ export function ReportsPage(): JSX.Element {
       try {
         const [encomendasResponse, enderecosResponse, moradoresResponse] = await Promise.all([
           backendApi.get<EncomendaListItem[]>('/encomendas'),
-          backendApi.get<Endereco[]>('/enderecos'),
+          backendApi.get<Endereco[]>('/enderecos/v2'),
           backendApi.get<MoradorContato[]>('/moradores')
         ]);
 
@@ -266,7 +289,6 @@ export function ReportsPage(): JSX.Element {
             ...item,
             receivedAt: parseDateTime(item.data_recebimento, item.hora_recebimento),
             deliveredAt: parseDateTime(item.data_entrega),
-            enderecoNome: item.endereco_label?.trim() || buildEnderecoLabel(endereco),
             endereco
           };
         });
@@ -544,7 +566,7 @@ export function ReportsPage(): JSX.Element {
         formatAguardandoValue(row),
         row.dataEntrega,
         row.moradorNome,
-        `Quadra: ${row.endereco.quadra}\n${row.endereco.secondLabel}: ${row.endereco.secondValue}\n${row.endereco.thirdLabel}: ${row.endereco.thirdValue}`,
+        `${row.endereco.firstLabel}: ${row.endereco.firstValue}\n${row.endereco.secondLabel}: ${row.endereco.secondValue}\n${row.endereco.thirdLabel}: ${row.endereco.thirdValue}`,
         row.contatoMorador
       ]);
 
@@ -585,7 +607,7 @@ export function ReportsPage(): JSX.Element {
         AGUARDANDO: formatAguardandoValue(row),
         DATA_ENTREGA: row.dataEntrega,
         MORADOR: row.moradorNome,
-        ENDERECO: `Quadra: ${row.endereco.quadra} | ${row.endereco.secondLabel}: ${row.endereco.secondValue} | ${row.endereco.thirdLabel}: ${row.endereco.thirdValue}`,
+        ENDERECO: `${row.endereco.firstLabel}: ${row.endereco.firstValue} | ${row.endereco.secondLabel}: ${row.endereco.secondValue} | ${row.endereco.thirdLabel}: ${row.endereco.thirdValue}`,
         CONTATO: row.contatoMorador
       }));
 
@@ -918,7 +940,7 @@ export function ReportsPage(): JSX.Element {
                       <td>
                         <div className="reports-mgr-endereco-stack">
                           <p>
-                            <strong>Quadra:</strong> {row.endereco.quadra}
+                            <strong>{row.endereco.firstLabel}:</strong> {row.endereco.firstValue}
                           </p>
                           <p>
                             <strong>{row.endereco.secondLabel}:</strong> {row.endereco.secondValue}

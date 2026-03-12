@@ -375,7 +375,20 @@ export function ResidentPage(): JSX.Element {
       {showViewModal ? (
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal-card morador-modal encomenda-detalhe-modal">
-            <h3>Detalhes da encomenda</h3>
+            <div className="encomenda-detalhe-head">
+              <h3>Detalhes da encomenda</h3>
+              <button
+                type="button"
+                className="reports-mgr-modal-close encomenda-detalhe-top-close-icon"
+                aria-label="Fechar modal"
+                onClick={() => setShowViewModal(false)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 6L18 18" />
+                  <path d="M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
             {detailLoading ? <p className="info-box">Carregando detalhes...</p> : null}
             {detail ? (
               <div className="detail-content">

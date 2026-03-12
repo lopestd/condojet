@@ -56,8 +56,14 @@ type ConfiguracoesResponse = {
 type MinhasEncomendasResponseItem = {
   id: number
   codigo_interno: string
+  codigo_externo?: string | null
   status: EncomendaListItem['status']
   tipo: EncomendaListItem['tipo']
+  morador_id?: number | null
+  morador_nome?: string | null
+  empresa_entregadora?: string | null
+  data_recebimento?: string | null
+  data_entrega?: string | null
 }
 
 function resolveDateRange(now: Date, period: ViewPeriod, dataAnchor: Date): DateRange {
@@ -172,12 +178,15 @@ export function DashboardPage(): JSX.Element {
               id: item.id,
               condominio_id: 0,
               codigo_interno: item.codigo_interno,
+              codigo_externo: item.codigo_externo ?? null,
               status: item.status,
               tipo: item.tipo,
-              morador_id: 0,
+              morador_id: item.morador_id ?? 0,
+              morador_nome: item.morador_nome ?? null,
               endereco_id: 0,
-              data_recebimento: null,
-              data_entrega: null
+              empresa_entregadora: item.empresa_entregadora ?? null,
+              data_recebimento: item.data_recebimento ?? null,
+              data_entrega: item.data_entrega ?? null
             }))
           );
           setEnderecosById(new Map());
@@ -315,8 +324,8 @@ export function DashboardPage(): JSX.Element {
               <span className="dashboard-hero-datetime dashboard-hero-datetime-short">{dataHoraCompacta}</span>
             </span>
           </p>
-          <h1>CondoJET - Dashboard Encomendas</h1>
-          <p>Acompanhamento das situações das encomendas recebidas na portaria do Condomínio.</p>
+          <h1>Dashboard Encomendas</h1>
+          <p>Gestão de encomendas no Condomínio.</p>
         </div>
         <div className="dashboard-hero-side">
           {canCreateEncomenda ? (

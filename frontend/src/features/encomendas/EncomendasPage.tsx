@@ -86,7 +86,7 @@ function formatDateTimeBR(value?: string | null, fallbackTime?: string | null): 
   const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw)
   if (dateOnly) {
     const time = normalizeTime(fallbackTime) ?? '00:00:00'
-    return `${dateOnly[3]}/${dateOnly[2]}/${dateOnly[1]} ${time}`
+    return `${dateOnly[3]}/${dateOnly[2]}/${dateOnly[1]} - ${time}`
   }
 
   const parsed = parseApiDate(raw)
@@ -110,7 +110,7 @@ function formatDateTimeBR(value?: string | null, fallbackTime?: string | null): 
   const hour = map.get('hour') ?? '00'
   const minute = map.get('minute') ?? '00'
   const second = map.get('second') ?? '00'
-  return `${day}/${month}/${year} ${hour}:${minute}:${second}`
+  return `${day}/${month}/${year} - ${hour}:${minute}:${second}`
 }
 
 function getEnderecoParts(endereco: Endereco | undefined): {
@@ -395,6 +395,12 @@ export function EncomendasPage(): JSX.Element {
         return
       }
 
+      if (match.status === 'ENTREGUE') {
+        setShowVerificarModal(false)
+        await openViewModal(match)
+        return
+      }
+
       setEncomendaVerificada(match)
       setShowVerificarModal(false)
       setShowResumoVerificacaoModal(true)
@@ -625,12 +631,12 @@ export function EncomendasPage(): JSX.Element {
             <table className="operation-table">
               <thead>
                 <tr>
-                  <th>DATA_ENTRADA</th>
+                  <th>DT_ENTRADA</th>
                   <th>TIPO</th>
                   <th>EMPRESA</th>
                   <th>Morador</th>
                   <th>Endereço</th>
-                  <th>DATA_RETIRADA</th>
+                  <th>DT_RETIRADA</th>
                   <th>Status</th>
                   <th className="actions-col">Ações</th>
                 </tr>
@@ -839,19 +845,42 @@ export function EncomendasPage(): JSX.Element {
                 <strong>{encomendaVerificada.morador_nome ?? `Morador #${encomendaVerificada.morador_id}`}</strong>
               </div>
             </div>
-            <div className="modal-data operation-modal-data">
-              <p><strong>Empresa responsável:</strong> {encomendaVerificada.empresa_entregadora || '-'}</p>
-              <p><strong>Recebimento:</strong> {encomendaVerificada.data_recebimento || '-'}</p>
-              <p><strong>Data de entrega:</strong> {encomendaVerificada.data_entrega || '-'}</p>
+            <div className="encomenda-verificacao-meta">
+              <div className="summary-card">
+                <span>Empresa responsável</span>
+                <strong>{encomendaVerificada.empresa_entregadora || '-'}</strong>
+              </div>
+              <div className="summary-grid encomenda-verificacao-dates">
+                <div className="summary-card">
+                  <span>Data_Entrada</span>
+                  <strong>{formatDateTimeBR(encomendaVerificada.data_recebimento, encomendaVerificada.hora_recebimento)}</strong>
+                </div>
+                <div className="summary-card">
+                  <span>Data_Retirada</span>
+                  <strong>{formatDateTimeBR(encomendaVerificada.data_entrega)}</strong>
+                </div>
+              </div>
               {(() => {
                 const endereco = enderecosById.get(encomendaVerificada.endereco_id)
                 const parts = getEnderecoParts(endereco)
                 return (
-                  <div className="address-stack">
-                    <p><strong>{parts.firstLabel}:</strong> {parts.firstValue}</p>
-                    <p><strong>{parts.secondLabel}:</strong> {parts.secondValue}</p>
-                    <p><strong>{parts.thirdLabel}:</strong> {parts.thirdValue}</p>
-                  </div>
+                  <section className="summary-card encomenda-verificacao-endereco" aria-label="Endereço da encomenda">
+                    <h4>Endereço</h4>
+                    <div className="encomenda-verificacao-endereco-grid">
+                      <div>
+                        <span>{parts.firstLabel}</span>
+                        <strong>{parts.firstValue}</strong>
+                      </div>
+                      <div>
+                        <span>{parts.secondLabel}</span>
+                        <strong>{parts.secondValue}</strong>
+                      </div>
+                      <div>
+                        <span>{parts.thirdLabel}</span>
+                        <strong>{parts.thirdValue}</strong>
+                      </div>
+                    </div>
+                  </section>
                 )
               })()}
             </div>
@@ -886,7 +915,20 @@ export function EncomendasPage(): JSX.Element {
       {showViewModal ? (
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="modal-card morador-modal encomenda-detalhe-modal">
-            <h3>Detalhes da encomenda</h3>
+            <div className="encomenda-detalhe-head">
+              <h3>Detalhes da encomenda</h3>
+              <button
+                type="button"
+                className="reports-mgr-modal-close encomenda-detalhe-top-close-icon"
+                aria-label="Fechar modal"
+                onClick={() => setShowViewModal(false)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 6L18 18" />
+                  <path d="M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
             {detailLoading ? <p className="info-box">Carregando detalhes...</p> : null}
             {detail ? (
               <div className="detail-content">
